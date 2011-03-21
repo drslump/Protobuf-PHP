@@ -10,7 +10,8 @@ hints to aide IDE's with autocompletion. Therefore, it can not only be used to
 communicate with Protocol Buffers services but also as a generation tool for 
 _data objects_ no matter what the final serialization is.
 
-For more information see the man pages.
+For more information see the included man pages.
+
 
 ## Requirements
 
@@ -35,7 +36,9 @@ For more information see the man pages.
 ### Upcoming
 
   - Pear package
-  - ProtoJson compatible serialization codec
+  - ProtoJson serialization codec
+  - Json serialization codec
+  - XML serialization codec
   - Improve binary codec speed and memory usage
 
 ### Future
