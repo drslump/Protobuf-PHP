@@ -1,0 +1,37 @@
+import "descriptor.proto";
+
+package php;
+
+extend google.protobuf.FileOptions {
+
+    // These two are aliases and set the namespace
+    optional string package     = 50001;
+    optional string namespace   = 50002;
+    // Suffix for file names
+    optional string suffix      = 50003 [default = ".pb.php"];
+
+}
+
+//extend google.protobuf.MessageOptions {
+//
+//}
+//
+//extend google.protobuf.FieldOptions {
+//
+//}
+//
+//extend google.protobuf.EnumOptions {
+//
+//}
+//
+//extend google.protobuf.EnumValueOptions {
+//
+//}
+//
+//extend google.protobuf.ServiceOptions {
+//
+//}
+//
+//extend google.protobuf.MethodOptions {
+//
+//}
