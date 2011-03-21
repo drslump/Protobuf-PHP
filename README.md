@@ -5,6 +5,13 @@ Protobuf for PHP is an implementation of Google's Protocol Buffers for the PHP
 language, supporting its binary data serialization and including a `protoc` 
 plugin to generate PHP classes from .proto files.
 
+Great effort has been put into generating PHP files that include all sort of type
+hints to aide IDE's with autocompletion. Therefore, it can not only be used to
+communicate with Protocol Buffers services but also as a generation tool for 
+_data objects_ no matter what the final serialization is.
+
+For more information see the man pages.
+
 ## Requirements
 
   - PHP 5.3  
@@ -17,11 +24,13 @@ plugin to generate PHP classes from .proto files.
 ### Working
 
   - Standard types (numbers, string, enums, messages, etc)
-  - Pluggable serialization backends or codecs
+  - Pluggable serialization backends (codecs)
     - Standard binary serialization
   - Protoc compiler plugin to generate the PHP classes
   - Extensions
   - Unknown fields
+  - Packed fields
+  - Reflection
 
 ### Upcoming
 
@@ -33,7 +42,9 @@ plugin to generate PHP classes from .proto files.
 
   - Lazy-loading of nested messages
   - Speed optimized code generation mode
-  
+  - Support numbers beyond PHP's native limits
+  - Service stubs
+
 
 ## Example usage
 
