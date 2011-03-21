@@ -1,0 +1,39 @@
+protobuf-php(3) -- The framework
+================================
+
+## SYNOPSIS
+
+    <?php
+    require_once 'DrSlump\Protobuf.php';
+
+    use DrSlump\Protobuf;
+
+    $data = file_get_contents('data.pb');
+    $person = new Tutorial\Person($data);
+    echo $person->getName();
+
+
+## DESCRIPTION
+
+Protobuf for PHP is a library to generate, parse and serialize data structures
+compatible with Google's Protocol Buffers.
+
+
+## EXAMPLES ##
+
+
+
+## BUGS ##
+
+Please report bugs using GitHub's issue tracker at http://github.com/drslump/protobuf-php/issues
+
+
+## COPYRIGHT ##
+
+Protobuf for PHP is Copyright (C) 2011 Ivan -DrSlump- Montes <http://pollinimini.net>
+
+
+## SEE ALSO
+
+protoc-gen-php(1),
+<http://github.com/drslump/protobuf-php>
