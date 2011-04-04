@@ -28,6 +28,11 @@ class Field
     }
     */
 
+    public function getNumber()
+    {
+        return $this->number;
+    }
+
     public function getType()
     {
         return $this->type;
