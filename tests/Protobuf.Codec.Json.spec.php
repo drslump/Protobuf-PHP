@@ -1,15 +1,12 @@
 <?php
 
-// Remove the Spec stream wrapper prefix from __DIR__
-$DIR = substr(__DIR__, strlen('spec://'));
-
-require_once $DIR . '/../library/DrSlump/Protobuf.php';
+require_once __DIR__ . '/../library/DrSlump/Protobuf.php';
 
 use \DrSlump\Protobuf;
 
 Protobuf::autoload();
 
-include_once $DIR . '/protos/simple.php';
+include_once __DIR__ . '/protos/simple.php';
 
 describe "JSON Codec"
 
