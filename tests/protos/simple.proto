@@ -1,0 +1,7 @@
+package tests;
+
+message Simple {
+  required string foo = 1;
+  required int32 bar = 2;
+  optional string baz = 3;
+}
