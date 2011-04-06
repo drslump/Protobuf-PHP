@@ -86,7 +86,6 @@ class Reader {
 
         if (PHP_INT_SIZE < 8) {
             list(, $lo, $hi) = unpack('v*', $bytes);
-            //$result = ($hi * (0xFFFF+1) + $lo;
             $result = $hi << 16 | $lo;
         } else {
             list(, $result) = unpack('V*', $bytes);
@@ -100,7 +99,6 @@ class Reader {
         $bytes = $this->read(8);
 
         list(, $lo0, $lo1, $hi0, $hi1) = unpack('v*', $bytes);
-        //$result = ($hi1 * (0xFFFF+1) + $hi0) * (0xFFFFFFFF+1) + ($lo1 * (0xFFFF+1) + $lo0);
         return ($hi1 << 16 | $hi0) << 32 | ($lo1 << 16 | $lo0);
     }
 

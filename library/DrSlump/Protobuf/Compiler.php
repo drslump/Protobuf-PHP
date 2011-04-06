@@ -6,19 +6,18 @@ namespace DrSlump\Protobuf;
 require_once __DIR__ . '/Compiler/protos/descriptor.pb.php';
 require_once __DIR__ . '/Compiler/protos/plugin.pb.php';
 require_once __DIR__ . '/Compiler/protos/php.pb.php';
+require_once __DIR__ . '/Compiler/protos/json.pb.php';
 
 use DrSlump\Protobuf;
 use google\protobuf as proto;
 
 class Compiler
 {
+    /** @var bool */
+    protected $verbose = false;
+
     /** @var array */
     protected $packages = array();
-
-    /** @var array */
-    protected $extensions = array();
-
-    protected $verbose = false;
 
 
     public function __construct($verbose = false)
@@ -26,20 +25,20 @@ class Compiler
         $this->verbose = $verbose;
     }
 
-    protected function stderr($str)
+    public function stderr($str)
     {
         $str = str_replace("\n", PHP_EOL, $str);
         fputs(STDERR, $str . PHP_EOL);
     }
 
-    protected function notice($str)
+    public function notice($str)
     {
         if ($this->verbose) {
             $this->stderr('NOTICE: ' . $str);
         }
     }
 
-    protected function warning($str)
+    public function warning($str)
     {
         $this->stderr('WARNING: ' . $str);
     }
@@ -49,10 +48,42 @@ class Compiler
         $this->stderr('ERROR: ' . $str);
     }
 
+    public function getPackages()
+    {
+        return $this->packages;
+    }
+
+    public function hasPackage($package)
+    {
+        return isset($this->packages[$package]);
+    }
+
+    public function getPackage($package)
+    {
+        return $this->packages[$package];
+    }
+
+    public function setPackage($package, $namespace)
+    {
+        $this->packages[$package] = $namespace;
+    }
+
+    public function camelize($name)
+    {
+        return preg_replace_callback(
+                    '/_([a-z])/i',
+                    function($m){ return strtoupper($m[1]); },
+                    $name
+                 );
+    }
+
     public function compile($data)
     {
         // Parse the request
-        $req = new \google\protobuf\compiler\CodeGeneratorRequest($data);
+        $req = new proto\compiler\CodeGeneratorRequest($data);
+
+        // Set default generator class
+        $generator = __CLASS__ . '\PhpGenerator';
 
         // Get plugin arguments
         if ($req->hasParameter()) {
@@ -62,22 +93,29 @@ class Compiler
                 case 'verbose':
                     $this->verbose = filter_var($val, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
                     break;
+                case 'json':
+                    $this->notice("Using ProtoJson generator");
+                    $generator = __CLASS__ . '\JsonGenerator';
+                    break;
                 default:
                     $this->warning('Skipping unknown option ' . $arg);
                 }
             }
         }
 
+        // Create a suitable generator
+        $generator = new $generator($this);
+
         // Setup response object
-        $resp = new \google\protobuf\Compiler\CodeGeneratorResponse();
+        $resp = new proto\Compiler\CodeGeneratorResponse();
 
         // First iterate over all the protos to get a map of namespaces
         $this->packages = array();
         foreach($req->getProtoFileList() as $proto) {
             $package = $proto->getPackage();
-            $namespace = $this->getNamespace($proto);
+            $namespace = $generator->getNamespace($proto);
             $this->packages[$package] = $namespace;
-            $this->notice("Mapping $package to \\$namespace");
+            $this->notice("Mapping $package to $namespace");
         }
 
         // Get the list of files to generate
@@ -91,7 +129,7 @@ class Compiler
                 continue;
             }
 
-            $sources = $this->compileProtoFile($file);
+            $sources = $generator->compileProtoFile($file);
             foreach($sources as $source) {
                 $this->notice('Generating "' . $source->getName() . '"');
                 $resp->addFile($source);
@@ -102,459 +140,5 @@ class Compiler
         return $resp->serialize();
     }
 
-    public function getNamespace(proto\FileDescriptorProto $proto)
-    {
-        $namespace = $proto->getPackage();
-        $opts = $proto->getOptions();
-        if (isset($opts['php.package'])) {
-            $namespace = $opts['php.package'];
-        }
-        if (isset($opts['php.namespace'])) {
-            $namespace = $opts['php.namespace'];
-        }
-
-        $namespace = trim($namespace, '\\.');
-        return str_replace('.', '\\', $namespace);
-    }
-
-    public function compileProtoFile(proto\FileDescriptorProto $proto)
-    {
-        // By default create a PHP for each .proto one
-        $file = new \google\protobuf\compiler\CodeGeneratorResponse\File();
-
-        $opts = $proto->getOptions();
-
-        $namespace = $this->getNamespace($proto);
-
-        $name = pathinfo($proto->getName(), PATHINFO_FILENAME);
-        $name .= isset($opts['php.suffix'])
-                  ? $opts['php.suffix']
-                  : '.php';
-        $file->setName($name);
-
-        $s = array();
-        $s[]= "<?php";
-        $s[]= "// DO NOT EDIT! Generated by Protobuf for PHP protoc plugin " . Protobuf::VERSION;
-        $s[]= "// Source: " . $proto->getName();
-        $s[]= "//   Date: " . date('Y-m-d H:i:s');
-        $s[]= "";
-
-        // Generate Enums
-        foreach ($proto->getEnumType() as $enum) {
-            $s[]= $this->compileEnum($enum, $namespace);
-        }
-
-        // Generate Messages
-        foreach ($proto->getMessageType() as $msg) {
-            $s[]= $this->compileMessage($msg, $namespace);
-        }
-
-        // Collect extensions
-        if ($proto->hasExtension()) {
-            foreach ($proto->getExtensionList() as $field) {
-                $this->extensions[$field->getExtendee()][] = array($namespace, $field);
-            }
-        }
-
-        // Dump all extensions found in this proto file
-        if (count($this->extensions)):
-        $s[]= 'namespace {';
-            foreach ($this->extensions as $extendee => $fields) {
-                foreach ($fields as $pair) {
-                    list($ns, $field) = $pair;
-                    $s[] = $this->compileExtension($field, $ns, '  ');
-                }
-            }
-        $s[]= '}';
-        endif;
-
-        $src = implode(PHP_EOL, $s);
-
-        $file->setContent($src);
-        return array($file);
-    }
-
-    public function compileEnum(proto\EnumDescriptorProto $enum, $namespace)
-    {
-        $s = array();
-
-        $s[]= "namespace $namespace {";
-        $s[]= "";
-        $s[]= "  class " . $enum->getName() . " {";
-        foreach ($enum->getValueList() as $value):
-        $s[]= "    const " . $value->getName() . " = " . $value->getNumber() . ";";
-        endforeach;
-        $s[]= "  }";
-        $s[]= "}";
-        $s[]= "";
-
-        return implode(PHP_EOL, $s);
-    }
-
-    public function compileMessage(proto\DescriptorProto $msg, $namespace)
-    {
-        $s = array();
-
-        $s[]= "namespace $namespace {";
-        $s[]= "";
-        $s[]= "  class " . $msg->getName() . " extends \DrSlump\Protobuf\Message {";
-        $s[]= "";
-        $s[]= '    /** @var \DrSlump\Protobuf\Descriptor */';
-        $s[]= '    protected static $__descriptor;';
-        $s[]= '    /** @var \Closure[] */';
-        $s[]= '    protected static $__extensions = array();';
-        $s[]= '';
-        $s[]= '    public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)';
-        $s[]= '    {';
-        $s[]= '      if (NULL !== $descriptor) {';
-        $s[]= '        self::$__descriptor = $descriptor;';
-        $s[]= '        return self::$__descriptor;';
-        $s[]= '      }';
-        $s[]= '';
-        $s[]= '      if (!self::$__descriptor) {';
-        $s[]= '        $descriptor = new \DrSlump\Protobuf\Descriptor("\\'.$namespace.'\\'.$msg->getName().'");';
-        $s[]= '';
-        foreach ($msg->getField() as $field):
-        $s[]=          $this->compileField($field, "        ");
-        $s[]= '        $descriptor->addField($f);';
-        $s[]= '';
-        endforeach;
-        $s[]= '        foreach (self::$__extensions as $cb) {';
-        $s[]= '          $descriptor->addField($cb(), true);';
-        $s[]= '        }';
-        $s[]= '';
-        $s[]= '        self::$__descriptor = $descriptor;';
-        $s[]= '      }';
-        $s[]= '';
-        $s[]= '      return self::$__descriptor;';
-        $s[]= '    }';
-        $s[]= '';
-
-        //$s[]= "    protected static \$__exts = array(";
-        //foreach ($msg->getExtensionRange() as $range):
-        //$s[]= '      array(' . $range->getStart() . ', ' . ($range->getEnd()-1) . '),';
-        //endforeach;
-        //$s[]= "    );";
-        //$s[]= "";
-
-        foreach ($msg->getField() as $field):
-        $s[]= $this->generatePublicField($field, "    ");
-        endforeach;
-        $s[]= "";
-
-        foreach ($msg->getField() as $field):
-        $s[]= $this->generateAccessors($field, $namespace . '\\' . $msg->getName(), "    ");
-        endforeach;
-        $s[]= "  }";
-        $s[]= "}";
-        $s[]= "";
-
-
-        // Compute a new namespace with the message name as suffix
-        $namespace .= "\\" . $msg->getName();
-
-        // Generate Enums
-        if ($msg->hasEnumType()):
-        foreach ($msg->getEnumType() as $enum):
-        $s[]= $this->compileEnum($enum, $namespace);
-        endforeach;
-        endif;
-
-        // Generate nested messages
-        if ($msg->hasNestedType()):
-        foreach ($msg->getNestedType() as $msg):
-        $s[]= $this->compileMessage($msg, $namespace);
-        endforeach;
-        endif;
-
-        // Collect extensions
-        if ($msg->hasExtension()) {
-            foreach ($msg->getExtensionList() as $field) {
-                $this->_extensions[$field->getExtendee()][] = array($namespace, $field);
-            }
-        }
-
-        return implode(PHP_EOL, $s);
-    }
-
-    public function camel($name)
-    {
-        return preg_replace_callback(
-                    '/_([a-z])/i',
-                    function($m){ return strtoupper($m[1]); },
-                    $name
-                 );
-    }
-
-    public function compileField(proto\FieldDescriptorProto $field, $indent)
-    {
-        switch ($field->getLabel()) {
-        case Protobuf::RULE_REQUIRED:
-            $rule = 'required';
-            break;
-        case Protobuf::RULE_OPTIONAL:
-            $rule = 'optional';
-            break;
-        case Protobuf::RULE_REPEATED:
-            $rule = 'repeated';
-            break;
-        }
-
-        $s[]= "// $rule " . $field->getTypeName() . " " . $field->getName() . " = " . $field->getNumber();
-        $s[]= '$f = new \DrSlump\Protobuf\Field();';
-        $s[]= '$f->number    = ' . $field->getNumber() . ';';
-        $s[]= '$f->name      = "'. $field->getName() . '";';
-        $s[]= '$f->type      = ' . $field->getType() . ';';
-        $s[]= '$f->rule      = ' . $field->getLabel() . ';';
-
-        if ($field->hasTypeName()):
-        $reference = $field->getTypeName();
-        if (substr($reference, 0, 1) !== '.') {
-            throw new \RuntimeException('Only fully qualified names are supported: ' . $reference);
-        }
-        $s[]= '$f->reference = "\\' . $this->normalizeReference($reference) . '";';
-        endif;
-
-        if ($field->hasDefaultValue()):
-            switch ($field->getType()) {
-            case Protobuf::TYPE_BOOL:
-                $s[]= '$f->default   = ' . ($field->getDefaultValue() ? 'true' : 'false') . ';';
-                break;
-            case Protobuf::TYPE_STRING:
-                $s[]= '$f->default   = "' . addcslashes($field->getDefaultValue(), '"\\') . '";';
-                break;
-            case Protobuf::TYPE_ENUM:
-                $value = '\\' . $this->normalizeReference($field->getTypeName()) . '::' . $field->getDefaultValue();
-                $s[]= '$f->default   = ' . $value . ';';
-                break;
-            default: // Numbers
-                $s[]= '$f->default   = ' . $field->getDefaultValue() . ';';
-            }
-        endif;
-
-        return $indent . implode(PHP_EOL.$indent, $s);
-    }
-
-    public function compileExtension(proto\FieldDescriptorProto $field, $ns, $indent)
-    {
-        $extendee = $this->normalizeReference($field->getExtendee());
-
-        $name = $field->getName();
-        if ($ns) {
-            $name = $ns . '.' . $name;
-        }
-        $name = str_replace('\\', '.', $name);
-        $field->setName($name);
-
-        $s[]= "\\$extendee::extension(function(){";
-        $s[]= $this->compileField($field, $indent.'  ');
-        $s[]= '  return $f;';
-        $s[]= "});";
-
-        return $indent . implode(PHP_EOL.$indent, $s);
-    }
-
-    public function generatePublicField(proto\FieldDescriptorProto $field, $indent)
-    {
-        if ($field->getLabel() === Protobuf::RULE_REPEATED) {
-            $s[]= "/** @var " . $this->getJavaDocType($field) . "[] */";
-            $s[]= 'public $' . $field->getName() . " = array();";
-        } else {
-            $s[]= "/** @var " . $this->getJavaDocType($field) . " */";
-            $default = 'null';
-            if ($field->hasDefaultValue()) {
-                switch ($field->getType()) {
-                case Protobuf::TYPE_BOOL:
-                    $default = $field->getDefaultValue() ? 'true' : 'false';
-                    break;
-                case Protobuf::TYPE_STRING:
-                    $default = '"' . addcslashes($field->getDefaultValue(), '"\\') . '"';
-                    break;
-                case Protobuf::TYPE_ENUM:
-                    $default = '\\' . $this->normalizeReference($field->getTypeName()) . '::' . $field->getDefaultValue();
-                    break;
-                default: // Numbers
-                    $default = $field->getDefaultValue();
-                }
-            }
-            $s[]= 'public $' . $field->getName() . ' = ' . $default . ';';
-        }
-        $s[]= "";
-
-        return $indent . implode(PHP_EOL.$indent, $s);
-    }
-
-    public function generateAccessors(proto\FieldDescriptorProto $field, $namespace, $indent)
-    {
-        $tag = $field->getNumber();
-        $name = $field->getName();
-        $camel = preg_replace_callback(
-                    '/_([a-z])/i',
-                    function($m){ return strtoupper($m[1]); },
-                    ucfirst($name)
-                 );
-
-        $typehint = '';
-        $typedoc = $this->getJavaDocType($field);
-        if (0 === strpos($typedoc, '\\')) {
-            $typehint = $typedoc;
-        }
-
-        // hasXXX
-        $s[]= "/**";
-        $s[]= " * Check if <$name> has a value";
-        $s[]= " *";
-        $s[]= " * @return boolean";
-        $s[]= " */";
-        $s[]= "public function has$camel(){";
-        $s[]= "  return \$this->_has($tag);";
-        $s[]= "}";
-        $s[]= "";
-
-        // clearXXX
-        $s[]= "/**";
-        $s[]= " * Clear <$name> value";
-        $s[]= " *";
-        $s[]= " * @return \\$namespace";
-        $s[]= " */";
-        $s[]= "public function clear$camel(){";
-        $s[]= "  return \$this->_clear($tag);";
-        $s[]= "}";
-        $s[]= "";
-
-
-        if ($field->getLabel() === Protobuf::RULE_REPEATED):
-
-        // getXXX
-        $s[]= "/**";
-        $s[]= " * Get <$name> value";
-        $s[]= " *";
-        $s[]= " * @param int \$idx";
-        $s[]= " * @return $typedoc";
-        $s[]= " */";
-        $s[]= "public function get$camel(\$idx = NULL){";
-        $s[]= "  return \$this->_get($tag, \$idx);";
-        $s[]= "}";
-        $s[]= "";
-
-        // setXXX
-        $s[]= "/**";
-        $s[]= " * Set <$name> value";
-        $s[]= " *";
-        $s[]= " * @param $typedoc \$value";
-        $s[]= " * @return \\$namespace";
-        $s[]= " */";
-        $s[]= "public function set$camel($typehint \$value, \$idx = NULL){";
-        $s[]= "  return \$this->_set($tag, \$value, \$idx);";
-        $s[]= "}";
-        $s[]= "";
-
-        $s[]= "/**";
-        $s[]= " * Get all elements of <$name>";
-        $s[]= " *";
-        $s[]= " * @return {$typedoc}[]";
-        $s[]= " */";
-        $s[]= "public function get{$camel}List(){";
-        $s[]= " return \$this->_get($tag);";
-        $s[]= "}";
-        $s[]= "";
-
-        $s[]= "/**";
-        $s[]= " * Add a new element to <$name>";
-        $s[]= " *";
-        $s[]= " * @param $typedoc \$value";
-        $s[]= " * @return \\$namespace";
-        $s[]= " */";
-        $s[]= "public function add$camel($typehint \$value){";
-        $s[]= " return \$this->_add($tag, \$value);";
-        $s[]= "}";
-        $s[]= "";
-
-        else:
-
-        // getXXX
-        $s[]= "/**";
-        $s[]= " * Get <$name> value";
-        $s[]= " *";
-        $s[]= " * @return $typedoc";
-        $s[]= " */";
-        $s[]= "public function get$camel(){";
-        $s[]= "  return \$this->_get($tag);";
-        $s[]= "}";
-        $s[]= "";
-
-        // setXXX
-        $s[]= "/**";
-        $s[]= " * Set <$name> value";
-        $s[]= " *";
-        $s[]= " * @param $typedoc \$value";
-        $s[]= " * @return \\$namespace";
-        $s[]= " */";
-        $s[]= "public function set$camel($typehint \$value){";
-        $s[]= "  return \$this->_set($tag, \$value);";
-        $s[]= "}";
-        $s[]= "";
-
-        endif;
-
-        return $indent . implode(PHP_EOL.$indent, $s);
-    }
-
-   public function getJavaDocType(proto\FieldDescriptorProto $field)
-    {
-        switch ($field->getType()) {
-            case Protobuf::TYPE_DOUBLE:
-            case Protobuf::TYPE_FLOAT:
-                return 'float';
-            case Protobuf::TYPE_INT64:
-            case Protobuf::TYPE_UINT64:
-            case Protobuf::TYPE_INT32:
-            case Protobuf::TYPE_FIXED64:
-            case Protobuf::TYPE_FIXED32:
-            case Protobuf::TYPE_UINT32:
-            case Protobuf::TYPE_SFIXED32:
-            case Protobuf::TYPE_SFIXED64:
-            case Protobuf::TYPE_SINT32:
-            case Protobuf::TYPE_SINT64:
-                return 'int';
-            case Protobuf::TYPE_BOOL:
-                return 'boolean';
-            case Protobuf::TYPE_STRING:
-                return 'string';
-            case Protobuf::TYPE_MESSAGE:
-                return '\\' . $this->normalizeReference($field->getTypeName());
-            case Protobuf::TYPE_BYTES:
-                return 'string';
-            case Protobuf::TYPE_ENUM:
-                return 'int - \\' . $this->normalizeReference($field->getTypeName());
-
-            case Protobuf::TYPE_GROUP:
-            default:
-                return 'unknown';
-        }
-    }
-
-    public function normalizeReference($reference)
-    {
-        // Remove leading dot
-        $reference = ltrim($reference, '.');
-
-        if (!isset($this->packages[$reference])) {
-            $found = false;
-            foreach ($this->packages as $package=>$namespace) {
-                if (0 === strpos($reference, $package.'.')) {
-                    $reference = $namespace . substr($reference, strlen($package));
-                    $found = true;
-                }
-            }
-            if (!$found) {
-                $this->warning('Non tracked package name found "' . $reference . '"');
-            }
-        } else {
-            $reference = $this->packages[$reference];
-        }
-
-        return str_replace('.', '\\', $reference);
-    }
 }
 

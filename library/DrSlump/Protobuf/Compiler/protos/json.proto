@@ -1,0 +1,37 @@
+import "descriptor.proto";
+
+package json;
+
+extend google.protobuf.FileOptions {
+
+    // These two are aliases and set the namespace
+    optional string package     = 50101;
+    optional string namespace   = 50102;
+    // Suffix for file names
+    optional string suffix      = 50103 [default = ".pb.json"];
+
+}
+
+//extend google.protobuf.MessageOptions {
+//
+//}
+//
+//extend google.protobuf.FieldOptions {
+//
+//}
+//
+//extend google.protobuf.EnumOptions {
+//
+//}
+//
+//extend google.protobuf.EnumValueOptions {
+//
+//}
+//
+//extend google.protobuf.ServiceOptions {
+//
+//}
+//
+//extend google.protobuf.MethodOptions {
+//
+//}

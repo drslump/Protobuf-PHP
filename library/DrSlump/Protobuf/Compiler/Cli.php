@@ -36,6 +36,7 @@ class Cli
 
         // We have data from stdin so compile it
         try {
+            // Create a compiler interface
             $comp = new Protobuf\Compiler();
             echo $comp->compile($stdin);
             exit(0);
@@ -74,14 +75,19 @@ class Cli
         $cmd[] = 'protoc';
         $cmd[] = '--plugin=protoc-gen-php=' . escapeshellarg($pluginExecutable);
         $cmd[] = '--proto_path=' . escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . 'protos');
-        foreach($result->options['include'] as $include) {
-            $include = realpath($include);
-            $cmd[] = '--proto_path=' . escapeshellarg($include);
+        if (!empty($result->options['include'])) {
+            foreach($result->options['include'] as $include) {
+                $include = realpath($include);
+                $cmd[] = '--proto_path=' . escapeshellarg($include);
+            }
         }
 
         $args = array();
         if ($result->options['verbose']) {
             $args['verbose'] = 1;
+        }
+        if ($result->options['json']) {
+            $args['json'] = 1;
         }
 
         $cmd[] = '--php_out=' .
@@ -137,6 +143,14 @@ class Cli
             'action'        => 'StoreArray',
             'description'   => 'define an include path (can be repeated)',
             'multiple'      => 'true',
+        ));
+
+
+        $main->addOption('json', array(
+            'short_name'    => '-j',
+            'long_name'     => '--json',
+            'action'        => 'StoreTrue',
+            'description'   => 'turn on ProtoJson Javascript file generation',
         ));
 
         $main->addArgument('protos', array(
