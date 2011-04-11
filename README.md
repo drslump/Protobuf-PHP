@@ -27,6 +27,9 @@ For more information see the included man pages.
   - Standard types (numbers, string, enums, messages, etc)
   - Pluggable serialization backends (codecs)
     - Standard binary serialization
+    - JSON serialization
+    - ProtoJson serialization with _HashTag_ variant
+    - ProtoJson serialization with _Indexed_ variant
   - Protoc compiler plugin to generate the PHP classes
   - Extensions
   - Unknown fields
@@ -36,8 +39,6 @@ For more information see the included man pages.
 ### Upcoming
 
   - Pear package
-  - ProtoJson serialization codec
-  - Json serialization codec
   - XML serialization codec
   - Improve binary codec speed and memory usage
 
