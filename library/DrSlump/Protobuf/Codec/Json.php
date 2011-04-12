@@ -6,13 +6,50 @@ use DrSlump\Protobuf;
 
 class Json implements Protobuf\CodecInterface
 {
+    /**
+     * @static
+     * @param \DrSlump\Protobuf\Message $message
+     * @return string
+     */
     static public function encode(Protobuf\Message $message)
     {
-        $data = self::encodeMessage($message);
+        $data = static::getInstance()->encodeMessage($message);
         return json_encode($data);
     }
 
-    static public function encodeMessage(Protobuf\Message $message)
+    /**
+     * @static
+     * @param String|Message $message
+     * @param String $data
+     * @return \DrSlump\Protobuf\Message
+     */
+    static public function decode($message, $data)
+    {
+        if (is_string($message)) {
+            $message = new $message;
+        }
+
+        $data = json_decode($data);
+        return static::getInstance()->decodeMessage($message, $data);
+    }
+
+    /**
+     * @static
+     * @return Binary
+     */
+    static public function getInstance()
+    {
+        static $instance;
+
+        if (NULL === $instance) {
+            $instance = new self();
+        }
+
+        return $instance;
+    }
+
+
+    public function encodeMessage(Protobuf\Message $message)
     {
         $descriptor = $message::descriptor();
 
@@ -39,12 +76,12 @@ class Json implements Protobuf\CodecInterface
                     if ($field->getType() !== Protobuf::TYPE_MESSAGE) {
                         $data->{$name}[] = $val;
                     } else {
-                        $data->{$name}[] = self::encodeMessage($val);
+                        $data->{$name}[] = $this->encodeMessage($val);
                     }
                 }
             } else {
                 if ($field->getType() === Protobuf::TYPE_MESSAGE) {
-                    $data->$name = self::encodeMessage($value);
+                    $data->$name = $this->encodeMessage($value);
                 } else {
                     $data->$name = $value;
                 }
@@ -54,20 +91,8 @@ class Json implements Protobuf\CodecInterface
         return $data;
     }
 
-    static public function decode($message, $data)
+    public function decodeMessage(Protobuf\Message $message, $data)
     {
-        $data = json_decode($data);
-        return self::decodeMessage($data, $message);
-    }
-
-    static public function decodeMessage($data, $message)
-    {
-        // If an instance was not given create one
-        // @todo check message class is valid
-        if (is_string($message)) {
-            $message = new $message();
-        }
-
         // Get message descriptor
         $descriptor = $message::descriptor();
 
@@ -91,7 +116,8 @@ class Json implements Protobuf\CodecInterface
 
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
                 $nested = $field->getReference();
-                $v = self::decodeMessage($v, $nested);
+                $nested = new $nested;
+                $v = $this->decodeMessage($nested, $v);
             }
 
             if ($field->isRepeated()) {

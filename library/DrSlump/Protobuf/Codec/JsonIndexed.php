@@ -4,15 +4,26 @@ namespace DrSlump\Protobuf\Codec;
 
 use DrSlump\Protobuf;
 
-class JsonIndexed implements Protobuf\CodecInterface
+class JsonIndexed extends Json
+    implements Protobuf\CodecInterface
 {
-    static public function encode(Protobuf\Message $message)
+
+    /**
+     * @static
+     * @return Binary
+     */
+    static public function getInstance()
     {
-        $data = self::encodeMessage($message);
-        return json_encode($data);
+        static $instance;
+
+        if (NULL === $instance) {
+            $instance = new self();
+        }
+
+        return $instance;
     }
 
-    static public function encodeMessage(Protobuf\Message $message)
+    public function encodeMessage(Protobuf\Message $message)
     {
         $descriptor = $message::descriptor();
 
@@ -31,7 +42,7 @@ class JsonIndexed implements Protobuf\CodecInterface
                 continue;
             }
 
-            $index .= self::i2c($tag + 48);
+            $index .= $this->i2c($tag + 48);
 
             $value = $message->_get($tag);
 
@@ -41,13 +52,13 @@ class JsonIndexed implements Protobuf\CodecInterface
                     if ($field->getType() !== Protobuf::TYPE_MESSAGE) {
                         $repeats[] = $val;
                     } else {
-                        $repeats[] = self::encodeMessage($val);
+                        $repeats[] = $this->encodeMessage($val);
                     }
                 }
                 $data[] = $repeats;
             } else {
                 if ($field->getType() === Protobuf::TYPE_MESSAGE) {
-                    $data[] = self::encodeMessage($value);
+                    $data[] = $this->encodeMessage($value);
                 } else {
                     $data[] = $value;
                 }
@@ -60,29 +71,18 @@ class JsonIndexed implements Protobuf\CodecInterface
         return $data;
     }
 
-    static public function decode($message, $data)
+    public function decodeMessage(\DrSlump\Protobuf\Message $message, $data)
     {
-        $data = json_decode($data);
-        return self::decodeMessage($data, $message);
-    }
-
-    static public function decodeMessage($data, $message)
-    {
-        // If an instance was not given create one
-        // @todo check message class is valid
-        if (is_string($message)) {
-            $message = new $message();
-        }
-
         // Get message descriptor
         $descriptor = $message::descriptor();
 
+        // Split the index in UTF8 characters
         preg_match_all('/./u', $data[0], $chars);
 
         $chars = $chars[0];
         for ($i=1; $i<count($data); $i++) {
 
-            $k = self::c2i($chars[$i-1]) - 48;
+            $k = $this->c2i($chars[$i-1]) - 48;
             $v = $data[$i];
 
             $field = $descriptor->getField($k);
@@ -98,7 +98,8 @@ class JsonIndexed implements Protobuf\CodecInterface
 
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
                 $nested = $field->getReference();
-                $v = self::decodeMessage($v, $nested);
+                $nested = new $nested;
+                $v = $this->decodeMessage($nested, $v);
             }
 
             if ($field->isRepeated()) {
@@ -111,14 +112,14 @@ class JsonIndexed implements Protobuf\CodecInterface
         return $message;
     }
 
-    static protected function i2c($codepoint)
+    protected function i2c($codepoint)
     {
         return $codepoint < 128
                ? chr($codepoint)
                : html_entity_decode("&#$codepoint;", ENT_NOQUOTES, 'UTF-8');
     }
 
-    static protected function c2i($char)
+    protected function c2i($char)
     {
         $value = ord($char[0]);
         if ($value < 128) return $value;

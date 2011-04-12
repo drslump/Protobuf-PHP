@@ -4,15 +4,26 @@ namespace DrSlump\Protobuf\Codec;
 
 use DrSlump\Protobuf;
 
-class JsonHashTag implements Protobuf\CodecInterface
+class JsonHashTag extends Json
+    implements Protobuf\CodecInterface
 {
-    static public function encode(Protobuf\Message $message)
+
+    /**
+     * @static
+     * @return Binary
+     */
+    static public function getInstance()
     {
-        $data = self::encodeMessage($message);
-        return json_encode($data);
+        static $instance;
+
+        if (NULL === $instance) {
+            $instance = new self();
+        }
+
+        return $instance;
     }
 
-    static public function encodeMessage(Protobuf\Message $message)
+    public function encodeMessage(Protobuf\Message $message)
     {
         $descriptor = $message::descriptor();
 
@@ -54,13 +65,8 @@ class JsonHashTag implements Protobuf\CodecInterface
         return $data;
     }
 
-    static public function decode($message, $data)
-    {
-        $data = json_decode($data);
-        return self::decodeMessage($data, $message);
-    }
 
-    static public function decodeMessage($data, $message)
+    public function decodeMessage(Protobuf\Message $message, $data)
     {
         // If an instance was not given create one
         // @todo check message class is valid
@@ -85,7 +91,8 @@ class JsonHashTag implements Protobuf\CodecInterface
 
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
                 $nested = $field->getReference();
-                $v = self::decodeMessage($v, $nested);
+                $nested = new $nested;
+                $v = $this->decodeMessage($nested, $v);
             }
 
             if ($field->isRepeated()) {

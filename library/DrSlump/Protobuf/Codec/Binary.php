@@ -6,20 +6,48 @@ use DrSlump\Protobuf;
 
 class Binary implements Protobuf\CodecInterface
 {
+    /**
+     * @static
+     * @param \DrSlump\Protobuf\Message $message
+     * @return string
+     */
     static public function encode(Protobuf\Message $message)
     {
-        // Create a binary writer for the data
-        $writer = new Protobuf\Codec\Binary\Writer();
-
-        // Encode the message
-        $data = self::encodeMessage($message);
-        if (strlen($data)) {
-            $writer->write($data);
-        }
-        return $writer->getContents();
+        return self::getInstance()->encodeMessage($message);
     }
 
-    static public function encodeMessage(Protobuf\Message $message)
+    /**
+     * @static
+     * @param String|Message $message
+     * @param String $data
+     * @return \DrSlump\Protobuf\Message
+     */
+    static public function decode($message, $data)
+    {
+        // Decode the message
+        if (is_string($message)) {
+            $message = new $message;
+        }
+
+        return self::getInstance()->decodeMessage($message, $data);
+    }
+
+    /**
+     * @static
+     * @return Binary
+     */
+    static public function getInstance()
+    {
+        static $instance;
+
+        if (NULL === $instance) {
+            $instance = new self();
+        }
+
+        return $instance;
+    }
+
+    public function encodeMessage(Protobuf\Message $message)
     {
         $writer = new Binary\Writer();
 
@@ -43,7 +71,7 @@ class Binary implements Protobuf\CodecInterface
             $type = $field->getType();
 
             // Compute key with tag number and wire type
-            $key = $tag << 3 | self::getWireType($type, null);
+            $key = $tag << 3 | $this->getWireType($type, null);
             $writer->varint($key);
 
             $value = $message->_get($tag);
@@ -53,9 +81,9 @@ class Binary implements Protobuf\CodecInterface
                 $data = '';
                 foreach($value as $val) {
                     if ($type !== Protobuf::TYPE_MESSAGE) {
-                       self::encodeSimpleType($writer, $type, $val);
+                       $this->encodeSimpleType($writer, $type, $val);
                     } else {
-                       $data .= self::encodeMessage($val);
+                       $data .= $this->encodeMessage($val);
                     }
                 }
 
@@ -65,9 +93,9 @@ class Binary implements Protobuf\CodecInterface
                 }
             } else {
                 if ($type !== Protobuf::TYPE_MESSAGE) {
-                    self::encodeSimpleType($writer, $type, $message->_get($tag));
+                    $this->encodeSimpleType($writer, $type, $value);
                 } else {
-                    $data = self::encodeMessage($field->getReference());
+                    $data = $this->encodeMessage($value);
                     $writer->varint(strlen($data));
                     $writer->write($data);
                 }
@@ -77,7 +105,7 @@ class Binary implements Protobuf\CodecInterface
         return $writer->getContents();
     }
 
-    static public function encodeSimpleType($writer, $type, $value)
+    protected function encodeSimpleType($writer, $type, $value)
     {
         switch ($type) {
             case Protobuf::TYPE_INT64:
@@ -136,35 +164,19 @@ class Binary implements Protobuf\CodecInterface
         }
     }
 
-    static public function decode($message, $data)
+
+    public function decodeMessage(\DrSlump\Protobuf\Message $message, $data)
     {
-        // Create a binary reader for the data
-        $reader = new Protobuf\Codec\Binary\Reader($data);
-
-        // Decode the message
-        return self::decodeMessage($reader, $message);
-    }
-
-    static public function decodeMessage(Protobuf\Codec\Binary\Reader $reader, $message, $limit = null)
-    {
-        // If an instance was not given create one
-        // @todo check message class is valid
-        if (is_string($message)) {
-            $message = new $message();
-        }
-
         /** @var $message \DrSlump\Protobuf\Message */
         /** @var $descriptor \DrSlump\Protobuf\Descriptor */
+
+        // Create a binary reader for the data
+        $reader = new Protobuf\Codec\Binary\Reader($data);
 
         // Get message descriptor
         $descriptor = $message::descriptor();
 
-        $current_pos = $reader->pos();
         while (!$reader->eof()) {
-
-            if ($limit !== NULL && $reader->pos() - $current_pos >= $limit) {
-                break;
-            }
 
             // Get initial varint with tag number and wire type
             $key = $reader->varint();
@@ -176,8 +188,7 @@ class Binary implements Protobuf\CodecInterface
             // Find the matching field for the tag number
             $field = $descriptor->getField($tag);
             if (!$field) {
-                fputs(STDERR, 'Unknown field! ' . $tag . PHP_EOL);
-                $data = self::decodeUnknown($reader, $wire);
+                $data = $this->decodeUnknown($reader, $wire);
                 $unknown = new Binary\Unknown($tag, $wire, $data);
                 $message->addUnknown($unknown);
                 continue;
@@ -185,15 +196,13 @@ class Binary implements Protobuf\CodecInterface
 
             $type = $field->getType();
 
-            //echo "Tag: $tag - Field: " . $field->getName() . " - Type: $type\n";
-
             // Check if we are dealing with a packaged structure
-            if ($wire === Protobuf::WIRE_LENGTH && self::isPackable($type)) {
+            if ($wire === Protobuf::WIRE_LENGTH && $this->isPackable($type)) {
                 $length = $reader->varint();
                 $ofs = $reader->pos();
                 $read = 0;
                 while ($read < $length) {
-                    $item = self::decodeSimpleType($reader, $type, Protobuf::WIRE_VARINT);
+                    $item = $this->decodeSimpleType($reader, $type, Protobuf::WIRE_VARINT);
                     $read = $reader->pos() - $ofs;
                     $message->_add($tag, $item);
                 }
@@ -201,20 +210,19 @@ class Binary implements Protobuf\CodecInterface
             } else {
 
                 // Assert wire and type match
-                self::assertWireType($wire, $type);
+                $this->assertWireType($wire, $type);
 
                 // Check if it's a sub-message
                 if ($type === Protobuf::TYPE_MESSAGE) {
                     $submessage = $field->getReference();
-                    $expected_length = self::decodeSimpleType($reader, Protobuf::TYPE_INT64, Protobuf::WIRE_VARINT);
-                    $initial_pos = $reader->pos();
-                    $value = self::decodeMessage($reader, $submessage, $expected_length);
-                    $actual_length = $reader->pos() - $initial_pos;
-                    if ($actual_length !== $expected_length) {
-                        throw new \Exception("Malformed message. Decoded length ($actual_length) doesn't match reported one ($expected_length)");
-                    }
+                    $submessage = new $submessage;
+
+                    $length = $this->decodeSimpleType($reader, Protobuf::TYPE_INT64, Protobuf::WIRE_VARINT);
+                    $data = $reader->read($length);
+
+                    $value = $this->decodeMessage($submessage, $data);
                 } else {
-                    $value = self::decodeSimpleType($reader, $type, $wire);
+                    $value = $this->decodeSimpleType($reader, $type, $wire);
                 }
 
                 // Support non-packed repeated fields
@@ -229,7 +237,7 @@ class Binary implements Protobuf\CodecInterface
         return $message;
     }
 
-    static public function isPackable($type)
+    protected function isPackable($type)
     {
         return in_array($type, array(
             Protobuf::TYPE_INT64,
@@ -249,7 +257,7 @@ class Binary implements Protobuf\CodecInterface
         ));
     }
 
-    static public function decodeUnknown($reader, $wire)
+    protected function decodeUnknown($reader, $wire)
     {
         switch ($wire) {
             case Protobuf::WIRE_VARINT:
@@ -269,15 +277,15 @@ class Binary implements Protobuf\CodecInterface
         }
     }
 
-    static public function assertWireType($wire, $type)
+    protected function assertWireType($wire, $type)
     {
-        $expected = self::getWireType($type, $wire);
+        $expected = $this->getWireType($type, $wire);
         if ($wire !== $expected) {
             throw new \Exception('Expected wire type ' . $expected . ' but got ' . $wire . ' for type ' . $type);
         }
     }
 
-    static public function getWireType($type, $wire)
+    protected function getWireType($type, $wire)
     {
         switch ($type) {
             case Protobuf::TYPE_INT32:
@@ -307,7 +315,7 @@ class Binary implements Protobuf\CodecInterface
         }
     }
 
-    static public function decodeSimpleType($reader, $type, $wireType)
+    protected function decodeSimpleType($reader, $type, $wireType)
     {
         switch ($type) {
             case Protobuf::TYPE_INT64:
