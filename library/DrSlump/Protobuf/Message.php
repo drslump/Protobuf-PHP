@@ -12,13 +12,6 @@ abstract class Message implements \ArrayAccess
     /** @var \Closure[] */
     static protected $__extensions = array();
 
-    /** @var array Holds information about defined fields by tag number */
-    static protected $__tags = array();
-    /** @var array Holds information about extension fields by tag number */
-    static protected $__exts = array();
-    /** @var array Holds information about extension ranges */
-    static protected $__ranges = array();
-
     /** @var array Store data for extension fields */
     protected $_extensions = array();
     /** @var array Store data for unknown values */
@@ -279,28 +272,4 @@ abstract class Message implements \ArrayAccess
         $this->_unknown = array();
     }
 
-
-
-    // @deprecated
-    static public function fieldFromTag($tag)
-    {
-        static $fields = array();
-
-        if (isset($fields[$tag])) {
-            return $fields[$tag];
-        }
-
-        if (isset(static::$__tags[$tag])) {
-            return new Protobuf\Field($tag, static::$__tags[$tag]);
-        } else {
-            return new Protobuf\Field(
-                $tag,
-                array(
-                    'name'      => 'Unknown-' . $tag,
-                    'type'      => Protobuf::TYPE_UNKNOWN,
-                    'rule'      => Protobuf::RULE_OPTIONAL,
-                )
-            );
-        }
-    }
 }
