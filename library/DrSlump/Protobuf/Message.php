@@ -20,16 +20,25 @@ abstract class Message implements \ArrayAccess
     /**
      * @static
      * @abstract
-     * @param Descriptor|null $descriptor
+     * @param \DrSlump\Protobuf\Descriptor|null $descriptor
      * @return \DrSlump\Protobuf\Descriptor
      */
     abstract public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = null);
 
+    /**
+     * Register an extension configuration callback
+     *
+     * @static
+     * @param \Closure $fn
+     */
     public static function extension(\Closure $fn)
     {
         static::$__extensions[] = $fn;
     }
 
+    /**
+     * @param string $data
+     */
     public function __construct($data = null)
     {
         // Assign default values to extensions
@@ -40,7 +49,7 @@ abstract class Message implements \ArrayAccess
            }
         }
 
-        if ($data !== NULL) {
+        if (NULL !== $data) {
             $this->parse($data);
         }
     }
@@ -83,13 +92,24 @@ abstract class Message implements \ArrayAccess
         }
     }
 
-
+    /**
+     * Parse the given data to hydrate the object
+     *
+     * @param string $data
+     * @param CodecInterface|null $codec
+     */
     public function parse($data, Protobuf\CodecInterface $codec = null)
     {
         $codec = Protobuf::getCodec($codec);
         $codec->decode($this, $data);
     }
 
+    /**
+     * Serialize the current object data
+     *
+     * @param CodecInterface|null $codec
+     * @return string
+     */
     public function serialize(Protobuf\CodecInterface $codec = null)
     {
         $codec = Protobuf::getCodec($codec);
@@ -97,6 +117,12 @@ abstract class Message implements \ArrayAccess
     }
 
 
+    /**
+     * Checks if the given tag number is set
+     *
+     * @param int $tag
+     * @return bool
+     */
     public function _has($tag)
     {
         $d = static::descriptor();
@@ -107,7 +133,7 @@ abstract class Message implements \ArrayAccess
 
             if ($f->isExtension()) {
                 return $f->isRepeated()
-                       ? count($this->_extensions[$name])
+                       ? count($this->_extensions[$name]) > 0
                        : $this->_extensions[$name] !== NULL;
             } else {
                 return $f->isRepeated()
@@ -119,6 +145,13 @@ abstract class Message implements \ArrayAccess
         return false;
     }
 
+    /**
+     * Get the value by tag number
+     *
+     * @param int $tag
+     * @param int|null $idx
+     * @return mixed
+     */
     public function _get($tag, $idx = null)
     {
         $d = static::descriptor();
@@ -146,6 +179,15 @@ abstract class Message implements \ArrayAccess
 
     }
 
+    /**
+     * Sets the value by tag number
+     *
+     * @throws \Exception If trying to set an unknown field
+     * @param int $tag
+     * @param mixed $value
+     * @param int|null $idx
+     * @return \DrSlump\Protobuf\Message - Fluent interface
+     */
     public function _set($tag, $value, $idx = null)
     {
         $d = static::descriptor();
@@ -175,6 +217,14 @@ abstract class Message implements \ArrayAccess
         return $this;
     }
 
+    /**
+     * Adds a new value to a repeated field by tag number
+     *
+     * @throws \Exception If trying to modify an unknown field
+     * @param int $tag
+     * @param mixed $value
+     * @return Message
+     */
     public function _add($tag, $value)
     {
         $d = static::descriptor();
@@ -194,6 +244,13 @@ abstract class Message implements \ArrayAccess
         return $this;
     }
 
+    /**
+     * Clears/Resets a field by tag number
+     *
+     * @throws \Exception If trying to modify an unknown field
+     * @param int $tag
+     * @return \DrSlump\Protobuf\Message - Fluent interface
+     */
     public function _clear($tag)
     {
         $d = static::descriptor();
@@ -220,11 +277,24 @@ abstract class Message implements \ArrayAccess
     // Extensions public methods.
     // @todo Check if extension name is defined
 
+    /**
+     * Checks if an extension field is set
+     *
+     * @param string $extname
+     * @return bool
+     */
     public function hasExtension($extname)
     {
         return isset($this->_extensions[$extname]);
     }
 
+    /**
+     * Get the value of an extension field
+     *
+     * @param string $extname
+     * @param int|null $idx
+     * @return mixed
+     */
     public function getExtension($extname, $idx = null)
     {
         if (!isset($this->_extensions[$extname])) return NULL;
@@ -234,6 +304,12 @@ abstract class Message implements \ArrayAccess
                : $this->_extensions[$extname][$idx];
     }
 
+    /**
+     * Get all the values of a repeated extension field
+     *
+     * @param string $extname
+     * @return array
+     */
     public function getExtensionList($extname)
     {
         return isset($this->_extensions[$extname])
@@ -241,16 +317,44 @@ abstract class Message implements \ArrayAccess
                : array();
     }
 
+    /**
+     * Set the value for an extension field
+     *
+     * @param string $extname
+     * @param mixed $value
+     * @param int|null $idx
+     * @return \DrSlump\Protobuf\Message - Fluent Interface
+     */
     public function setExtension($extname, $value, $idx = null)
     {
+        if (NULL !== $idx) {
+            if (empty($this->_extensions)) {
+                $this->_extensions[$extname] = array();
+            }
+            $this->_extensions[$extname][$idx] = $value;
+        }
+
         $this->_extensions[$extname] = $value;
+
+        return $this;
     }
 
+    /**
+     * Adds a value to repeated extension field
+     *
+     * @param string $extname
+     * @param mixed $value
+     * @return \DrSlump\Protobuf\Message - Fluent Interface
+     */
     public function addExtension($extname, $value)
     {
         $this->_extensions[$extname][] = $value;
     }
 
+    /**
+     * @param  $extname
+     * @return void
+     */
     public function clearExtension($extname)
     {
         unset($this->_extensions[$extname]);
