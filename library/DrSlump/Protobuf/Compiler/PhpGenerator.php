@@ -117,7 +117,7 @@ class PhpGenerator extends AbstractGenerator
           $s[]= '      }';
           $s[]= '';
           $s[]= '      if (!self::$__descriptor) {';
-          $s[]= '        $descriptor = new \DrSlump\Protobuf\Descriptor("\\'.$namespace.'\\'.$msg->getName().'");';
+          $s[]= '        $descriptor = new \DrSlump\Protobuf\Descriptor(\'\\'.$namespace.'\\'.$msg->getName().'\');';
           $s[]= '';
           foreach ($msg->getField() as $field):
           $s[]=          $this->compileField($field, "        ");
@@ -209,7 +209,7 @@ class PhpGenerator extends AbstractGenerator
           if (substr($reference, 0, 1) !== '.') {
               throw new \RuntimeException('Only fully qualified names are supported: ' . $reference);
           }
-          $s[]= '$f->reference = "\\' . $this->normalizeReference($reference) . '";';
+          $s[]= "\$f->reference = '\\" . $this->normalizeReference($reference) . "';";
           endif;
 
           if ($field->hasDefaultValue()):
