@@ -72,29 +72,28 @@ class Binary implements Protobuf\CodecInterface
 
             // Compute key with tag number and wire type
             $key = $tag << 3 | $this->getWireType($type, null);
-            $writer->varint($key);
 
             $value = $message->_get($tag);
 
             // @todo Support PACKED fields
             if ($field->isRepeated()) {
-                $data = '';
                 foreach($value as $val) {
                     if ($type !== Protobuf::TYPE_MESSAGE) {
-                       $this->encodeSimpleType($writer, $type, $val);
+                        $writer->varint($key);
+                        $this->encodeSimpleType($writer, $type, $val);
                     } else {
-                       $data .= $this->encodeMessage($val);
+                        $writer->varint($key);
+                        $data = $this->encodeMessage($val);
+                        $writer->varint(strlen($data));
+                        $writer->write($data);
                     }
-                }
-
-                if (strlen($data) > 0) {
-                    $writer->varint(strlen($data));
-                    $writer->write($data);
                 }
             } else {
                 if ($type !== Protobuf::TYPE_MESSAGE) {
+                    $writer->varint($key);
                     $this->encodeSimpleType($writer, $type, $value);
                 } else {
+                    $writer->varint($key);
                     $data = $this->encodeMessage($value);
                     $writer->varint(strlen($data));
                     $writer->write($data);
