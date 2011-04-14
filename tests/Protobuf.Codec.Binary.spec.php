@@ -124,5 +124,35 @@ describe "Binary Codec"
             }
         end.
 
+        it "a complex message"
+            $complex = Protobuf\Codec\Binary::decode('Tests\AddressBook', $W->bin_book);
+            count($complex->person) should eq 2;
+            $complex->getPerson(0)->name should eq 'John Doe';
+            $complex->getPerson(1)->name should eq 'Iván Montes';
+            $complex->getPerson(0)->getPhone(1)->number should eq '55512321312';
+        end.
+
+    end;
+
+    describe "multi codec"
+
+        it "a simple message"
+
+            $simple = Protobuf\Codec\Binary::decode('Tests\Simple', $W->bin_simple);
+            $json = Protobuf\Codec\Json::encode($simple);
+            $simple = Protobuf\Codec\Json::decode('Tests\Simple', $json);
+            $bin = Protobuf\Codec\Binary::encode($simple);
+            $bin should be $W->bin_simple;
+
+        end.
+
+        it "a message with repeated fields"
+            $repeated = Protobuf\Codec\Binary::decode('Tests\Repeated', $W->bin_repeated_nested);
+            $json = Protobuf\Codec\Json::encode($repeated);
+            $repeated = Protobuf\Codec\Json::decode('Tests\Repeated', $json);
+            $bin = Protobuf\Codec\Binary::encode($repeated);
+            $bin should be $W->bin_repeated_nested;
+        end.
+
     end;
 end;
