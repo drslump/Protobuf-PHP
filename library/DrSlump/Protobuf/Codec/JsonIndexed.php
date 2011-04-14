@@ -94,16 +94,17 @@ class JsonIndexed extends Json
                 continue;
             }
 
-            $message->_set($k, $v);
-
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
                 $nested = $field->getReference();
-                $nested = new $nested;
-                $v = $this->decodeMessage($nested, $v);
-            }
-
-            if ($field->isRepeated()) {
-                $message->_add($k, $v);
+                if ($field->isRepeated()) {
+                    foreach ($v as $vv) {
+                        $obj = $this->decodeMessage(new $nested, $vv);
+                        $message->_add($k, $obj);
+                    }
+                } else {
+                    $obj = $this->decodeMessage(new $nested, $vv);
+                    $message->_set($k, $obj);
+                }
             } else {
                 $message->_set($k, $v);
             }

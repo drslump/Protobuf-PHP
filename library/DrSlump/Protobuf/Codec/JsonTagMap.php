@@ -87,8 +87,6 @@ class JsonTagMap extends Json
                 continue;
             }
 
-            $message->_set($k, $v);
-
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
                 $nested = $field->getReference();
                 if ($field->isRepeated()) {
