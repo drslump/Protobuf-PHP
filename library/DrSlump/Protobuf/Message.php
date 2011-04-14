@@ -166,7 +166,7 @@ abstract class Message implements \ArrayAccess
         if (!$f->isExtension()) {
 
             return $idx !== NULL
-                   ? $this->$name[$idx]
+                   ? $this->{$name}[$idx]
                    : $this->$name;
 
         } else {
