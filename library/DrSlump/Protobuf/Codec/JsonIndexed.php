@@ -7,23 +7,7 @@ use DrSlump\Protobuf;
 class JsonIndexed extends Json
     implements Protobuf\CodecInterface
 {
-
-    /**
-     * @static
-     * @return Binary
-     */
-    static public function getInstance()
-    {
-        static $instance;
-
-        if (NULL === $instance) {
-            $instance = new self();
-        }
-
-        return $instance;
-    }
-
-    public function encodeMessage(Protobuf\Message $message)
+    protected function encodeMessage(Protobuf\Message $message)
     {
         $descriptor = $message::descriptor();
 
@@ -71,7 +55,7 @@ class JsonIndexed extends Json
         return $data;
     }
 
-    public function decodeMessage(\DrSlump\Protobuf\Message $message, $data)
+    protected function decodeMessage(Protobuf\Message $message, $data)
     {
         // Get message descriptor
         $descriptor = $message::descriptor();
@@ -102,7 +86,7 @@ class JsonIndexed extends Json
                         $message->_add($k, $obj);
                     }
                 } else {
-                    $obj = $this->decodeMessage(new $nested, $vv);
+                    $obj = $this->decodeMessage(new $nested, $v);
                     $message->_set($k, $obj);
                 }
             } else {
@@ -113,6 +97,12 @@ class JsonIndexed extends Json
         return $message;
     }
 
+    /**
+     * Converts an Unicode codepoint number to an UTF-8 character
+     *
+     * @param int $codepoint
+     * @return string
+     */
     protected function i2c($codepoint)
     {
         return $codepoint < 128
@@ -120,6 +110,12 @@ class JsonIndexed extends Json
                : html_entity_decode("&#$codepoint;", ENT_NOQUOTES, 'UTF-8');
     }
 
+    /**
+     * Converts an UTF-8 character to an Unicode codepoint number
+     *
+     * @param string $char
+     * @return int
+     */
     protected function c2i($char)
     {
         $value = ord($char[0]);

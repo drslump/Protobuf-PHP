@@ -7,8 +7,14 @@ use \DrSlump\Protobuf;
 Protobuf::autoload();
 
 include_once __DIR__ . '/protos/simple.php';
+include_once __DIR__ . '/protos/repeated.php';
+include_once __DIR__ . '/protos/addressbook.php';
 
 describe "JSON Indexed Codec"
+
+    before
+        Protobuf::setDefaultCodec(new Protobuf\Codec\JsonIndexed);
+    end
 
     describe "serialize"
 
@@ -16,7 +22,7 @@ describe "JSON Indexed Codec"
             $simple = new Tests\Simple();
             $simple->foo = 'FOO';
             $simple->bar = 'BAR';
-            $json = Protobuf\Codec\JsonIndexed::encode($simple);
+            $json = Protobuf::encode($simple);
             $json. should. eq. '["12","FOO","BAR"]';
         end.
 
@@ -26,14 +32,14 @@ describe "JSON Indexed Codec"
               $repeated->addString('one');
               $repeated->addString('two');
               $repeated->addString('three');
-              $bin = Protobuf\Codec\JsonIndexed::encode($repeated);
+              $bin = Protobuf::encode($repeated);
               $bin should be '["1",["one","two","three"]]';
 
               $repeated = new Tests\Repeated();
               $repeated->addInt(1);
               $repeated->addInt(2);
               $repeated->addInt(3);
-              $bin = Protobuf\Codec\JsonIndexed::encode($repeated);
+              $bin = Protobuf::encode($repeated);
               $bin should be '["2",[1,2,3]]';
 
               $repeated = new Tests\Repeated();
@@ -46,7 +52,7 @@ describe "JSON Indexed Codec"
               $nested = new Tests\Repeated\Nested();
               $nested->setId(3);
               $repeated->addNested($nested);
-              $json = Protobuf\Codec\JsonIndexed::encode($repeated);
+              $json = Protobuf::encode($repeated);
               $json should eq '["3",[["1",1],["1",2],["1",3]]]';
           end.
 
@@ -77,7 +83,7 @@ describe "JSON Indexed Codec"
             $person->addPhone($phone);
             $book->addPerson($person);
 
-            $json = Protobuf\Codec\JsonIndexed::encode($book);
+            $json = Protobuf::encode($book);
 
             $expected = '[
                  "1",
@@ -114,7 +120,7 @@ describe "JSON Indexed Codec"
 
         it "should unserialize a simple message"
             $json = '["12","FOO","BAR"]';
-            $simple = Protobuf\Codec\JsonIndexed::decode('Tests\Simple', $json);
+            $simple = Protobuf::decode('Tests\Simple', $json);
             $simple should be instanceof 'Tests\Simple';
             $simple->foo should equal 'FOO';
             $simple->bar should equal 'BAR';
@@ -123,16 +129,16 @@ describe "JSON Indexed Codec"
         it "a message with repeated fields"
 
             $json = '["1",["one","two","three"]]';
-            $repeated = Protobuf\Codec\JsonIndexed::decode('Tests\Repeated', $json);
+            $repeated = Protobuf::decode('Tests\Repeated', $json);
             $repeated->getString() should eq array('one', 'two', 'three');
 
             $json = '["2",[1,2,3]]';
-            $repeated = Protobuf\Codec\JsonIndexed::decode('Tests\Repeated', $json);
+            $repeated = Protobuf::decode('Tests\Repeated', $json);
             $repeated should be instanceof 'Tests\Repeated';
             $repeated->getInt() should eq array(1,2,3);
 
             $json = '["3",[["1",1],["1",2],["1",3]]]';
-            $repeated = Protobuf\Codec\JsonIndexed::decode('Tests\Repeated', $json);
+            $repeated = Protobuf::decode('Tests\Repeated', $json);
             $repeated should be instanceof 'Tests\Repeated';
             foreach ($repeated->getNested() as $i=>$nested) {
                 $nested->getId() should eq ($i+1);
@@ -167,7 +173,7 @@ describe "JSON Indexed Codec"
 
             $json = preg_replace('/\n\s*/', '', $json);
 
-            $complex = Protobuf\Codec\JsonIndexed::decode('Tests\AddressBook', $json);
+            $complex = Protobuf::decode('Tests\AddressBook', $json);
             count($complex->person) should eq 2;
             $complex->getPerson(0)->name should eq 'John Doe';
             $complex->getPerson(1)->name should eq 'Iván Montes';

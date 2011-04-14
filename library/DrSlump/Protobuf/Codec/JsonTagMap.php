@@ -7,23 +7,7 @@ use DrSlump\Protobuf;
 class JsonTagMap extends Json
     implements Protobuf\CodecInterface
 {
-
-    /**
-     * @static
-     * @return Binary
-     */
-    static public function getInstance()
-    {
-        static $instance;
-
-        if (NULL === $instance) {
-            $instance = new self();
-        }
-
-        return $instance;
-    }
-
-    public function encodeMessage(Protobuf\Message $message)
+    protected function encodeMessage(Protobuf\Message $message)
     {
         $descriptor = $message::descriptor();
 
@@ -66,14 +50,8 @@ class JsonTagMap extends Json
     }
 
 
-    public function decodeMessage(Protobuf\Message $message, $data)
+    protected function decodeMessage(Protobuf\Message $message, $data)
     {
-        // If an instance was not given create one
-        // @todo check message class is valid
-        if (is_string($message)) {
-            $message = new $message();
-        }
-
         // Get message descriptor
         $descriptor = $message::descriptor();
 

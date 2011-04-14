@@ -7,49 +7,28 @@ use DrSlump\Protobuf;
 class Json implements Protobuf\CodecInterface
 {
     /**
-     * @static
      * @param \DrSlump\Protobuf\Message $message
      * @return string
      */
-    static public function encode(Protobuf\Message $message)
+    public function encode(Protobuf\Message $message)
     {
-        $data = static::getInstance()->encodeMessage($message);
+        $data = $this->encodeMessage($message);
         return json_encode($data);
     }
 
     /**
      * @static
-     * @param String|Message $message
+     * @param \DrSlump\Protobuf\Message $message
      * @param String $data
      * @return \DrSlump\Protobuf\Message
      */
-    static public function decode($message, $data)
+    public function decode(Protobuf\Message $message, $data)
     {
-        if (is_string($message)) {
-            $message = new $message;
-        }
-
         $data = json_decode($data);
-        return static::getInstance()->decodeMessage($message, $data);
+        return $this->decodeMessage($message, $data);
     }
 
-    /**
-     * @static
-     * @return Binary
-     */
-    static public function getInstance()
-    {
-        static $instance;
-
-        if (NULL === $instance) {
-            $instance = new self();
-        }
-
-        return $instance;
-    }
-
-
-    public function encodeMessage(Protobuf\Message $message)
+    protected function encodeMessage(Protobuf\Message $message)
     {
         $descriptor = $message::descriptor();
 
@@ -91,7 +70,7 @@ class Json implements Protobuf\CodecInterface
         return $data;
     }
 
-    public function decodeMessage(Protobuf\Message $message, $data)
+    protected function decodeMessage(Protobuf\Message $message, $data)
     {
         // Get message descriptor
         $descriptor = $message::descriptor();

@@ -7,8 +7,14 @@ use \DrSlump\Protobuf;
 Protobuf::autoload();
 
 include_once __DIR__ . '/protos/simple.php';
+include_once __DIR__ . '/protos/repeated.php';
+include_once __DIR__ . '/protos/addressbook.php';
 
 describe "JSON Codec"
+
+    before
+        Protobuf::setDefaultCodec(new ProtoBuf\Codec\Json);
+    end
 
     describe "serialize"
 
@@ -16,24 +22,24 @@ describe "JSON Codec"
             $simple = new Tests\Simple();
             $simple->foo = 'FOO';
             $simple->bar = 'BAR';
-            $json = Protobuf\Codec\Json::encode($simple);
+            $json = Protobuf::encode($simple);
             $json. should. eq. '{"foo":"FOO","bar":"BAR"}';
         end.
 
          it. "a message with repeated fields"
 
-             $repeated = new Tests\Repeated();
+             $repeated = new \Tests\Repeated();
              $repeated->addString('one');
              $repeated->addString('two');
              $repeated->addString('three');
-             $bin = Protobuf\Codec\Json::encode($repeated);
+             $bin = Protobuf::encode($repeated);
              $bin should be '{"string":["one","two","three"]}';
 
              $repeated = new Tests\Repeated();
              $repeated->addInt(1);
              $repeated->addInt(2);
              $repeated->addInt(3);
-             $bin = Protobuf\Codec\Json::encode($repeated);
+             $bin = Protobuf::encode($repeated);
              $bin should be '{"int":[1,2,3]}';
 
              $repeated = new Tests\Repeated();
@@ -46,7 +52,7 @@ describe "JSON Codec"
              $nested = new Tests\Repeated\Nested();
              $nested->setId(3);
              $repeated->addNested($nested);
-             $json = Protobuf\Codec\Json::encode($repeated);
+             $json = Protobuf::encode($repeated);
              $json should eq '{"nested":[{"id":1},{"id":2},{"id":3}]}';
          end.
 
@@ -77,7 +83,7 @@ describe "JSON Codec"
             $person->addPhone($phone);
             $book->addPerson($person);
 
-            $json = Protobuf\Codec\Json::encode($book);
+            $json = Protobuf::encode($book);
 
             $expected = '{
                 "person":[
@@ -109,7 +115,7 @@ describe "JSON Codec"
 
         it "should unserialize a simple message"
             $json = '{"foo":"FOO","bar":"BAR"}';
-            $simple = Protobuf\Codec\Json::decode('Tests\Simple', $json);
+            $simple = Protobuf::decode('Tests\Simple', $json);
             $simple should be instanceof 'Tests\Simple';
             $simple->foo should equal 'FOO';
             $simple->bar should equal 'BAR';
@@ -118,16 +124,16 @@ describe "JSON Codec"
         it "a message with repeated fields"
 
             $json = '{"string":["one","two","three"]}';
-            $repeated = Protobuf\Codec\Json::decode('Tests\Repeated', $json);
+            $repeated = Protobuf::decode('Tests\Repeated', $json);
             $repeated->getString() should eq array('one', 'two', 'three');
 
             $json = '{"int":[1,2,3]}';
-            $repeated = Protobuf\Codec\Json::decode('Tests\Repeated', $json);
+            $repeated = Protobuf::decode('Tests\Repeated', $json);
             $repeated should be instanceof 'Tests\Repeated';
             $repeated->getInt() should eq array(1,2,3);
 
             $json = '{"nested":[{"id":1},{"id":2},{"id":3}]}';
-            $repeated = Protobuf\Codec\Json::decode('Tests\Repeated', $json);
+            $repeated = Protobuf::decode('Tests\Repeated', $json);
             $repeated should be instanceof 'Tests\Repeated';
             foreach ($repeated->getNested() as $i=>$nested) {
                 $nested->getId() should eq ($i+1);
@@ -157,7 +163,7 @@ describe "JSON Codec"
 
             $json = preg_replace('/\n\s*/', '', $json);
 
-            $complex = Protobuf\Codec\Json::decode('Tests\AddressBook', $json);
+            $complex = Protobuf::decode('Tests\AddressBook', $json);
             count($complex->person) should eq 2;
             $complex->getPerson(0)->name should eq 'John Doe';
             $complex->getPerson(1)->name should eq 'Iván Montes';

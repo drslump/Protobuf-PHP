@@ -7,47 +7,26 @@ use DrSlump\Protobuf;
 class Binary implements Protobuf\CodecInterface
 {
     /**
-     * @static
      * @param \DrSlump\Protobuf\Message $message
      * @return string
      */
-    static public function encode(Protobuf\Message $message)
+    public function encode(Protobuf\Message $message)
     {
-        return self::getInstance()->encodeMessage($message);
+        return $this->encodeMessage($message);
     }
 
     /**
-     * @static
      * @param String|Message $message
      * @param String $data
      * @return \DrSlump\Protobuf\Message
      */
-    static public function decode($message, $data)
+    public function decode(Protobuf\Message $message, $data)
     {
-        // Decode the message
-        if (is_string($message)) {
-            $message = new $message;
-        }
-
-        return self::getInstance()->decodeMessage($message, $data);
+        return $this->decodeMessage($message, $data);
     }
 
-    /**
-     * @static
-     * @return Binary
-     */
-    static public function getInstance()
-    {
-        static $instance;
 
-        if (NULL === $instance) {
-            $instance = new self();
-        }
-
-        return $instance;
-    }
-
-    public function encodeMessage(Protobuf\Message $message)
+    protected function encodeMessage(Protobuf\Message $message)
     {
         $writer = new Binary\Writer();
 
@@ -164,7 +143,7 @@ class Binary implements Protobuf\CodecInterface
     }
 
 
-    public function decodeMessage(\DrSlump\Protobuf\Message $message, $data)
+    protected function decodeMessage(\DrSlump\Protobuf\Message $message, $data)
     {
         /** @var $message \DrSlump\Protobuf\Message */
         /** @var $descriptor \DrSlump\Protobuf\Descriptor */

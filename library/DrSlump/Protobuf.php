@@ -87,6 +87,7 @@ class Protobuf
         }
 
         if (is_string($codec)) {
+            $codec = strtolower($codec);
             if (!isset(self::$codecs[$codec])) {
                 throw new Protobuf\Exception('No codec found by name "' . $codec . '"');
             }
@@ -111,15 +112,46 @@ class Protobuf
 
     static public function registerCodec($name, Protobuf\CodecInterface $codec)
     {
+        $name = strtolower($name);
         self::$codecs[$name] = $codec;
     }
 
     static public function unregisterCodec($name)
     {
+        $name = strtolower($name);
         if (isset(self::$codecs[$name])) {
             unset(self::$codecs[$name]);
             return true;
         }
         return false;
+    }
+
+    /**
+     * Encodes a message using the default codec
+     *
+     * @static
+     * @param \DrSlump\Protobuf\Message $message
+     * @return string
+     */
+    static public function encode(Protobuf\Message $message)
+    {
+        $codec = self::getCodec();
+        return $codec->encode($message);
+    }
+
+    /**
+     * @static
+     * @param String|Message $message
+     * @param String $data
+     * @return \DrSlump\Protobuf\Message
+     */
+    static public function decode($message, $data)
+    {
+        if (is_string($message)) {
+            $message = new $message;
+        }
+
+        $codec = self::getCodec();
+        return $codec->decode($message, $data);
     }
 }

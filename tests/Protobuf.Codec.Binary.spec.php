@@ -13,6 +13,10 @@ include_once __DIR__ . '/protos/addressbook.php';
 describe "Binary Codec"
 
     before
+
+        $codec = new Protobuf\Codec\Binary();
+        Protobuf::setDefaultCodec($codec);
+
         $W->bin_simple = file_get_contents(__DIR__ . '/protos/simple.bin');
         $W->bin_book = file_get_contents(__DIR__ . '/protos/addressbook.bin');
         $W->bin_repeated_string = file_get_contents(__DIR__ . '/protos/repeated-string.bin');
@@ -28,7 +32,7 @@ describe "Binary Codec"
             $simple->foo = 'FOO';
             $simple->bar = 100;
             $simple->baz = 'BAZ';
-            $bin = Protobuf\Codec\Binary::encode($simple);
+            $bin = Protobuf::encode($simple);
             $bin should be $W->bin_simple but not be false;
         end.
 
@@ -38,14 +42,14 @@ describe "Binary Codec"
             $repeated->addString('one');
             $repeated->addString('two');
             $repeated->addString('three');
-            $bin = Protobuf\Codec\Binary::encode($repeated);
+            $bin = Protobuf::encode($repeated);
             $bin should be $W->bin_repeated_string;
 
             $repeated = new Tests\Repeated();
             $repeated->addInt(1);
             $repeated->addInt(2);
             $repeated->addInt(3);
-            $bin = Protobuf\Codec\Binary::encode($repeated);
+            $bin = Protobuf::encode($repeated);
             $bin should be $W->bin_repeated_int32;
 
 
@@ -59,7 +63,7 @@ describe "Binary Codec"
             $nested = new Tests\Repeated\Nested();
             $nested->setId(3);
             $repeated->addNested($nested);
-            $bin = Protobuf\Codec\Binary::encode($repeated);
+            $bin = Protobuf::encode($repeated);
             $bin should eq $W->bin_repeated_nested;
         end.
 
@@ -90,7 +94,7 @@ describe "Binary Codec"
             $person->addPhone($phone);
             $book->addPerson($person);
 
-            $bin = Protobuf\Codec\Binary::encode($book);
+            $bin = Protobuf::encode($book);
             $bin should eq $W->bin_book but not be false;
 
         end.
@@ -100,7 +104,7 @@ describe "Binary Codec"
     describe "unserialize"
 
         it "a simple message"
-            $simple = Protobuf\Codec\Binary::decode('Tests\Simple', $W->bin_simple);
+            $simple = Protobuf::decode('Tests\Simple', $W->bin_simple);
             $simple should be instanceof 'Tests\Simple';
             $simple->foo should be 'FOO';
             $simple->bar should be 100;
@@ -109,15 +113,15 @@ describe "Binary Codec"
 
         it "a message with repeated fields"
 
-            $repeated = Protobuf\Codec\Binary::decode('Tests\Repeated', $W->bin_repeated_string);
+            $repeated = Protobuf::decode('Tests\Repeated', $W->bin_repeated_string);
             $repeated should be instanceof 'Tests\Repeated';
             $repeated->getString() should eq array('one', 'two', 'three');
 
-            $repeated = Protobuf\Codec\Binary::decode('Tests\Repeated', $W->bin_repeated_int32);
+            $repeated = Protobuf::decode('Tests\Repeated', $W->bin_repeated_int32);
             $repeated should be instanceof 'Tests\Repeated';
             $repeated->getInt() should eq array(1,2,3);
 
-            $repeated = Protobuf\Codec\Binary::decode('Tests\Repeated', $W->bin_repeated_nested);
+            $repeated = Protobuf::decode('Tests\Repeated', $W->bin_repeated_nested);
             $repeated should be instanceof 'Tests\Repeated';
             foreach ($repeated->getNested() as $i=>$nested) {
                 $nested->getId() should eq ($i+1);
@@ -125,7 +129,7 @@ describe "Binary Codec"
         end.
 
         it "a complex message"
-            $complex = Protobuf\Codec\Binary::decode('Tests\AddressBook', $W->bin_book);
+            $complex = Protobuf::decode('Tests\AddressBook', $W->bin_book);
             count($complex->person) should eq 2;
             $complex->getPerson(0)->name should eq 'John Doe';
             $complex->getPerson(1)->name should eq 'Iván Montes';
@@ -136,21 +140,25 @@ describe "Binary Codec"
 
     describe "multi codec"
 
+        before
+           $W->jsonCodec = new Protobuf\Codec\Json();
+        end
+
         it "a simple message"
 
-            $simple = Protobuf\Codec\Binary::decode('Tests\Simple', $W->bin_simple);
-            $json = Protobuf\Codec\Json::encode($simple);
-            $simple = Protobuf\Codec\Json::decode('Tests\Simple', $json);
-            $bin = Protobuf\Codec\Binary::encode($simple);
+            $simple = Protobuf::decode('Tests\Simple', $W->bin_simple);
+            $json = $W->jsonCodec->encode($simple);
+            $simple = $W->jsonCodec->decode(new \Tests\Simple, $json);
+            $bin = Protobuf::encode($simple);
             $bin should be $W->bin_simple;
 
         end.
 
         it "a message with repeated fields"
-            $repeated = Protobuf\Codec\Binary::decode('Tests\Repeated', $W->bin_repeated_nested);
-            $json = Protobuf\Codec\Json::encode($repeated);
-            $repeated = Protobuf\Codec\Json::decode('Tests\Repeated', $json);
-            $bin = Protobuf\Codec\Binary::encode($repeated);
+            $repeated = Protobuf::decode('Tests\Repeated', $W->bin_repeated_nested);
+            $json = $W->jsonCodec->encode($repeated);
+            $repeated = $W->jsonCodec->decode(new \Tests\Repeated, $json);
+            $bin = Protobuf::encode($repeated);
             $bin should be $W->bin_repeated_nested;
         end.
 
