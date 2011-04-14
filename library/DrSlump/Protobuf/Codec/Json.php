@@ -17,7 +17,6 @@ class Json implements Protobuf\CodecInterface
     }
 
     /**
-     * @static
      * @param \DrSlump\Protobuf\Message $message
      * @param String $data
      * @return \DrSlump\Protobuf\Message

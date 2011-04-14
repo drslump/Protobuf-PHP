@@ -26,10 +26,11 @@ For more information see the included man pages.
 
   - Standard types (numbers, string, enums, messages, etc)
   - Pluggable serialization backends (codecs)
-    - Standard binary serialization
-    - JSON serialization
-    - ProtoJson serialization with _HashTag_ variant
-    - ProtoJson serialization with _Indexed_ variant
+    - Standard Binary serialization
+    - Standard TextFormat (serialization only)
+    - JSON
+    - ProtoJson with _HashTag_ variant
+    - ProtoJson with _Indexed_ variant
   - Protoc compiler plugin to generate the PHP classes
   - Extensions
   - Unknown fields
