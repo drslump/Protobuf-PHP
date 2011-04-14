@@ -112,16 +112,21 @@ class Json implements Protobuf\CodecInterface
                 continue;
             }
 
-            $message->_set($tag, $v);
 
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
-                $nested = $field->getReference();
-                $nested = new $nested;
-                $v = $this->decodeMessage($nested, $v);
-            }
 
-            if ($field->isRepeated()) {
-                $message->_add($tag, $v);
+                $nested = $field->getReference();
+                if ($field->isRepeated()) {
+                    foreach($v as $vv) {
+                        $obj = $this->decodeMessage(new $nested, $vv);
+                        $message->_add($tag, $obj);
+                    }
+                } else {
+                    $obj = new $nested;
+                    $v = $this->decodeMessage($obj, $v);
+                    $message->_set($tag, $v);
+                }
+
             } else {
                 $message->_set($tag, $v);
             }
