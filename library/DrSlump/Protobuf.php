@@ -8,15 +8,6 @@ class Protobuf
 {
     const VERSION = '@package_version@';
 
-    // @todo Move WIRE constants to Codec\Binary
-    const WIRE_VARINT   = 0;
-    const WIRE_FIXED64  = 1;
-    const WIRE_LENGTH   = 2;
-    const WIRE_GROUP_START = 3;
-    const WIRE_GROUP_END = 4;
-    const WIRE_FIXED32  = 5;
-    const WIRE_UNKNOWN  = -1;
-
     const RULE_OPTIONAL = 1;
     const RULE_REQUIRED = 2;
     const RULE_REPEATED = 3;

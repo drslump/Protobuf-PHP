@@ -6,6 +6,14 @@ use DrSlump\Protobuf;
 
 class Binary implements Protobuf\CodecInterface
 {
+    const WIRE_VARINT      = 0;
+    const WIRE_FIXED64     = 1;
+    const WIRE_LENGTH      = 2;
+    const WIRE_GROUP_START = 3;
+    const WIRE_GROUP_END   = 4;
+    const WIRE_FIXED32     = 5;
+    const WIRE_UNKNOWN     = -1;
+
     /**
      * @param \DrSlump\Protobuf\Message $message
      * @return string
@@ -175,12 +183,12 @@ class Binary implements Protobuf\CodecInterface
             $type = $field->getType();
 
             // Check if we are dealing with a packaged structure
-            if ($wire === Protobuf::WIRE_LENGTH && $this->isPackable($type)) {
+            if ($wire === self::WIRE_LENGTH && $this->isPackable($type)) {
                 $length = $reader->varint();
                 $ofs = $reader->pos();
                 $read = 0;
                 while ($read < $length) {
-                    $item = $this->decodeSimpleType($reader, $type, Protobuf::WIRE_VARINT);
+                    $item = $this->decodeSimpleType($reader, $type, self::WIRE_VARINT);
                     $read = $reader->pos() - $ofs;
                     $message->_add($tag, $item);
                 }
@@ -195,7 +203,7 @@ class Binary implements Protobuf\CodecInterface
                     $submessage = $field->getReference();
                     $submessage = new $submessage;
 
-                    $length = $this->decodeSimpleType($reader, Protobuf::TYPE_INT64, Protobuf::WIRE_VARINT);
+                    $length = $this->decodeSimpleType($reader, Protobuf::TYPE_INT64, self::WIRE_VARINT);
                     $data = $reader->read($length);
 
                     $value = $this->decodeMessage($submessage, $data);
@@ -238,17 +246,17 @@ class Binary implements Protobuf\CodecInterface
     protected function decodeUnknown($reader, $wire)
     {
         switch ($wire) {
-            case Protobuf::WIRE_VARINT:
+            case self::WIRE_VARINT:
                 return $reader->varint();
-            case Protobuf::WIRE_LENGTH:
+            case self::WIRE_LENGTH:
                 $length = $reader->varint();
                 return $reader->read($length);
-            case Protobuf::WIRE_FIXED32:
+            case self::WIRE_FIXED32:
                 return $reader->fixed32();
-            case Protobuf::WIRE_FIXED64:
+            case self::WIRE_FIXED64:
                 return $reader->fixed64;
-            case Protobuf::WIRE_GROUP_START:
-            case Protobuf::WIRE_GROUP_END:
+            case self::WIRE_GROUP_START:
+            case self::WIRE_GROUP_END:
                 throw new \Exception('Groups are deprecated in Protocol Buffers and unsupported by this library');
             default:
                 throw new \Exception('Unsupported wire type (' . $wire . ') while consuming unknown field');
@@ -274,19 +282,19 @@ class Binary implements Protobuf\CodecInterface
             case Protobuf::TYPE_SINT64:
             case Protobuf::TYPE_BOOL:
             case Protobuf::TYPE_ENUM:
-                return Protobuf::WIRE_VARINT;
+                return self::WIRE_VARINT;
             case Protobuf::TYPE_FIXED64:
             case Protobuf::TYPE_SFIXED64:
             case Protobuf::TYPE_DOUBLE:
-                return Protobuf::WIRE_FIXED64;
+                return self::WIRE_FIXED64;
             case Protobuf::TYPE_STRING:
             case Protobuf::TYPE_BYTES:
             case Protobuf::TYPE_MESSAGE:
-                return Protobuf::WIRE_LENGTH;
+                return self::WIRE_LENGTH;
             case Protobuf::TYPE_FIXED32:
             case Protobuf::TYPE_SFIXED32:
             case Protobuf::TYPE_FLOAT:
-                return Protobuf::WIRE_FIXED32;
+                return self::WIRE_FIXED32;
             default:
                 // Unknown fields just return the reported wire type
                 return $wire;
@@ -344,17 +352,17 @@ class Binary implements Protobuf\CodecInterface
             default:
                 // Unknown type, follow wire type rules
                 switch ($wireType) {
-                    case Protobuf::WIRE_VARINT:
+                    case self::WIRE_VARINT:
                         return $reader->varint();
-                    case Protobuf::WIRE_FIXED32:
+                    case self::WIRE_FIXED32:
                         return $reader->fixed32();
-                    case Protobuf::WIRE_FIXED64:
+                    case self::WIRE_FIXED64:
                         return $reader->fixed64();
-                    case Protobuf::WIRE_LENGTH:
+                    case self::WIRE_LENGTH:
                         $length = $reader->varint();
                         return $reader->read($length);
-                    case Protobuf::WIRE_GROUP_START:
-                    case Protobuf::WIRE_GROUP_END:
+                    case self::WIRE_GROUP_START:
+                    case self::WIRE_GROUP_END:
                         throw new \Exception('Group is deprecated and not supported');
                     default:
                         throw new \Exception('Unsupported wire type number ' . $wireType);
