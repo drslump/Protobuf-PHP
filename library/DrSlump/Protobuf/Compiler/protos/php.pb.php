@@ -33,7 +33,17 @@ namespace {
     $f->nameOrig  = "php.suffix";
     $f->type      = 9;
     $f->rule      = 1;
-    $f->default   = ".pb.php";
+    $f->default   = ".php";
+    return $f;
+  });
+  \google\protobuf\FileOptions::extension(function(){
+      // optional  php.multiple = 50004
+    $f = new \DrSlump\Protobuf\Field();
+    $f->number    = 50004;
+    $f->name      = "php.multifile";
+    $f->type      = 8;
+    $f->rule      = 1;
+    $f->default   = false;
     return $f;
   });
 }

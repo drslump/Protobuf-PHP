@@ -35,5 +35,5 @@ Protobuf for PHP is Copyright (C) 2011 Ivan -DrSlump- Montes <http://pollinimini
 
 ## SEE ALSO
 
-protoc-gen-php(1),
+protoc-gen-php(1), protobuf-php(5),
 <http://github.com/drslump/protobuf-php>

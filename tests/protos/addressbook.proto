@@ -1,4 +1,9 @@
+import "php.proto";
+
 package tests;
+
+//option (php.namespace) = "Example";
+//option (php.multifile) = true;
 
 message Person {
   required string name = 1;
@@ -21,4 +26,13 @@ message Person {
 
 message AddressBook {
   repeated Person person = 1;
+
+  extensions 1000 to max;
+}
+
+extend AddressBook {
+
+    // These two are aliases and set the namespace
+    optional string package     = 50001;
+
 }
