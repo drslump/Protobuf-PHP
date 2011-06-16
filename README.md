@@ -28,6 +28,7 @@ For more information see the included man pages.
   - Pluggable serialization backends (codecs)
     - Standard Binary serialization
     - Standard TextFormat (serialization only)
+    - PhpArray
     - JSON
     - ProtoJson with _HashTag_ variant
     - ProtoJson with _Indexed_ variant

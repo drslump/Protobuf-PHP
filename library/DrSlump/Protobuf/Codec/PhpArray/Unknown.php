@@ -1,6 +1,6 @@
 <?php
 
-namespace DrSlump\Protobuf\Codec\Json;
+namespace DrSlump\Protobuf\Codec\PhpArray;
 
 class Unknown extends \DrSlump\Protobuf\Unknown
 {

@@ -4,14 +4,32 @@ namespace DrSlump\Protobuf\Codec;
 
 use DrSlump\Protobuf;
 
-class JsonTagMap extends Json
-    implements Protobuf\CodecInterface
+class PhpArray implements Protobuf\CodecInterface
 {
+    /**
+     * @param \DrSlump\Protobuf\Message $message
+     * @return array
+     */
+    public function encode(Protobuf\Message $message)
+    {
+        return $this->encodeMessage($message);
+    }
+
+    /**
+     * @param \DrSlump\Protobuf\Message $message
+     * @param array $data
+     * @return \DrSlump\Protobuf\Message
+     */
+    public function decode(Protobuf\Message $message, $data)
+    {
+        return $this->decodeMessage($message, $data);
+    }
+
     protected function encodeMessage(Protobuf\Message $message)
     {
         $descriptor = $message::descriptor();
 
-        $data = new \stdClass();
+        $data = array();
         foreach ($descriptor->getFields() as $tag=>$field) {
 
             $empty = !$message->_has($tag);
@@ -25,23 +43,23 @@ class JsonTagMap extends Json
                 continue;
             }
 
-            $number = $field->getNumber();
+            $name = $field->getName();
             $value = $message->_get($tag);
 
             if ($field->isRepeated()) {
-                $data->$number = array();
+                $data[$name] = array();
                 foreach ($value as $val) {
                     if ($field->getType() !== Protobuf::TYPE_MESSAGE) {
-                        $data->{$number}[] = $val;
+                        $data[$name][] = $val;
                     } else {
-                        $data->{$number}[] = self::encodeMessage($val);
+                        $data[$name][] = $this->encodeMessage($val);
                     }
                 }
             } else {
                 if ($field->getType() === Protobuf::TYPE_MESSAGE) {
-                    $data->$number = self::encodeMessage($value);
+                    $data[$name] = $this->encodeMessage($value);
                 } else {
-                    $data->$number = $value;
+                    $data[$name] = $value;
                 }
             }
         }
@@ -49,35 +67,44 @@ class JsonTagMap extends Json
         return $data;
     }
 
-
     protected function decodeMessage(Protobuf\Message $message, $data)
     {
         // Get message descriptor
         $descriptor = $message::descriptor();
 
         foreach ($data as $k=>$v) {
-            $field = $descriptor->getField($k);
+            $tag = null;
+            foreach ($descriptor->getFields() as $field) {
+                if ($field->getName() === $k) {
+                    $tag = $field->getNumber();
+                    break;
+                }
+            }
 
-            if (NULL === $field) {
+            if ($tag === NULL) {
                 // Unknown
-                $unknown = new PhpArray\Unknown($k, gettype($v), $v);
+                $unknown = new PhpArray\Unknown($tag, gettype($v), $v);
                 $message->addUnknown($unknown);
                 continue;
             }
 
+
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
+
                 $nested = $field->getReference();
                 if ($field->isRepeated()) {
                     foreach($v as $vv) {
                         $obj = $this->decodeMessage(new $nested, $vv);
-                        $message->_add($k, $obj);
+                        $message->_add($tag, $obj);
                     }
                 } else {
-                    $obj = $this->decodeMessage(new $nested, $v);
-                    $message->_set($k, $obj);
+                    $obj = new $nested;
+                    $v = $this->decodeMessage($obj, $v);
+                    $message->_set($tag, $v);
                 }
+
             } else {
-                $message->_set($k, $v);
+                $message->_set($tag, $v);
             }
         }
 

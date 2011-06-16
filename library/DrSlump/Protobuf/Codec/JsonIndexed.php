@@ -73,7 +73,7 @@ class JsonIndexed extends Json
 
             if (NULL === $field) {
                 // Unknown
-                $unknown = new Json\Unknown($k, gettype($v), $v);
+                $unknown = new PhpArray\Unknown($k, gettype($v), $v);
                 $message->addUnknown($unknown);
                 continue;
             }
