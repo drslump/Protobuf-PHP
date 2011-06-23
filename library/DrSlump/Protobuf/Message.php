@@ -26,6 +26,7 @@ abstract class Message implements \ArrayAccess
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = null)
     {
         throw new \BadMethodCallException('This method should be implemented in inherited classes');
+    }
 
     /**
      * Register an extension configuration callback
