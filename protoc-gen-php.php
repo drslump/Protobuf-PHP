@@ -1,4 +1,4 @@
-#!/usr/bin/env php -d display_errors=stderr -d log_errors=On -d error_log=Off
+#!/usr/bin/env php
 <?php
 // The MIT License
 //
@@ -21,9 +21,6 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
-
-// NOTE: The strange shebang line above is to force PHP into output
-// all errors it founds to STDERR instead of STDOUT.
 
 // Set up default timezone
 date_default_timezone_set('GMT');
