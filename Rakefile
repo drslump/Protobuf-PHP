@@ -84,7 +84,10 @@ namespace :doc do
     require 'git'
     require 'logger'
 
-    remote = `git remote show origin`.grep(/Push.*URL/).first[/git@.*/]
+    remote = `git remote show origin`
+             .split(%r{\n})  # Ruby 1.9 only has grep() on Array
+             .grep(/Push.*URL/)
+             .first[/git@.*/]
 
     files = [
       'protoc-gen-php.1.html',
