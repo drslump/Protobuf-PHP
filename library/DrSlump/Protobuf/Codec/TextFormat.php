@@ -31,7 +31,7 @@ class TextFormat implements Protobuf\CodecInterface
     {
         $indent = str_repeat('  ', $level);
 
-        $descriptor = $message::descriptor();
+        $descriptor = $message->descriptor();
 
         $data = '';
         foreach ($descriptor->getFields() as $tag=>$field) {

@@ -27,7 +27,7 @@ class PhpArray implements Protobuf\CodecInterface
 
     protected function encodeMessage(Protobuf\Message $message)
     {
-        $descriptor = $message::descriptor();
+        $descriptor = $message->descriptor();
 
         $data = array();
         foreach ($descriptor->getFields() as $tag=>$field) {
@@ -70,7 +70,7 @@ class PhpArray implements Protobuf\CodecInterface
     protected function decodeMessage(Protobuf\Message $message, $data)
     {
         // Get message descriptor
-        $descriptor = $message::descriptor();
+        $descriptor = $message->descriptor();
 
         foreach ($data as $k=>$v) {
             $tag = null;

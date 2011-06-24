@@ -9,7 +9,7 @@ class JsonTagMap extends Json
 {
     protected function encodeMessage(Protobuf\Message $message)
     {
-        $descriptor = $message::descriptor();
+        $descriptor = $message->descriptor();
 
         $data = new \stdClass();
         foreach ($descriptor->getFields() as $tag=>$field) {
@@ -53,7 +53,7 @@ class JsonTagMap extends Json
     protected function decodeMessage(Protobuf\Message $message, $data)
     {
         // Get message descriptor
-        $descriptor = $message::descriptor();
+        $descriptor = $message->descriptor();
 
         foreach ($data as $k=>$v) {
             $field = $descriptor->getField($k);

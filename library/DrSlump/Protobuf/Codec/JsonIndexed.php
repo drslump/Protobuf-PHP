@@ -9,7 +9,7 @@ class JsonIndexed extends Json
 {
     protected function encodeMessage(Protobuf\Message $message)
     {
-        $descriptor = $message::descriptor();
+        $descriptor = $message->descriptor();
 
         $index = '';
         $data = array();
@@ -58,7 +58,7 @@ class JsonIndexed extends Json
     protected function decodeMessage(Protobuf\Message $message, $data)
     {
         // Get message descriptor
-        $descriptor = $message::descriptor();
+        $descriptor = $message->descriptor();
 
         // Split the index in UTF8 characters
         preg_match_all('/./u', $data[0], $chars);
