@@ -34,8 +34,8 @@ class PhpArray implements Protobuf\CodecInterface
 
             $empty = !$message->_has($tag);
             if ($field->isRequired() && $empty) {
-                throw new \RuntimeException(
-                    'Message ' . get_class($message) . ' field tag ' . $tag . ' is required but has not value'
+                throw new \UnexpectedValueException(
+                    'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
@@ -46,22 +46,13 @@ class PhpArray implements Protobuf\CodecInterface
             $name = $field->getName();
             $value = $message->_get($tag);
 
-            if ($field->isRepeated()) {
-                $data[$name] = array();
-                foreach ($value as $val) {
-                    if ($field->getType() !== Protobuf::TYPE_MESSAGE) {
-                        $data[$name][] = $val;
-                    } else {
-                        $data[$name][] = $this->encodeMessage($val);
-                    }
-                }
-            } else {
-                if ($field->getType() === Protobuf::TYPE_MESSAGE) {
-                    $data[$name] = $this->encodeMessage($value);
-                } else {
-                    $data[$name] = $value;
-                }
+            if ($field->getType() === Protobuf::TYPE_MESSAGE) {
+                $value = $field->isRepeated()
+                       ? array_map(array($this, 'encodeMessage'), $value)
+                       : $this->encodeMessage($value);
             }
+
+            $data[$name] = $value;
         }
 
         return $data;
@@ -74,6 +65,7 @@ class PhpArray implements Protobuf\CodecInterface
 
         foreach ($data as $k=>$v) {
             $tag = null;
+            $field = null;
             foreach ($descriptor->getFields() as $field) {
                 if ($field->getName() === $k) {
                     $tag = $field->getNumber();

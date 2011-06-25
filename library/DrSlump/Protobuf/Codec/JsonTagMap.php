@@ -11,13 +11,13 @@ class JsonTagMap extends Json
     {
         $descriptor = $message->descriptor();
 
-        $data = new \stdClass();
+        $data =  array();
         foreach ($descriptor->getFields() as $tag=>$field) {
 
             $empty = !$message->_has($tag);
             if ($field->isRequired() && $empty) {
-                throw new \RuntimeException(
-                    'Message ' . get_class($message) . ' field tag ' . $tag . ' is required but has not value'
+                throw new \UnexpectedValueException(
+                    'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
@@ -25,25 +25,16 @@ class JsonTagMap extends Json
                 continue;
             }
 
-            $number = $field->getNumber();
             $value = $message->_get($tag);
 
-            if ($field->isRepeated()) {
-                $data->$number = array();
-                foreach ($value as $val) {
-                    if ($field->getType() !== Protobuf::TYPE_MESSAGE) {
-                        $data->{$number}[] = $val;
-                    } else {
-                        $data->{$number}[] = self::encodeMessage($val);
-                    }
-                }
-            } else {
-                if ($field->getType() === Protobuf::TYPE_MESSAGE) {
-                    $data->$number = self::encodeMessage($value);
-                } else {
-                    $data->$number = $value;
-                }
+            if ($field->getType() === Protobuf::TYPE_MESSAGE) {
+                $value = $field->isRepeated()
+                       ? array_map(array($this, 'encodeMessage'), $value)
+                       : $this->encodeMessage($value);
             }
+
+            $number = $field->getNumber();
+            $data[$number] = $value;
         }
 
         return $data;

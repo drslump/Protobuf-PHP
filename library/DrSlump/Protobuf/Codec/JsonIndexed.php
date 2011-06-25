@@ -17,8 +17,8 @@ class JsonIndexed extends Json
 
             $empty = !$message->_has($tag);
             if ($field->isRequired() && $empty) {
-                throw new \RuntimeException(
-                    'Message ' . get_class($message) . ' field tag ' . $tag . ' is required but has not value'
+                throw new \UnexpectedValueException(
+                    'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
