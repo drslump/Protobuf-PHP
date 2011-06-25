@@ -3,20 +3,23 @@
 namespace DrSlump\Protobuf\Codec\Binary;
 
 /**
+ * Implements reading primitives for Protobuf binary streams
+ *
+ * Important: There are no checks in place for overflows, so you must
+ * be aware of PHP's integer and floating point limits.
  *
  * @note Protobuf uses little-endian order
- *
- * @throws Exception
  */
-class Reader {
-
-    const LITTLE_ENDIAN = 1;
-    const BIG_ENDIAN = 2;
-
-    static protected $_endianness = null;
-
+class Reader
+{
+    /** @var resource */
     protected $_fd;
 
+    /**
+     * Create a new reader from a file descriptor or a string of bytes
+     *
+     * @param resource|string $fdOrString
+     */
     public function __construct($fdOrString)
     {
         if (is_resource($fdOrString)) {
@@ -32,31 +35,58 @@ class Reader {
         fclose($this->_fd);
     }
 
+    /**
+     * Obtain a number of bytes from the string
+     *
+     * @throws \RuntimeException
+     * @param int $length
+     * @return string
+     */
     public function read($length)
     {
         $bytes = fread($this->_fd, $length);
-        if ($bytes === false) {
-            throw new \Exception('Failed to read ' . $length . ' bytes');
+        if (FALSE === $bytes) {
+            throw new \RuntimeException('Failed to read ' . $length . ' bytes');
         }
 
         return $bytes;
     }
 
+    /**
+     * Check if we have reached the end of the stream
+     *
+     * @return bool
+     */
     public function eof()
     {
         return feof($this->_fd);
     }
 
+    /**
+     * Obtain the current position in the stream
+     *
+     * @return int
+     */
     public function pos()
     {
         return ftell($this->_fd);
     }
 
+    /**
+     * Obtain a byte
+     *
+     * @return int
+     */
     public function byte()
     {
         return ord($this->read(1));
     }
 
+    /**
+     * Decode a varint
+     *
+     * @return int
+     */
     public function varint()
     {
         $result = $shift = 0;
@@ -69,6 +99,22 @@ class Reader {
         return $result;
     }
 
+    /**
+     * Decodes a zigzag integer of the given bits
+     *
+     * @param int $bits - Either 32 or 64
+     */
+    public function zigzag($bits)
+    {
+        $number = $this->varint();
+        return ($number << 1) ^ ($number >> ($bits-1));
+    }
+
+    /**
+     * Decode a fixed 32bit integer with sign
+     *
+     * @return int
+     */
     public function sFixed32()
     {
         $bytes = $this->read(4);
@@ -80,6 +126,11 @@ class Reader {
         return $result;
     }
 
+    /**
+     * Decode a fixed 32bit integer without sign
+     *
+     * @return int
+     */
     public function fixed32()
     {
         $bytes = $this->read(4);
@@ -94,6 +145,11 @@ class Reader {
         return $result;
     }
 
+    /**
+     * Decode a fixed 62bit integer with sign
+     *
+     * @return int
+     */
     public function sFixed64()
     {
         $bytes = $this->read(8);
@@ -102,11 +158,21 @@ class Reader {
         return ($hi1 << 16 | $hi0) << 32 | ($lo1 << 16 | $lo0);
     }
 
+    /**
+     * Decode a fixed 62bit integer without sign
+     *
+     * @return int
+     */
     public function fixed64()
     {
         return $this->sFixed64();
     }
 
+    /**
+     * Decode a 32bit float
+     *
+     * @return float
+     */
     public function float()
     {
         $bytes = $this->read(4);
@@ -118,6 +184,11 @@ class Reader {
         return $result;
     }
 
+    /**
+     * Decode a 64bit double
+     *
+     * @return float
+     */
     public function double()
     {
         $bytes = $this->read(8);
@@ -129,20 +200,20 @@ class Reader {
         return $result;
     }
 
-
-
+    /**
+     * Check if the current architecture is Big Endian
+     *
+     * @return bool
+     */
     public function isBigEndian()
     {
-        if (self::$_endianness === NULL) {
+        static $endianness;
+
+        if (NULL === $endianness) {
             list(,$result) = unpack('L', pack('V', 1));
-            if ($result === 1)
-                self::$_endianness = self::LITTLE_ENDIAN;
-            else {
-                self::$_endianness = self::BIG_ENDIAN;
-            }
+            $endianness = $result !== 1;
         }
-        return self::$_endianness === self::BIG_ENDIAN;
+
+        return $endianness;
     }
-
-
 }

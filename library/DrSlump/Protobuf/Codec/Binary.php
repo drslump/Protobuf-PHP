@@ -71,7 +71,7 @@ class Binary implements Protobuf\CodecInterface
                     foreach($value as $val) {
                         $this->encodeSimpleType($subwriter, $type, $val);
                     }
-                    $data = $subwriter->getContents();
+                    $data = $subwriter->getBytes();
                     $writer->varint($key);
                     $writer->varint(strlen($data));
                     $writer->write($data);
@@ -101,7 +101,7 @@ class Binary implements Protobuf\CodecInterface
             }
         }
 
-        return $writer->getContents();
+        return $writer->getBytes();
     }
 
     protected function encodeSimpleType($writer, $type, $value)
@@ -116,8 +116,7 @@ class Binary implements Protobuf\CodecInterface
 
             case Protobuf::TYPE_SINT32: // ZigZag
             case Protobuf::TYPE_SINT64: // ZigZag
-                $value = ($value >> 1) ^ (-($value & 1));
-                $writer->varint($value);
+                $writer->zigzag($value);
                 break;
 
             case Protobuf::TYPE_DOUBLE:
@@ -272,9 +271,9 @@ class Binary implements Protobuf\CodecInterface
                 return $reader->fixed64;
             case self::WIRE_GROUP_START:
             case self::WIRE_GROUP_END:
-                throw new \Exception('Groups are deprecated in Protocol Buffers and unsupported by this library');
+                throw new \RuntimeException('Groups are deprecated in Protocol Buffers and unsupported by this library');
             default:
-                throw new \Exception('Unsupported wire type (' . $wire . ') while consuming unknown field');
+                throw new \RuntimeException('Unsupported wire type (' . $wire . ') while consuming unknown field');
         }
     }
 
@@ -282,11 +281,11 @@ class Binary implements Protobuf\CodecInterface
     {
         $expected = $this->getWireType($type, $wire);
         if ($wire !== $expected) {
-            throw new \Exception('Expected wire type ' . $expected . ' but got ' . $wire . ' for type ' . $type);
+            throw new \RuntimeException("Expected wire type $expected but got $wire for type $type");
         }
     }
 
-    protected function getWireType($type, $wire)
+    protected function getWireType($type, $default)
     {
         switch ($type) {
             case Protobuf::TYPE_INT32:
@@ -312,7 +311,7 @@ class Binary implements Protobuf\CodecInterface
                 return self::WIRE_FIXED32;
             default:
                 // Unknown fields just return the reported wire type
-                return $wire;
+                return $default;
         }
     }
 
@@ -326,12 +325,9 @@ class Binary implements Protobuf\CodecInterface
                 return $reader->varint();
 
             case Protobuf::TYPE_SINT32: // ZigZag
-                $number = $reader->varint();
-                return ($number << 1) ^ ($number >> 31);
+                return $reader->zigzag(32);
             case Protobuf::TYPE_SINT64: // ZigZag
-                $number = $reader->varint();
-                return ($number << 1) ^ ($number >> 63);
-
+                return $reader->zigzag(64);
             case Protobuf::TYPE_DOUBLE:
                 return $reader->double();
             case Protobuf::TYPE_FIXED64:
@@ -378,9 +374,9 @@ class Binary implements Protobuf\CodecInterface
                         return $reader->read($length);
                     case self::WIRE_GROUP_START:
                     case self::WIRE_GROUP_END:
-                        throw new \Exception('Group is deprecated and not supported');
+                        throw new \RuntimeException('Group is deprecated and not supported');
                     default:
-                        throw new \Exception('Unsupported wire type number ' . $wireType);
+                        throw new \RuntimeException('Unsupported wire type number ' . $wireType);
                 }
         }
 
