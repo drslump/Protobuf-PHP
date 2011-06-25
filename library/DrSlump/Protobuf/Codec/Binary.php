@@ -43,10 +43,9 @@ class Binary implements Protobuf\CodecInterface
         foreach ($descriptor->getFields() as $tag=>$field) {
 
             $empty = !$message->_has($tag);
-
             if ($field->isRequired() && $empty) {
-                throw new \RuntimeException(
-                    'Message ' . get_class($message) . ' field tag ' . $tag . ' is required but has no value'
+                throw new \UnexpectedValueException(
+                    'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
@@ -56,23 +55,37 @@ class Binary implements Protobuf\CodecInterface
             }
 
             $type = $field->getType();
+            $wire = $field->isPacked() ? self::WIRE_LENGTH : $this->getWireType($type, null);
 
             // Compute key with tag number and wire type
-            $key = $tag << 3 | $this->getWireType($type, null);
+            $key = $tag << 3 | $wire;
 
             $value = $message->_get($tag);
 
-            // @todo Support PACKED fields
             if ($field->isRepeated()) {
-                foreach($value as $val) {
-                    if ($type !== Protobuf::TYPE_MESSAGE) {
-                        $writer->varint($key);
-                        $this->encodeSimpleType($writer, $type, $val);
-                    } else {
-                        $writer->varint($key);
-                        $data = $this->encodeMessage($val);
-                        $writer->varint(strlen($data));
-                        $writer->write($data);
+
+                // Packed fields are encoded as a length-delimited stream containing
+                // the concatenated encoding of each value.
+                if ($field->isPacked() && !empty($value)) {
+                    $subwriter = new Binary\Writer();
+                    foreach($value as $val) {
+                        $this->encodeSimpleType($subwriter, $type, $val);
+                    }
+                    $data = $subwriter->getContents();
+                    $writer->varint($key);
+                    $writer->varint(strlen($data));
+                    $writer->write($data);
+                } else {
+                    foreach($value as $val) {
+                        if ($type !== Protobuf::TYPE_MESSAGE) {
+                            $writer->varint($key);
+                            $this->encodeSimpleType($writer, $type, $val);
+                        } else {
+                            $writer->varint($key);
+                            $data = $this->encodeMessage($val);
+                            $writer->varint(strlen($data));
+                            $writer->write($data);
+                        }
                     }
                 }
             } else {
@@ -182,14 +195,14 @@ class Binary implements Protobuf\CodecInterface
 
             $type = $field->getType();
 
-            // Check if we are dealing with a packaged structure
+            // Check if we are dealing with a packed stream, we cannot rely on the packed
+            // flag of the message since we cannot be certain if the creator of the was
+            // using it.
             if ($wire === self::WIRE_LENGTH && $this->isPackable($type)) {
                 $length = $reader->varint();
-                $ofs = $reader->pos();
-                $read = 0;
-                while ($read < $length) {
+                $until = $reader->pos() + $length;
+                while ($reader->pos() < $until) {
                     $item = $this->decodeSimpleType($reader, $type, self::WIRE_VARINT);
-                    $read = $reader->pos() - $ofs;
                     $message->_add($tag, $item);
                 }
 
@@ -225,7 +238,7 @@ class Binary implements Protobuf\CodecInterface
 
     protected function isPackable($type)
     {
-        return in_array($type, array(
+        static $packable = array(
             Protobuf::TYPE_INT64,
             Protobuf::TYPE_UINT64,
             Protobuf::TYPE_INT32,
@@ -240,7 +253,9 @@ class Binary implements Protobuf\CodecInterface
             Protobuf::TYPE_SFIXED32,
             Protobuf::TYPE_BOOL,
             Protobuf::TYPE_ENUM
-        ));
+        );
+
+        return in_array($type, $packable);
     }
 
     protected function decodeUnknown($reader, $wire)
