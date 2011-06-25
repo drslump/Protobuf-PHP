@@ -4,6 +4,11 @@ namespace DrSlump\Protobuf\Codec;
 
 use DrSlump\Protobuf;
 
+/**
+ * This codec serializes to Protobuf's TextFormat, unserialization
+ * is not supported.
+ *
+ */
 class TextFormat implements Protobuf\CodecInterface
 {
     /**
@@ -24,7 +29,7 @@ class TextFormat implements Protobuf\CodecInterface
      */
     public function decode(Protobuf\Message $message, $data)
     {
-        throw new Protobuf\Exception('TextFormat codec does not support decoding');
+        throw new \BadMethodCallException('TextFormat codec does not support decoding');
     }
 
     protected function encodeMessage(Protobuf\Message $message, $level = 0)

@@ -4,8 +4,28 @@ namespace DrSlump\Protobuf\Codec;
 
 use DrSlump\Protobuf;
 
+/**
+ * This codec serializes and unserializes data from/to PHP associative
+ * arrays, allowing it to be used as a base for an arbitrary number
+ * of different serializations (json, yaml, ini, xml ...).
+ *
+ */
 class PhpArray implements Protobuf\CodecInterface
 {
+    /** @var bool */
+    protected $useTagNumber = false;
+
+    /**
+     * Tells the codec to expect the array keys to contain the
+     * field's tag number instead of the name.
+     *
+     * @param bool $useIt
+     */
+    public function useTagNumberAsKey($useIt = true)
+    {
+        $this->useTagNumber = $useIt;
+    }
+
     /**
      * @param \DrSlump\Protobuf\Message $message
      * @return array
@@ -43,7 +63,7 @@ class PhpArray implements Protobuf\CodecInterface
                 continue;
             }
 
-            $name = $field->getName();
+            $key = $this->useTagNumber ? $field->getNumber() : $field->getName();
             $value = $message->_get($tag);
 
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
@@ -52,7 +72,7 @@ class PhpArray implements Protobuf\CodecInterface
                        : $this->encodeMessage($value);
             }
 
-            $data[$name] = $value;
+            $data[$key] = $value;
         }
 
         return $data;
@@ -63,40 +83,45 @@ class PhpArray implements Protobuf\CodecInterface
         // Get message descriptor
         $descriptor = $message->descriptor();
 
-        foreach ($data as $k=>$v) {
-            $tag = null;
-            $field = null;
-            foreach ($descriptor->getFields() as $field) {
-                if ($field->getName() === $k) {
-                    $tag = $field->getNumber();
-                    break;
+        foreach ($data as $key=>$v) {
+
+            // Search for the field with the name
+            if (!$this->useTagNumber) {
+                $field = null;
+                foreach ($descriptor->getFields() as $f) {
+                    if ($f->getName() === $key) {
+                        $field = $f;
+                        break;
+                    }
                 }
+            // Get the field by tag number
+            } else {
+                $field = $descriptor->getField($key);
             }
 
-            if ($tag === NULL) {
-                // Unknown
-                $unknown = new PhpArray\Unknown($tag, gettype($v), $v);
+            // Unknown field found
+            if (!$field) {
+                $unknown = new PhpArray\Unknown($key, gettype($v), $v);
                 $message->addUnknown($unknown);
                 continue;
             }
 
+            $key = $field->getNumber();
 
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
-
                 $nested = $field->getReference();
                 if ($field->isRepeated()) {
                     foreach($v as $vv) {
                         $obj = $this->decodeMessage(new $nested, $vv);
-                        $message->_add($tag, $obj);
+                        $message->_add($key, $obj);
                     }
                 } else {
                     $obj = new $nested;
                     $v = $this->decodeMessage($obj, $v);
-                    $message->_set($tag, $v);
+                    $message->_set($key, $v);
                 }
-
             } else {
-                $message->_set($tag, $v);
+                $message->_set($key, $v);
             }
         }
 

@@ -121,7 +121,7 @@ describe "TextFormat Codec"
 
     describe "unserialize"
 
-         # throws \DrSlump\Protobuf\Exception
+         # throws \BadMethodCallException
          it "TextFormat does not implement decoding"
              $txt = "foo: \"FOO\"\nbar: \"BAR\"\n";
              $simple = Protobuf::decode('Tests\Simple', $txt);

@@ -4,9 +4,16 @@ namespace DrSlump\Protobuf\Codec;
 
 use DrSlump\Protobuf;
 
+/**
+ * This codec serializes and unserializes from/to Json strings
+ * where the keys are packed as the first element of numeric arrays,
+ * optimizing the resulting payload size.
+ *
+ */
 class JsonIndexed extends Json
     implements Protobuf\CodecInterface
 {
+
     protected function encodeMessage(Protobuf\Message $message)
     {
         $descriptor = $message->descriptor();
@@ -14,7 +21,6 @@ class JsonIndexed extends Json
         $index = '';
         $data = array();
         foreach ($descriptor->getFields() as $tag=>$field) {
-
             $empty = !$message->_has($tag);
             if ($field->isRequired() && $empty) {
                 throw new \UnexpectedValueException(
