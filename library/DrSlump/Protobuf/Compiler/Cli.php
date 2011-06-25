@@ -51,8 +51,10 @@ class Cli
     {
         $result = self::parseArguments();
 
+        $protocBin = $result->options['protoc'];
+
         // Check if protoc is available
-        exec('protoc --version', $output, $return);
+        exec("$protocBin --version", $output, $return);
 
         if (0 !== $return && 1 !== $return) {
             fputs(STDERR, "ERROR: Unable to find the protoc command.". PHP_EOL);
@@ -60,7 +62,7 @@ class Cli
             exit(1);
         }
 
-        if (!preg_match('/([0-9]+\.?)+/', $output[0], $m)) {
+        if (!preg_match('/[0-9\.]+/', $output[0], $m)) {
             fputs(STDERR, "ERROR: Unable to get protoc command version.". PHP_EOL);
             fputs(STDERR, "       Please make sure it's installed and available in the path." . PHP_EOL);
             exit(1);
@@ -68,12 +70,14 @@ class Cli
 
         if (version_compare($m[0], '2.3.0') < 0) {
             fputs(STDERR, "ERROR: The protoc command in your system is too old." . PHP_EOL);
-            fputs(STDERR, "       Minimum version required is 2.3.0 but found {$m[1]}." . PHP_EOL);
+            fputs(STDERR, "       Minimum version required is 2.3.0 but found {$m[0]}." . PHP_EOL);
             exit(1);
         }
 
-        $cmd[] = 'protoc';
+        $cmd[] = $protocBin;
         $cmd[] = '--plugin=protoc-gen-php=' . escapeshellarg($pluginExecutable);
+
+        // Include paths
         $cmd[] = '--proto_path=' . escapeshellarg(__DIR__ . DIRECTORY_SEPARATOR . 'protos');
         if (!empty($result->options['include'])) {
             foreach($result->options['include'] as $include) {
@@ -81,6 +85,11 @@ class Cli
                 $cmd[] = '--proto_path=' . escapeshellarg($include);
             }
         }
+
+
+        // Protoc will pass custom arguments to the plugin if they are given
+        // before a colon character. ie: --php_out="foo=bar:/path/to/plugin"
+        // We make use of it to pass arguments encoded as an URI query string
 
         $args = array();
         if ($result->options['verbose']) {
@@ -97,19 +106,21 @@ class Cli
                      $result->options['out']
                  );
 
+
+        // Add the chosen proto files to generate
         foreach ($result->args['protos'] as $arg) {
             $cmd[] = escapeshellarg(realpath($arg));
         }
 
-        $cmd = implode(' ', $cmd);
+        $cmdStr = implode(' ', $cmd);
 
-        passthru($cmd . ' 2>&1', $return);
+        // Run command with stderr redirected to stdout
+        passthru($cmdStr . ' 2>&1', $return);
 
         if ($return !== 0) {
             fputs(STDERR, PHP_EOL);
-            fputs(STDERR, 'ERROR: protoc exited with an error (' . $return . ') when execute with:' . PHP_EOL);
-            fputs(STDERR, PHP_EOL);
-            fputs(STDERR, $cmd . PHP_EOL);
+            fputs(STDERR, 'ERROR: protoc exited with an error (' . $return . ') when executed with: ' . PHP_EOL);
+            fputs(STDERR, '  ' . implode(" \\\n    ", $cmd) . PHP_EOL);
             exit($return);
         }
     }
@@ -117,10 +128,7 @@ class Cli
 
     public static function parseArguments()
     {
-        $main = new \Console_CommandLine(array(
-            //'description'   => 'Protobuf for PHP ' . Protobuf::VERSION . ' by Ivan -DrSlump- Montes',
-            //'version'       => Protobuf::VERSION,
-        ));
+        $main = new \Console_CommandLine();
 
         $main->addOption('out', array(
             'short_name'    => '-o',
@@ -130,19 +138,12 @@ class Cli
             'default'       => './',
         ));
 
-        $main->addOption('verbose', array(
-            'short_name'    => '-v',
-            'long_name'     => '--verbose',
-            'action'        => 'StoreTrue',
-            'description'   => 'turn on verbose output',
-        ));
-
         $main->addOption('include', array(
             'short_name'    => '-i',
             'long_name'     => '--include',
             'action'        => 'StoreArray',
             'description'   => 'define an include path (can be repeated)',
-            'multiple'      => 'true',
+            'multiple'      => true,
         ));
 
 
@@ -153,13 +154,27 @@ class Cli
             'description'   => 'turn on ProtoJson Javascript file generation',
         ));
 
+        $main->addOption('protoc', array(
+            'long_name'     => '--protoc',
+            'action'        => 'StoreString',
+            'default'       => 'protoc',
+            'description'   => 'protoc compiler executable path',
+        ));
+
+        $main->addOption('verbose', array(
+            'short_name'    => '-v',
+            'long_name'     => '--verbose',
+            'action'        => 'StoreTrue',
+            'description'   => 'turn on verbose output',
+        ));
+
         $main->addArgument('protos', array(
             'multiple'      => true,
             'description'   => 'proto files',
         ));
 
         try {
-            echo 'Protobuf for PHP ' . Protobuf::VERSION . ' by Ivan -DrSlump- Montes' . PHP_EOL . PHP_EOL;
+            echo 'Protobuf-PHP ' . Protobuf::VERSION . ' by Ivan -DrSlump- Montes' . PHP_EOL . PHP_EOL;
             $result = $main->parse();
             return $result;
         } catch (\Exception $e) {
