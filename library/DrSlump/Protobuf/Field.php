@@ -8,7 +8,6 @@ class Field
 {
     public $number;
     public $name;
-    public $nameOrig;
     public $type = Protobuf::TYPE_UNKNOWN;
     public $rule = Protobuf::RULE_OPTIONAL;
     public $reference;
@@ -16,17 +15,19 @@ class Field
     public $packed = false;
     public $extension = false;
 
-    /*
-    public function __construct($tag=null, $opts=array())
+    public function __construct(array $opts = array())
     {
-        $this->tag = (int)$tag;
-        $this->name = $opts['name'];
-        $this->type = (int)$opts['type'];
-        $this->rule = (int)$opts['rule'];
-        $this->packed = isset($opts['packed']) ? (bool)$opts['packed'] : false;
-        $this->reference = isset($opts['reference']) ? $opts['reference'] : null;
+        if (!empty($opts)) {
+            if (isset($opts['number'])) $this->number = (int)$opts['number'];
+            if (isset($opts['name'])) $this->name = $opts['name'];
+            if (isset($opts['type'])) $this->type = (int)$opts['type'];
+            if (isset($opts['rule'])) $this->rule = (int)$opts['rule'];
+            if (isset($opts['packed'])) $this->packed = (bool)$opts['packed'];
+            if (isset($opts['reference'])) $this->reference = $opts['reference'];
+            if (isset($opts['default'])) $this->default = $opts['default'];
+            if (isset($opts['extension'])) $this->extension = (bool)$opts['extension'];
+        }
     }
-    */
 
     public function getNumber()
     {

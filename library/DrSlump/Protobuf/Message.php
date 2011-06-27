@@ -6,9 +6,6 @@ use DrSlump\Protobuf;
 
 abstract class Message implements \ArrayAccess
 {
-    /** @var \DrSlump\Protobuf\Descriptor */
-    static protected $descriptor;
-
     /** @var \Closure[] */
     static protected $__extensions = array();
 
@@ -20,10 +17,9 @@ abstract class Message implements \ArrayAccess
     /**
      * @static
      * @abstract
-     * @param \DrSlump\Protobuf\Descriptor|null $descriptor
      * @return \DrSlump\Protobuf\Descriptor
      */
-    public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = null)
+    public static function descriptor()
     {
         throw new \BadMethodCallException('This method should be implemented in inherited classes');
     }

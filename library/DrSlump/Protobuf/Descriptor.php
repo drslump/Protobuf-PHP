@@ -12,6 +12,8 @@ class Descriptor
     /** @var \DrSlump\Protobuf\Field[] */
     protected $fields = array();
 
+    /** @var array - Cache the relation between names and tags */
+    protected $names = array();
 
     /**
      * @param string $message
@@ -22,6 +24,8 @@ class Descriptor
     }
 
     /**
+     * Obtain the list of fields in the message
+     *
      * @return \DrSlump\Protobuf\Field[]
      */
     public function getFields()
@@ -30,6 +34,8 @@ class Descriptor
     }
 
     /**
+     * Adds a field to the message
+     *
      * @param \DrSlump\Protobuf\Field $field
      * @param bool $isExtension
      */
@@ -40,6 +46,8 @@ class Descriptor
     }
 
     /**
+     * Obtain a field descriptor by its tag number
+     *
      * @param int $tag
      * @return \DrSlump\Protobuf\Field | NULL
      */
@@ -51,6 +59,33 @@ class Descriptor
     }
 
     /**
+     * Obtain a field descriptor by its name
+     *
+     * @param string $name
+     * @return \DrSlump\Protobuf\Field | NULL
+     */
+    public function getFieldByName($name)
+    {
+        // Check cached map
+        if (isset($this->names[$name])) {
+            return $this->getField($this->names[$name]);
+        }
+
+        // Loop thru all fields to find it
+        foreach ($this->fields as $tag=>$field) {
+            // Build the cache map
+            $this->names[$name] = $tag;
+            if ($name === $field->getName()) {
+                return $field;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if the given tag number matches a field
+     *
      * @param int $tag
      * @return bool
      */
