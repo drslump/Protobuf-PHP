@@ -34,10 +34,9 @@ class TextFormat implements Protobuf\CodecInterface
 
     protected function encodeMessage(Protobuf\Message $message, $level = 0)
     {
+        $descriptor = Protobuf::getRegistry()->getDescriptor($message);
+
         $indent = str_repeat('  ', $level);
-
-        $descriptor = $message->descriptor();
-
         $data = '';
         foreach ($descriptor->getFields() as $tag=>$field) {
 

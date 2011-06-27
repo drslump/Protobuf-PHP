@@ -63,6 +63,23 @@ class Protobuf
         });
     }
 
+    /**
+     * Obtain an instance of the descriptor's registry
+     *
+     * @static
+     * @return Protobuf\Registry
+     */
+    static public function getRegistry()
+    {
+        static $registry = NULL;
+
+        if (NULL === $registry) {
+            $registry = new Protobuf\Registry();
+        }
+
+        return $registry;
+    }
+
 
     static public function getCodec($codec = null)
     {

@@ -47,7 +47,7 @@ class PhpArray implements Protobuf\CodecInterface
 
     protected function encodeMessage(Protobuf\Message $message)
     {
-        $descriptor = $message->descriptor();
+        $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
         $data = array();
         foreach ($descriptor->getFields() as $tag=>$field) {
@@ -64,15 +64,19 @@ class PhpArray implements Protobuf\CodecInterface
             }
 
             $key = $this->useTagNumber ? $field->getNumber() : $field->getName();
-            $value = $message->_get($tag);
+            $v = $message->_get($tag);
 
-            if ($field->getType() === Protobuf::TYPE_MESSAGE) {
-                $value = $field->isRepeated()
-                       ? array_map(array($this, 'encodeMessage'), $value)
-                       : $this->encodeMessage($value);
+            if ($field->isRepeated()) {
+                // Make sure the value is an array of values
+                $v = is_array($v) ? $v : array($v);
+                foreach ($v as $k=>$vv) {
+                    $v[$k] = $this->filterValue($vv, $field);
+                }
+            } else {
+                $v = $this->filterValue($v, $field);
             }
 
-            $data[$key] = $value;
+            $data[$key] = $v;
         }
 
         return $data;
@@ -81,23 +85,14 @@ class PhpArray implements Protobuf\CodecInterface
     protected function decodeMessage(Protobuf\Message $message, $data)
     {
         // Get message descriptor
-        $descriptor = $message->descriptor();
+        $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
         foreach ($data as $key=>$v) {
 
-            // Search for the field with the name
-            if (!$this->useTagNumber) {
-                $field = null;
-                foreach ($descriptor->getFields() as $f) {
-                    if ($f->getName() === $key) {
-                        $field = $f;
-                        break;
-                    }
-                }
-            // Get the field by tag number
-            } else {
-                $field = $descriptor->getField($key);
-            }
+            // Get the field by tag number or name
+            $field = $this->useTagNumber
+                   ? $descriptor->getField($key)
+                   : $descriptor->getFieldByName($key);
 
             // Unknown field found
             if (!$field) {
@@ -106,26 +101,46 @@ class PhpArray implements Protobuf\CodecInterface
                 continue;
             }
 
-            $key = $field->getNumber();
-
-            if ($field->getType() === Protobuf::TYPE_MESSAGE) {
-                $nested = $field->getReference();
-                if ($field->isRepeated()) {
-                    foreach($v as $vv) {
-                        $obj = $this->decodeMessage(new $nested, $vv);
-                        $message->_add($key, $obj);
-                    }
-                } else {
-                    $obj = new $nested;
-                    $v = $this->decodeMessage($obj, $v);
-                    $message->_set($key, $v);
+            if ($field->isRepeated()) {
+                // Make sure the value is an array of values
+                $v = is_array($v) && is_int(key($v)) ? $v : array($v);
+                foreach ($v as $k=>$vv) {
+                    $v[$k] = $this->filterValue($vv, $field);
                 }
             } else {
-                $message->_set($key, $v);
+                $v = $this->filterValue($v, $field);
             }
+
+            $message->_set($field->getNumber(), $v);
         }
 
         return $message;
     }
+
+    protected function filterValue($value, Protobuf\Field $field)
+    {
+        switch ($field->getType()) {
+            case Protobuf::TYPE_MESSAGE:
+                // Tell apart encoding and decoding
+                if ($value instanceof Protobuf\Message) {
+                    return $this->encodeMessage($value);
+                } else {
+                    $nested = $field->getReference();
+                    return $this->decodeMessage(new $nested, $value);
+                }
+            case Protobuf::TYPE_BOOL:
+                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+            case Protobuf::TYPE_STRING:
+            case Protobuf::TYPE_BYTES:
+                return (string)$value;
+            case Protobuf::TYPE_FLOAT:
+            case Protobuf::TYPE_DOUBLE:
+                return filter_var($value, FILTER_VALIDATE_FLOAT);
+            // Assume the rest are ints
+            default:
+                return filter_var($value, FILTER_VALIDATE_INT);
+        }
+    }
+
 
 }
