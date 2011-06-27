@@ -7,19 +7,11 @@ namespace tests {
 
   class Person extends \DrSlump\Protobuf\Message {
 
-    /** @var \DrSlump\Protobuf\Descriptor */
-    protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
 
-    public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
+    public static function descriptor()
     {
-      if (NULL !== $descriptor) {
-        self::$__descriptor = $descriptor;
-        return self::$__descriptor;
-      }
-
-      if (!self::$__descriptor) {
         $descriptor = new \DrSlump\Protobuf\Descriptor('\tests\Person');
 
         // required  name = 1
@@ -59,10 +51,7 @@ namespace tests {
           $descriptor->addField($cb(), true);
         }
 
-        self::$__descriptor = $descriptor;
-      }
-
-      return self::$__descriptor;
+      return $descriptor;
     }
 
     /** @var string */
@@ -262,19 +251,11 @@ namespace tests\Person {
 
   class PhoneNumber extends \DrSlump\Protobuf\Message {
 
-    /** @var \DrSlump\Protobuf\Descriptor */
-    protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
-      if (NULL !== $descriptor) {
-        self::$__descriptor = $descriptor;
-        return self::$__descriptor;
-      }
-
-      if (!self::$__descriptor) {
         $descriptor = new \DrSlump\Protobuf\Descriptor('\tests\Person\PhoneNumber');
 
         // required  number = 1
@@ -299,10 +280,7 @@ namespace tests\Person {
           $descriptor->addField($cb(), true);
         }
 
-        self::$__descriptor = $descriptor;
-      }
-
-      return self::$__descriptor;
+      return $descriptor;
     }
 
     /** @var string */
@@ -393,19 +371,11 @@ namespace tests {
 
   class AddressBook extends \DrSlump\Protobuf\Message {
 
-    /** @var \DrSlump\Protobuf\Descriptor */
-    protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
-      if (NULL !== $descriptor) {
-        self::$__descriptor = $descriptor;
-        return self::$__descriptor;
-      }
-
-      if (!self::$__descriptor) {
         $descriptor = new \DrSlump\Protobuf\Descriptor('\tests\AddressBook');
 
         // repeated .tests.Person person = 1
@@ -421,10 +391,7 @@ namespace tests {
           $descriptor->addField($cb(), true);
         }
 
-        self::$__descriptor = $descriptor;
-      }
-
-      return self::$__descriptor;
+      return $descriptor;
     }
 
     /** @var \tests\Person[] */

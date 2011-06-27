@@ -21,9 +21,9 @@ describe "JSON TagMap Codec"
         it "should serialize a simple message"
             $simple = new Tests\Simple();
             $simple->foo = 'FOO';
-            $simple->bar = 'BAR';
+            $simple->bar = 1000;
             $json = Protobuf::encode($simple);
-            $json. should. eq. '{"1":"FOO","2":"BAR"}';
+            $json. should. eq. '{"1":"FOO","2":1000}';
         end.
 
         it. "a message with repeated fields"
@@ -114,11 +114,11 @@ describe "JSON TagMap Codec"
     describe "unserialize"
 
         it "should unserialize a simple message"
-            $json = '{"1":"FOO","2":"BAR"}';
+            $json = '{"1":"FOO","2":1000}';
             $simple = Protobuf::decode('Tests\Simple', $json);
             $simple should be instanceof 'Tests\Simple';
             $simple->foo should equal 'FOO';
-            $simple->bar should equal 'BAR';
+            $simple->bar should equal 1000;
         end.
 
         it "a message with repeated fields"

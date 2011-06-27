@@ -10,6 +10,11 @@ include_once __DIR__ . '/protos/simple.php';
 include_once __DIR__ . '/protos/repeated.php';
 include_once __DIR__ . '/protos/addressbook.php';
 
+include_once __DIR__ . '/protos/Annotated/Simple.php';
+include_once __DIR__ . '/protos/Annotated/Repeated.php';
+include_once __DIR__ . '/protos/Annotated/Addressbook.php';
+
+
 describe "JSON Codec"
 
     before
@@ -18,12 +23,12 @@ describe "JSON Codec"
 
     describe "serialize"
 
-        it "should serialize a simple message"
+        it "a simple message"
             $simple = new Tests\Simple();
             $simple->foo = 'FOO';
-            $simple->bar = 'BAR';
+            $simple->bar = 1000;
             $json = Protobuf::encode($simple);
-            $json. should. eq. '{"foo":"FOO","bar":"BAR"}';
+            $json. should. eq. '{"foo":"FOO","bar":1000}';
         end.
 
          it. "a message with repeated fields"
@@ -109,16 +114,50 @@ describe "JSON Codec"
 
             $json should be $expected;
         end.
+
+        it "an annotated simple message"
+            $simple = new tests\Annotated\Simple();
+            $simple->foo = 'FOO';
+            $simple->bar = 1000;
+            $json = Protobuf::encode($simple);
+            $json. should. eq. '{"foo":"FOO","bar":1000}';
+        end.
+
+        it "an annotated message with repeated fields"
+             $repeated = new \Tests\Annotated\Repeated();
+             $repeated->string = array('one', 'two', 'three');
+             $bin = Protobuf::encode($repeated);
+             $bin should be '{"string":["one","two","three"]}';
+
+             $repeated = new Tests\Annotated\Repeated();
+             $repeated->int = array(1,2,3);
+             $bin = Protobuf::encode($repeated);
+             $bin should be '{"int":[1,2,3]}';
+
+             $repeated = new Tests\Annotated\Repeated();
+             $repeated->nested = array();
+             $nested = new Tests\Annotated\RepeatedNested();
+             $nested->id = 1;
+             $repeated->nested[] = $nested;
+             $nested = new Tests\Annotated\RepeatedNested();
+             $nested->id = 2;
+             $repeated->nested[] = $nested;
+             $nested = new Tests\Annotated\RepeatedNested();
+             $nested->id = 3;
+             $repeated->nested[] = $nested;
+             $json = Protobuf::encode($repeated);
+             $json should eq '{"nested":[{"id":1},{"id":2},{"id":3}]}';
+        end.
     end;
 
     describe "unserialize"
 
         it "should unserialize a simple message"
-            $json = '{"foo":"FOO","bar":"BAR"}';
+            $json = '{"foo":"FOO","bar":1000}';
             $simple = Protobuf::decode('Tests\Simple', $json);
             $simple should be instanceof 'Tests\Simple';
             $simple->foo should equal 'FOO';
-            $simple->bar should equal 'BAR';
+            $simple->bar should equal 1000;
         end.
 
         it "a message with repeated fields"

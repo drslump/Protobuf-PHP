@@ -7,19 +7,11 @@ namespace tests {
 
   class Repeated extends \DrSlump\Protobuf\Message {
 
-    /** @var \DrSlump\Protobuf\Descriptor */
-    protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
-      if (NULL !== $descriptor) {
-        self::$__descriptor = $descriptor;
-        return self::$__descriptor;
-      }
-
-      if (!self::$__descriptor) {
         $descriptor = new \DrSlump\Protobuf\Descriptor('\tests\Repeated');
 
         // repeated  string = 1
@@ -51,10 +43,7 @@ namespace tests {
           $descriptor->addField($cb(), true);
         }
 
-        self::$__descriptor = $descriptor;
-      }
-
-      return self::$__descriptor;
+      return $descriptor;
     }
 
     /** @var string[] */
@@ -245,19 +234,11 @@ namespace tests\Repeated {
 
   class Nested extends \DrSlump\Protobuf\Message {
 
-    /** @var \DrSlump\Protobuf\Descriptor */
-    protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
-      if (NULL !== $descriptor) {
-        self::$__descriptor = $descriptor;
-        return self::$__descriptor;
-      }
-
-      if (!self::$__descriptor) {
         $descriptor = new \DrSlump\Protobuf\Descriptor('\tests\Repeated\Nested');
 
         // optional  id = 1
@@ -272,10 +253,7 @@ namespace tests\Repeated {
           $descriptor->addField($cb(), true);
         }
 
-        self::$__descriptor = $descriptor;
-      }
-
-      return self::$__descriptor;
+      return $descriptor;
     }
 
     /** @var int */
