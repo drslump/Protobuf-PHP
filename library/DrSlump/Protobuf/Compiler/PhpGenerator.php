@@ -11,32 +11,37 @@ class PhpGenerator extends AbstractGenerator
 
     protected function addComponent($ns, $name, $src)
     {
-        if (!empty($ns)) {
-            $ns = str_replace('\\', '.', $ns);
-            $name = $ns . '.' . $name;
-        }
-
+        $name = $this->normalizeNS($ns . '.' . $name);
         $this->components[$name] = $src;
     }
 
-    public function getNamespace(proto\FileDescriptorProto $proto)
+    public function getNamespace(proto\FileDescriptorProto $proto = NULL)
     {
-        $namespace = $proto->getPackage();
+        $proto = $proto ?: $this->proto;
+
         $opts = $proto->getOptions();
-        if (isset($opts['php.package'])) {
-            $namespace = $opts['php.package'];
-        }
-        if (isset($opts['php.namespace'])) {
+        if ($this->compiler->getOption('namespace')) {
+            $namespace = $this->compiler->getOption('namespace');
+        } else if ($this->compiler->getOption('package')) {
+            $namespace = $this->compiler->getOption('package');
+        } else if (isset($opts['php.namespace'])) {
             $namespace = $opts['php.namespace'];
+        } else if (isset($opts['php.package'])) {
+            $namespace = $opts['php.package'];
+        } else {
+            $namespace = parent::getNamespace($proto);
         }
 
         $namespace = trim($namespace, '.\\');
         return str_replace('.', '\\', $namespace);
     }
 
-    public function compileProtoFile(proto\FileDescriptorProto $proto)
+    public function generate(proto\FileDescriptorProto $proto)
     {
-        $namespace = $this->getNamespace($proto);
+        parent::generate($proto);
+
+        $this->components = array();
+        $namespace = $proto->getPackage();
 
         // Generate Enums
         foreach ($proto->getEnumType() as $enum) {
@@ -79,7 +84,8 @@ class PhpGenerator extends AbstractGenerator
 
         $files = array();
         $opts = $proto->getOptions();
-        if (empty($opts) || empty($opts['php.multifile'])) {
+        $multi = $this->compiler->getOption('multifile', 'bool');
+        if (!$multi && (empty($opts) || empty($opts['php.multifile']))) {
             $src = '';
             foreach ($this->components as $content) {
                 $src .= $content;
@@ -88,7 +94,7 @@ class PhpGenerator extends AbstractGenerator
             $files[] = $this->buildFile($proto, $fname, $src);
         } else {
             foreach ($this->components as $ns => $content) {
-                $fname = str_replace('.', '/', $ns);
+                $fname = str_replace('\\', '/', $ns);
                 $files[] = $this->buildFile($proto, $fname, $content);
             }
         }
@@ -96,11 +102,16 @@ class PhpGenerator extends AbstractGenerator
         return $files;
     }
 
-    protected function buildFile($proto, $fname, $contents)
+    protected function buildFile(proto\FileDescriptorProto $proto, $fname, $contents)
     {
-        $opts = $proto->hasOptions() ? $proto->getOptions() : array();
-        $fname = str_replace('.', '/', $fname);
-        $fname .= isset($opts['php.suffix']) ? $opts['php.suffix'] : '.php';
+        $suffix = $this->compiler->getOption('suffix');
+        if (!$suffix) {
+            $opts = $proto->hasOptions() ? $proto->getOptions() : array();
+            $suffix = isset($opts['php.suffix'])
+                    ? $opts['php.suffix']
+                    : '.php';
+        }
+        $fname .= $suffix;
 
         $file = new \google\protobuf\compiler\CodeGeneratorResponse\File();
         $file->setName($fname);
@@ -119,22 +130,30 @@ class PhpGenerator extends AbstractGenerator
         return $file;
     }
 
-    public function compileEnum(proto\EnumDescriptorProto $enum, $namespace)
+    protected function compileEnum(proto\EnumDescriptorProto $enum, $ns)
     {
         $s = array();
 
-        $s[]= "namespace $namespace {";
+        $s[]= "namespace " . $this->normalizeNS($ns) . " {";
         $s[]= "";
         $s[]= "  // @@protoc_insertion_point(scope_namespace)";
-        $s[]= "  // @@protoc_insertion_point(namespace_" . str_replace('\\', '_', $namespace) . ')';
+        $s[]= "  // @@protoc_insertion_point(namespace_" . str_replace('.', '_', $ns) . ')';
         $s[]= "";
+
+        $cmt = $this->compiler->getComment($ns . '.' . $enum->getName(), '   * ');
+        if ($cmt):
+        $s[]= "  /**";
+        $s[]= $cmt;
+        $s[]= "   */";
+        endif;
+
         $s[]= "  class " . $enum->getName() . " {";
         foreach ($enum->getValueList() as $value):
         $s[]= "    const " . $value->getName() . " = " . $value->getNumber() . ";";
         endforeach;
         $s[]= "";
         $s[]= "    // @@protoc_insertion_point(scope_class)";
-        $s[]= '    // @@protoc_insertion_point(class_' . str_replace('\\', '_', $namespace) . '.' . $enum->getName() . ')';
+        $s[]= '    // @@protoc_insertion_point(class_' . str_replace('.', '_', $ns) . '_' . $enum->getName() . ')';
         $s[]= "  }";
         $s[]= "}";
         $s[]= "";
@@ -142,14 +161,25 @@ class PhpGenerator extends AbstractGenerator
         return implode(PHP_EOL, $s);
     }
 
-    public function compileMessage(proto\DescriptorProto $msg, $namespace)
+    protected function compileMessage(proto\DescriptorProto $msg, $ns)
     {
         $s = array();
-        $s[]= "namespace $namespace {";
+        $s[]= "namespace " . $this->normalizeNS($ns) . " {";
         $s[]= "";
         $s[]= "  // @@protoc_insertion_point(scope_namespace)";
-        $s[]= "  // @@protoc_insertion_point(namespace_" . str_replace('\\', '_', $namespace) . ')';
+        $s[]= "  // @@protoc_insertion_point(namespace_" . str_replace('.', '_', $ns) . ')';
         $s[]= "";
+
+        $cmt = $this->compiler->getComment($ns . '.' . $msg->getName(), '   * ');
+        if ($cmt):
+        $s[]= "  /**";
+        $s[]= $cmt;
+        $s[]= "   */";
+        endif;
+
+        // Compute a new namespace with the message name as suffix
+        $ns .= '.' . $msg->getName();
+
         $s[]= "  class " . $msg->getName() . " extends \DrSlump\Protobuf\Message {";
         $s[]= "";
         $s[]= '    /** @var \Closure[] */';
@@ -157,10 +187,10 @@ class PhpGenerator extends AbstractGenerator
         $s[]= '';
         $s[]= '    public static function descriptor()';
         $s[]= '    {';
-        $s[]= '      $descriptor = new \DrSlump\Protobuf\Descriptor(\'\\'.$namespace.'\\'.$msg->getName().'\');';
+        $s[]= '      $descriptor = new \DrSlump\Protobuf\Descriptor(\'\\' . $this->normalizeNS($ns) . "');";
         $s[]= '';
         foreach ($msg->getField() as $field):
-        $s[]=        $this->compileField($field, $namespace . '\\' . $msg->getName(), "      ");
+        $s[]=        $this->compileField($field, $ns, "      ");
         $s[]= '      $descriptor->addField($f);';
         $s[]= '';
         endforeach;
@@ -169,7 +199,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= '      }';
         $s[]= '';
         $s[]= '      // @@protoc_insertion_point(scope_descriptor)';
-        $s[]= '      // @@protoc_insertion_point(descriptor_' . str_replace('\\', '_', $namespace) . '_' . $msg->getName() . ')';
+        $s[]= '      // @@protoc_insertion_point(descriptor_' . str_replace('.', '_', $ns) . ')';
         $s[]= '';
         $s[]= '      return $descriptor;';
         $s[]= '    }';
@@ -183,45 +213,41 @@ class PhpGenerator extends AbstractGenerator
         //$s[]= "";
 
         foreach ($msg->getField() as $field):
-        $s[]= $this->generatePublicField($field, "    ");
+        $s[]= $this->generatePublicField($field, $ns, "    ");
         endforeach;
         $s[]= "";
 
         foreach ($msg->getField() as $field):
-        $s[]= $this->generateAccessors($field, $namespace . '\\' . $msg->getName(), "    ");
+        $s[]= $this->generateAccessors($field, $ns, "    ");
         endforeach;
 
         $s[]= "";
         $s[]= "    // @@protoc_insertion_point(scope_class)";
-        $s[]= '    // @@protoc_insertion_point(class_' . str_replace('\\', '_', $namespace) . '_' . $msg->getName() . ')';
+        $s[]= '    // @@protoc_insertion_point(class_' . str_replace('.', '_', $ns) . ')';
         $s[]= "  }";
         $s[]= "}";
         $s[]= "";
 
-
-        // Compute a new namespace with the message name as suffix
-        $namespace .= "\\" . $msg->getName();
-
         // Generate Enums
         if ($msg->hasEnumType()):
         foreach ($msg->getEnumType() as $enum):
-        $src = $this->compileEnum($enum, $namespace);
-        $this->addComponent($namespace, $enum->getName(), $src);
+        $src = $this->compileEnum($enum, $ns);
+        $this->addComponent($ns, $enum->getName(), $src);
         endforeach;
         endif;
 
         // Generate nested messages
         if ($msg->hasNestedType()):
         foreach ($msg->getNestedType() as $msg):
-        $src = $this->compileMessage($msg, $namespace);
-        $this->addComponent($namespace, $msg->getName(), $src);
+        $src = $this->compileMessage($msg, $ns);
+        $this->addComponent($ns, $msg->getName(), $src);
         endforeach;
         endif;
 
         // Collect extensions
         if ($msg->hasExtension()) {
             foreach ($msg->getExtensionList() as $field) {
-                $this->_extensions[$field->getExtendee()][] = array($namespace, $field);
+                $this->_extensions[$field->getExtendee()][] = array($ns, $field);
             }
         }
 
@@ -229,7 +255,7 @@ class PhpGenerator extends AbstractGenerator
     }
 
 
-    public function compileField(proto\FieldDescriptorProto $field, $namespace, $indent)
+    protected function compileField(proto\FieldDescriptorProto $field, $ns, $indent)
     {
         switch ($field->getLabel()) {
         case Protobuf::RULE_REQUIRED:
@@ -251,24 +277,24 @@ class PhpGenerator extends AbstractGenerator
         $s[]= '$f->rule      = ' . $field->getLabel() . ';';
 
         if ($field->hasTypeName()):
-        $reference = $field->getTypeName();
-        if (substr($reference, 0, 1) !== '.') {
-            throw new \RuntimeException('Only fully qualified names are supported: ' . $reference);
+        $ref = $field->getTypeName();
+        if (substr($ref, 0, 1) !== '.') {
+            throw new \RuntimeException("Only fully qualified names are supported but found '$ref' at $ns");
         }
-        $s[]= "\$f->reference = '\\" . $this->normalizeReference($reference) . "';";
+        $s[]= '$f->reference = \'\\' . $this->normalizeNS($ref) . "';";
         endif;
 
         if ($field->hasDefaultValue()):
             switch ($field->getType()) {
             case Protobuf::TYPE_BOOL:
-                $bool = filter_var($field->getDefaultValue(), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                $bool = filter_var($field->getDefaultValue(), FILTER_VALIDATE_BOOLEAN);
                 $s[]= '$f->default   = ' . ($bool ? 'true' : 'false') . ';';
                 break;
             case Protobuf::TYPE_STRING:
                 $s[]= '$f->default   = "' . addcslashes($field->getDefaultValue(), '"\\') . '";';
                 break;
             case Protobuf::TYPE_ENUM:
-                $value = '\\' . $this->normalizeReference($field->getTypeName()) . '::' . $field->getDefaultValue();
+                $value = '\\' . $this->normalizeNS($field->getTypeName()) . '::' . $field->getDefaultValue();
                 $s[]= '$f->default   = ' . $value . ';';
                 break;
             default: // Numbers
@@ -277,39 +303,39 @@ class PhpGenerator extends AbstractGenerator
         endif;
 
         $s[]= '// @@protoc_insertion_point(scope_field)';
-        $s[]= '// @@protoc_insertion_point(field_' . str_replace('\\', '_', $namespace) . '_' . $field->getName();
+        $s[]= '// @@protoc_insertion_point(field_' . str_replace('.', '_', $ns) . '_' . $field->getName();
 
         return $indent . implode(PHP_EOL.$indent, $s);
     }
 
-    public function compileExtension(proto\FieldDescriptorProto $field, $ns, $indent)
+    protected function compileExtension(proto\FieldDescriptorProto $field, $ns, $indent)
     {
-        $extendee = $this->normalizeReference($field->getExtendee());
-
-        $name = $field->getName();
-        if ($ns) {
-            $name = $ns . '.' . $name;
-        }
-        $name = str_replace('\\', '.', $name);
+        $extendee = $this->normalizeNS($field->getExtendee());
+        $name = $this->normalizeNS($ns . '.' . $field->getName());
         $field->setName($name);
 
         $s[]= "\\$extendee::extension(function(){";
         $s[]= $this->compileField($field, $ns, $indent.'  ');
         $s[]= '  // @@protoc_insertion_point(scope_extension)';
-        $s[]= '  // @@protoc_insertion_point(extension_' . str_replace('\\', '_', $ns) . '_' . $field->getName();
+        $s[]= '  // @@protoc_insertion_point(extension_' . str_replace('.', '_', $ns) . '_' . $field->getName();
         $s[]= '  return $f;';
         $s[]= "});";
 
         return $indent . implode(PHP_EOL.$indent, $s);
     }
 
-    public function generatePublicField(proto\FieldDescriptorProto $field, $indent)
+    protected function generatePublicField(proto\FieldDescriptorProto $field, $ns, $indent)
     {
+        $cmt = $this->compiler->getComment($ns . '.' . $field->getNumber(), "$indent * ");
+        if ($cmt) {
+            $cmt = "\n" . $cmt . "\n$indent *";
+        }
+
         if ($field->getLabel() === Protobuf::RULE_REPEATED) {
-            $s[]= "/** @var " . $this->getJavaDocType($field) . "[] */";
+            $s[]= "/** $cmt @var " . $this->getJavaDocType($field) . "[] " . ($cmt ? "\n$indent" : '') . " */";
             $s[]= 'public $' . $field->getName() . " = array();";
         } else {
-            $s[]= "/** @var " . $this->getJavaDocType($field) . " */";
+            $s[]= "/** $cmt @var " . $this->getJavaDocType($field) . ($cmt ? "\n$indent" : '') . " */";
             $default = 'null';
             if ($field->hasDefaultValue()) {
                 switch ($field->getType()) {
@@ -320,7 +346,7 @@ class PhpGenerator extends AbstractGenerator
                     $default = '"' . addcslashes($field->getDefaultValue(), '"\\') . '"';
                     break;
                 case Protobuf::TYPE_ENUM:
-                    $default = '\\' . $this->normalizeReference($field->getTypeName()) . '::' . $field->getDefaultValue();
+                    $default = '\\' . $this->normalizeNS($field->getTypeName()) . '::' . $field->getDefaultValue();
                     break;
                 default: // Numbers
                     $default = $field->getDefaultValue();
@@ -333,11 +359,11 @@ class PhpGenerator extends AbstractGenerator
         return $indent . implode(PHP_EOL.$indent, $s);
     }
 
-    public function generateAccessors(proto\FieldDescriptorProto $field, $namespace, $indent)
+    protected function generateAccessors(proto\FieldDescriptorProto $field, $ns, $indent)
     {
         $tag = $field->getNumber();
         $name = $field->getName();
-        $camel = $this->comp->camelize(ucfirst($name));
+        $camel = $this->compiler->camelize(ucfirst($name));
 
         $typehint = '';
         $typedoc = $this->getJavaDocType($field);
@@ -360,7 +386,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= "/**";
         $s[]= " * Clear <$name> value";
         $s[]= " *";
-        $s[]= " * @return \\$namespace";
+        $s[]= " * @return \\" . $this->normalizeNS($ns);
         $s[]= " */";
         $s[]= "public function clear$camel(){";
         $s[]= "  return \$this->_clear($tag);";
@@ -387,7 +413,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= " * Set <$name> value";
         $s[]= " *";
         $s[]= " * @param $typedoc \$value";
-        $s[]= " * @return \\$namespace";
+        $s[]= " * @return \\" . $this->normalizeNS($ns);
         $s[]= " */";
         $s[]= "public function set$camel($typehint \$value, \$idx = NULL){";
         $s[]= "  return \$this->_set($tag, \$value, \$idx);";
@@ -408,7 +434,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= " * Add a new element to <$name>";
         $s[]= " *";
         $s[]= " * @param $typedoc \$value";
-        $s[]= " * @return \\$namespace";
+        $s[]= " * @return \\" . $this->normalizeNS($ns);
         $s[]= " */";
         $s[]= "public function add$camel($typehint \$value){";
         $s[]= " return \$this->_add($tag, \$value);";
@@ -433,7 +459,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= " * Set <$name> value";
         $s[]= " *";
         $s[]= " * @param $typedoc \$value";
-        $s[]= " * @return \\$namespace";
+        $s[]= " * @return \\" . $this->normalizeNS($ns);
         $s[]= " */";
         $s[]= "public function set$camel($typehint \$value){";
         $s[]= "  return \$this->_set($tag, \$value);";
@@ -445,7 +471,7 @@ class PhpGenerator extends AbstractGenerator
         return $indent . implode(PHP_EOL.$indent, $s);
     }
 
-    public function getJavaDocType(proto\FieldDescriptorProto $field)
+    protected function getJavaDocType(proto\FieldDescriptorProto $field)
     {
         switch ($field->getType()) {
         case Protobuf::TYPE_DOUBLE:
@@ -467,11 +493,11 @@ class PhpGenerator extends AbstractGenerator
         case Protobuf::TYPE_STRING:
             return 'string';
         case Protobuf::TYPE_MESSAGE:
-            return '\\' . $this->normalizeReference($field->getTypeName());
+            return '\\' . $this->normalizeNS($field->getTypeName());
         case Protobuf::TYPE_BYTES:
             return 'string';
         case Protobuf::TYPE_ENUM:
-            return 'int - \\' . $this->normalizeReference($field->getTypeName());
+            return 'int - \\' . $this->normalizeNS($field->getTypeName());
 
         case Protobuf::TYPE_GROUP:
         default:
@@ -479,26 +505,26 @@ class PhpGenerator extends AbstractGenerator
         }
     }
 
-    public function normalizeReference($reference)
+    protected function normalizeNS($namespace)
     {
         // Remove leading dot
-        $reference = ltrim($reference, '.');
+        $namespace = ltrim($namespace, '.\\');
 
-        if (!$this->comp->hasPackage($reference)) {
+        if (!$this->compiler->hasPackage($namespace)) {
             $found = false;
-            foreach ($this->comp->getPackages() as $package=>$namespace) {
-                if (0 === strpos($reference, $package.'.')) {
-                    $reference = $namespace . substr($reference, strlen($package));
+            foreach ($this->compiler->getPackages() as $package=>$ns) {
+                if (0 === strpos($namespace, $package.'.')) {
+                    $namespace = $ns . substr($namespace, strlen($package));
                     $found = true;
                 }
             }
             if (!$found) {
-                $this->comp->warning('Non tracked package name found "' . $reference . '"');
+                $this->compiler->warning('Non tracked package name found "' . $namespace . '"');
             }
         } else {
-            $reference = $this->comp->getPackage($reference);
+            $namespace = $this->compiler->getPackage($namespace);
         }
 
-        return str_replace('.', '\\', $reference);
+        return str_replace('.', '\\', $namespace);
     }
 }

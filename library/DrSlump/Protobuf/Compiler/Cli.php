@@ -86,17 +86,39 @@ class Cli
             }
         }
 
+        // Convert proto files to absolute paths
+        $protos = array();
+        foreach ($result->args['protos'] as $proto) {
+            $protos[] = realpath($proto);
+        }
 
         // Protoc will pass custom arguments to the plugin if they are given
         // before a colon character. ie: --php_out="foo=bar:/path/to/plugin"
         // We make use of it to pass arguments encoded as an URI query string
 
         $args = array();
+
+        if ($result->options['comments']) {
+            $args['comments'] = 1;
+            // Protos are only needed for comments right now
+            $args['protos'] = $protos;
+        }
         if ($result->options['verbose']) {
             $args['verbose'] = 1;
         }
         if ($result->options['json']) {
             $args['json'] = 1;
+        }
+        if ($result->options['define']) {
+            $args['options'] = array();
+            foreach($result->options['define'] as $define) {
+                $parts = explode('=', $define);
+                $parts = array_filter(array_map('trim', $parts));
+                if (count($parts) === 1) {
+                    $parts[1] = 1;
+                }
+                $args['options'][$parts[0]] = $parts[1];
+            }
         }
 
         $cmd[] = '--php_out=' .
@@ -106,10 +128,9 @@ class Cli
                      $result->options['out']
                  );
 
-
         // Add the chosen proto files to generate
-        foreach ($result->args['protos'] as $arg) {
-            $cmd[] = escapeshellarg(realpath($arg));
+        foreach ($protos as $proto) {
+            $cmd[] = escapeshellarg($proto);
         }
 
         $cmdStr = implode(' ', $cmd);
@@ -161,12 +182,27 @@ class Cli
             'description'   => 'protoc compiler executable path',
         ));
 
+        $main->addOption('comments', array(
+            'long_name'     => '--comments',
+            'action'        => 'StoreTrue',
+            'description'   => 'port .proto comments to generated code',
+        ));
+
+        $main->addOption('define', array(
+            'short_name'    => '-D',
+            'long_name'     => '--define',
+            'action'        => 'StoreArray',
+            'multiple'      => true,
+            'description'   => 'define a generator option (ie: -Dmultifile -Dsuffix=pb.php)',
+        ));
+
         $main->addOption('verbose', array(
             'short_name'    => '-v',
             'long_name'     => '--verbose',
             'action'        => 'StoreTrue',
             'description'   => 'turn on verbose output',
         ));
+
 
         $main->addArgument('protos', array(
             'multiple'      => true,

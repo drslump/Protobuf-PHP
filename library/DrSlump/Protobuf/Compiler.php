@@ -15,14 +15,19 @@ class Compiler
 {
     /** @var bool */
     protected $verbose = false;
-
     /** @var array */
     protected $packages = array();
-
+    /** @var \DrSlump\Protobuf\Compiler\CommentsParser */
+    protected $comments;
+    /** @var array */
+    protected $options = array();
+    /** @var array */
+    protected $protos = array();
 
     public function __construct($verbose = false)
     {
         $this->verbose = $verbose;
+        $this->comments = new Compiler\CommentsParser();
     }
 
     public function stderr($str)
@@ -68,6 +73,20 @@ class Compiler
         $this->packages[$package] = $namespace;
     }
 
+    public function getOption($option, $type = 'string')
+    {
+        $value = isset($this->options[$option])
+                 ? $this->options[$option]
+                 : null;
+
+        switch ($type) {
+            case 'bool':
+                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+            default:
+                return $value;
+        }
+    }
+
     public function camelize($name)
     {
         return preg_replace_callback(
@@ -80,10 +99,14 @@ class Compiler
     public function compile($data)
     {
         // Parse the request
-        $req = new proto\compiler\CodeGeneratorRequest($data);
+        $req = new \google\protobuf\compiler\CodeGeneratorRequest($data);
 
         // Set default generator class
         $generator = __CLASS__ . '\PhpGenerator';
+
+        // Reset comments parser
+        $this->comments->reset();
+        $parseComments = false;
 
         // Get plugin arguments
         if ($req->hasParameter()) {
@@ -97,17 +120,41 @@ class Compiler
                     $this->notice("Using ProtoJson generator");
                     $generator = __CLASS__ . '\JsonGenerator';
                     break;
+                case 'comments':
+                    $parseComments = filter_var($val, FILTER_VALIDATE_BOOLEAN);
+                    break;
+                case 'protos':
+                    $this->protos = $val;
+                    break;
+                case 'options':
+                    $this->warning(print_r($val, true));
+                    $this->options = $val;
+                    break;
                 default:
                     $this->warning('Skipping unknown option ' . $arg);
                 }
             }
         }
 
-        // Create a suitable generator
+        // Parse comments if we're told to do so
+        if ($parseComments) {
+            if (empty($this->protos)) {
+                throw new \RuntimeException('Unable to port comments if .proto files are not passed as argument');
+            }
+            foreach ($this->protos as $fname) {
+                $src = file_get_contents($fname);
+                if (FALSE === $src) {
+                    throw new \RuntimeException('Unable to parse file ' . $fname . ' for comments');
+                }
+                $this->comments->parse($src);
+            }
+        }
+
+        /** @var $generator \DrSlump\Protobuf\Compiler\AbstractGenerator */
         $generator = new $generator($this);
 
         // Setup response object
-        $resp = new proto\Compiler\CodeGeneratorResponse();
+        $resp = new \google\protobuf\compiler\CodeGeneratorResponse();
 
         // First iterate over all the protos to get a map of namespaces
         $this->packages = array();
@@ -122,15 +169,15 @@ class Compiler
         $files = $req->getFileToGenerate();
 
         // Run each file
-        foreach($req->getProtoFileList() as $file) {
+        foreach ($req->getProtoFileList() as $file) {
             // Only compile those given to generate, not the imported ones
             if (!in_array($file->getName(), $files)) {
                 $this->notice('Skipping generation of imported file "' . $file->getName() . '"');
                 continue;
             }
 
-            $sources = $generator->compileProtoFile($file);
-            foreach($sources as $source) {
+            $sources = $generator->generate($file);
+            foreach ($sources as $source) {
                 $this->notice('Generating "' . $source->getName() . '"');
                 $resp->addFile($source);
             }
@@ -140,5 +187,18 @@ class Compiler
         return $resp->serialize();
     }
 
+    public function getComment($ident, $prefix = '')
+    {
+        if (!$this->comments->hasComment($ident)) {
+            return null;
+        }
+
+        $comment = $this->comments->getComment($ident);
+        if (0 < strlen($prefix)) {
+            $comment = $prefix . str_replace("\n", "\n$prefix", $comment);
+        }
+
+        return $comment;
+    }
 }
 

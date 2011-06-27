@@ -43,6 +43,15 @@ The command accepts the following command-line options (switches).
     directory. If not set it will create the files in the working
     directory.
 
+  * `--comments`
+    Parses the .proto files looking for multiline comments (/* ... */) to
+    include them in the generated files.
+
+  * `-Ddefine`, `-Ddefine`=_value_:
+    Defines an option (defaults to true if no value given) to pass to
+    the generator. See protobuf-php(5) for supported options, noting that
+    the `php.` prefix shall not be used here.
+
 
 ## EXAMPLES ##
 
@@ -58,6 +67,10 @@ Generate PHP files in the "build" directory for each proto file found the
 Generate a PHP file from a proto file using imports from an include path:
 
     $ protoc-gen-php -i ./protos protos/tutorial.proto
+
+Generate a PHP file with a custom extension
+
+    $ protoc-gen-php -Dsuffix=pb.php tutorial.proto
 
 
 ## BUGS ##

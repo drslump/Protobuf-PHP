@@ -6,24 +6,35 @@ use google\protobuf as proto;
 
 abstract class AbstractGenerator
 {
-    /** @var \DrSlump\Protobuf\Compiler; */
-    protected $comp;
+    /** @var \DrSlump\Protobuf\Compiler */
+    protected $compiler;
+    /** @var \google\protobuf\FileDescriptorProto */
+    protected $proto;
 
     /** @var array */
     protected $extensions = array();
 
     public function __construct(\DrSlump\Protobuf\Compiler $compiler)
     {
-        $this->comp = $compiler;
+        $this->compiler = $compiler;
     }
 
-    abstract public function getNamespace(proto\FileDescriptorProto $proto);
+    public function getNamespace(proto\FileDescriptorProto $proto = NULL)
+    {
+        return NULL === $proto
+               ? $this->proto->getPackage()
+               : $proto->getPackage();
+    }
 
-    abstract public function compileProtoFile(proto\FileDescriptorProto $proto);
+    public function generate(proto\FileDescriptorProto $proto)
+    {
+        $this->proto = $proto;
+    }
 
-    abstract public function compileEnum(proto\EnumDescriptorProto $enum, $namespace);
 
-    abstract public function compileMessage(proto\DescriptorProto $msg, $namespace);
+    abstract protected function compileEnum(proto\EnumDescriptorProto $enum, $namespace);
 
-    abstract public function compileExtension(proto\FieldDescriptorProto $field, $ns, $indent);
+    abstract protected function compileMessage(proto\DescriptorProto $msg, $namespace);
+
+    abstract protected function compileExtension(proto\FieldDescriptorProto $field, $ns, $indent);
 }
