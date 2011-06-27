@@ -103,17 +103,28 @@ Buffers's <em>protoc</em> command, version 2.3 or above, available on your path.
 
 <p>The command accepts the following command-line options (switches).</p>
 
-<dl>
-<dt><code>-v</code>, <code>--verbose</code></dt><dd><p>Enables verbose mode. Additional information will be printed when
-processing the files.</p></dd>
-<dt><code>-h</code>, <code>--help</code></dt><dd><p>Prints the usage help message and quits.</p></dd>
-<dt><code>-i</code> <em>directory</em>, <code>--include</code>=<em>directory</em></dt><dd><p>Tells the protoc compiler to look into that directory when resolving
+<ul>
+<li><p><code>-v</code>, <code>--verbose</code>:
+Enables verbose mode. Additional information will be printed when
+processing the files.</p></li>
+<li><p><code>-h</code>, <code>--help</code>:
+Prints the usage help message and quits.</p></li>
+<li><p><code>-i</code> <em>directory</em>, <code>--include</code>=<em>directory</em>:
+Tells the protoc compiler to look into that directory when resolving
 import statements. Note that you can use this switch more than once
-to configure multiple directories.</p></dd>
-<dt><code>-o</code> <em>directory</em>, <code>--out</code>=<em>directory</em></dt><dd><p>Tells the protoc compiler to create generated files in the given
+to configure multiple directories.</p></li>
+<li><p><code>-o</code> <em>directory</em>, <code>--out</code>=<em>directory</em>:
+Tells the protoc compiler to create generated files in the given
 directory. If not set it will create the files in the working
-directory.</p></dd>
-</dl>
+directory.</p></li>
+<li><p><code>--comments</code>
+Parses the .proto files looking for multiline comments (/<em> ... </em>/) to
+include them in the generated files.</p></li>
+<li><p><code>-Ddefine</code>, <code>-Ddefine</code>=<em>value</em>:
+Defines an option (defaults to true if no value given) to pass to
+the generator. See <a class="man-ref" href="protobuf-php.5.html">protobuf-php<span class="s">(5)</span></a> for supported options, noting that
+the <code>php.</code> prefix shall not be used here.</p></li>
+</ul>
 
 
 <h2 id="EXAMPLES">EXAMPLES</h2>
@@ -132,6 +143,11 @@ directory.</p></dd>
 <p>Generate a PHP file from a proto file using imports from an include path:</p>
 
 <pre><code>$ protoc-gen-php -i ./protos protos/tutorial.proto
+</code></pre>
+
+<p>Generate a PHP file with a custom extension</p>
+
+<pre><code>$ protoc-gen-php -Dsuffix=pb.php tutorial.proto
 </code></pre>
 
 <h2 id="BUGS">BUGS</h2>
