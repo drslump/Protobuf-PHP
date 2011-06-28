@@ -195,9 +195,9 @@ class Binary implements Protobuf\CodecInterface
             $type = $field->getType();
 
             // Check if we are dealing with a packed stream, we cannot rely on the packed
-            // flag of the message since we cannot be certain if the creator of the was
-            // using it.
-            if ($wire === self::WIRE_LENGTH && $this->isPackable($type)) {
+            // flag of the message since we cannot be certain if the creator of the message
+            // was using it.
+            if ($wire === self::WIRE_LENGTH && $field->isRepeated() && $this->isPackable($type)) {
                 $length = $reader->varint();
                 $until = $reader->pos() + $length;
                 while ($reader->pos() < $until) {
