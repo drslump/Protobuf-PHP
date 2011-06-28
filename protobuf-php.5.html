@@ -98,6 +98,9 @@ definition. If this option is set to <code>true</code> then each message and enu
 generated in a separate file, following PEAR's conventions, and if extensions
 are pressent in the proto definition a file named after the proto file with the
 suffix "-extensions" will contain them.</p></dd>
+<dt><code>php.generic_services</code> <var>boolean</var></dt><dd><p>By default no service interfaces will be generated. If this option is set
+to true then Interfaces will be created for each <code>service</code> definition found,
+including a method named after each <code>rpc</code> entry.</p></dd>
 </dl>
 
 
@@ -106,6 +109,7 @@ suffix "-extensions" will contain them.</p></dd>
 <pre><code>option (php.suffix) = ".pb.php"
 option (php.namespace) = "MyOrg.Protos"
 option (php.multifile) = true
+option (php.generic_services) = true
 </code></pre>
 
 <h2 id="BUGS">BUGS</h2>
