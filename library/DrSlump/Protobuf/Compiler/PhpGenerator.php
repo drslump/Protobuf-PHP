@@ -137,7 +137,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= "namespace " . $this->normalizeNS($ns) . " {";
         $s[]= "";
         $s[]= "  // @@protoc_insertion_point(scope_namespace)";
-        $s[]= "  // @@protoc_insertion_point(namespace_" . str_replace('.', '_', $ns) . ')';
+        $s[]= "  // @@protoc_insertion_point(namespace_$ns)";
         $s[]= "";
 
         $cmt = $this->compiler->getComment($ns . '.' . $enum->getName(), '   * ');
@@ -153,7 +153,7 @@ class PhpGenerator extends AbstractGenerator
         endforeach;
         $s[]= "";
         $s[]= "    // @@protoc_insertion_point(scope_class)";
-        $s[]= '    // @@protoc_insertion_point(class_' . str_replace('.', '_', $ns) . '_' . $enum->getName() . ')';
+        $s[]= '    // @@protoc_insertion_point(class_' . $ns . '.' . $enum->getName() . ')';
         $s[]= "  }";
         $s[]= "}";
         $s[]= "";
@@ -167,7 +167,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= "namespace " . $this->normalizeNS($ns) . " {";
         $s[]= "";
         $s[]= "  // @@protoc_insertion_point(scope_namespace)";
-        $s[]= "  // @@protoc_insertion_point(namespace_" . str_replace('.', '_', $ns) . ')';
+        $s[]= "  // @@protoc_insertion_point(namespace_$ns)";
         $s[]= "";
 
         $cmt = $this->compiler->getComment($ns . '.' . $msg->getName(), '   * ');
@@ -199,7 +199,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= '      }';
         $s[]= '';
         $s[]= '      // @@protoc_insertion_point(scope_descriptor)';
-        $s[]= '      // @@protoc_insertion_point(descriptor_' . str_replace('.', '_', $ns) . ')';
+        $s[]= '      // @@protoc_insertion_point(descriptor_' . $ns . ')';
         $s[]= '';
         $s[]= '      return $descriptor;';
         $s[]= '    }';
@@ -223,7 +223,7 @@ class PhpGenerator extends AbstractGenerator
 
         $s[]= "";
         $s[]= "    // @@protoc_insertion_point(scope_class)";
-        $s[]= '    // @@protoc_insertion_point(class_' . str_replace('.', '_', $ns) . ')';
+        $s[]= '    // @@protoc_insertion_point(class_' . $ns . ')';
         $s[]= "  }";
         $s[]= "}";
         $s[]= "";
@@ -303,7 +303,7 @@ class PhpGenerator extends AbstractGenerator
         endif;
 
         $s[]= '// @@protoc_insertion_point(scope_field)';
-        $s[]= '// @@protoc_insertion_point(field_' . str_replace('.', '_', $ns) . '_' . $field->getName();
+        $s[]= '// @@protoc_insertion_point(field_' . $ns . ':' . $field->getName() . ')';
 
         return $indent . implode(PHP_EOL.$indent, $s);
     }
@@ -317,7 +317,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= "\\$extendee::extension(function(){";
         $s[]= $this->compileField($field, $ns, $indent.'  ');
         $s[]= '  // @@protoc_insertion_point(scope_extension)';
-        $s[]= '  // @@protoc_insertion_point(extension_' . str_replace('.', '_', $ns) . '_' . $field->getName();
+        $s[]= '  // @@protoc_insertion_point(extension_' . $ns . ':' . $field->getName() . ')';
         $s[]= '  return $f;';
         $s[]= "});";
 
