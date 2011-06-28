@@ -46,4 +46,14 @@ namespace {
     $f->default   = false;
     return $f;
   });
+  \google\protobuf\FileOptions::extension(function(){
+      // optional  php.generic_services = 50005
+    $f = new \DrSlump\Protobuf\Field();
+    $f->number    = 50005;
+    $f->name      = "php.generic_services";
+    $f->type      = 8;
+    $f->rule      = 1;
+    $f->default   = false;
+    return $f;
+  });
 }

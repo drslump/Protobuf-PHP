@@ -11,9 +11,10 @@ class CommentsParser
     protected $tokens = array(
         'comment' => '/\*([\S\s]+?)\*/',
         'package' => 'package\s+([A-Z0-9_]+)',
-        'struct'  => '(?:message|enum)\s+([A-Z0-9_]+)',
+        'struct'  => '(?:message|enum|service)\s+([A-Z0-9_]+)',
         'close'   => '}',
         'field'   => '(?:required|optional|repeated)\s+[^=]+=\s*([0-9]+)[^;]*;',
+        'rpc'     => 'rpc\s+([A-Z0-9_]+)[^;]+'
     );
 
     /** @var string - The regular expresion for the tokenizer */
@@ -77,7 +78,7 @@ class CommentsParser
             } elseif ($token['token'] === 'close') {
                 array_pop($stack);
                 $comment = null;
-            } elseif ($token['token'] === 'field') {
+            } elseif ($token['token'] === 'field' || $token['token'] === 'rpc') {
                 if ($comment) {
                     $this->setComment(implode('.', $stack) . '.' . $token['value'], $comment);
                     $comment = null;

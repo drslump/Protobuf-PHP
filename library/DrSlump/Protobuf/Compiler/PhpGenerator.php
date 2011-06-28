@@ -43,6 +43,9 @@ class PhpGenerator extends AbstractGenerator
         $this->components = array();
         $namespace = $proto->getPackage();
 
+        // Get options for the file
+        $opts = $proto->getOptions();
+
         // Generate Enums
         foreach ($proto->getEnumType() as $enum) {
             $src = $this->compileEnum($enum, $namespace);
@@ -54,6 +57,14 @@ class PhpGenerator extends AbstractGenerator
             $src = $this->compileMessage($msg, $namespace);
             $this->addComponent($namespace, $msg->getName(), $src);
         }
+
+        // Generate services
+        if (!empty($opts['php.generic_services']) && count($proto->hasService())):
+            foreach ($proto->getServiceList() as $service) {
+                $src = $this->compileService($service, $namespace);
+                $this->addComponent($namespace, $service->getName(), $src);
+            }
+        endif;
 
         // Collect extensions
         if ($proto->hasExtension()) {
@@ -81,6 +92,7 @@ class PhpGenerator extends AbstractGenerator
         $fname = pathinfo($proto->getName(), PATHINFO_FILENAME);
         $this->addComponent(null, $fname . '-extensions', $src);
         endif;
+
 
         $files = array();
         $opts = $proto->getOptions();
@@ -251,7 +263,7 @@ class PhpGenerator extends AbstractGenerator
             }
         }
 
-        return implode(PHP_EOL, $s);
+        return implode(PHP_EOL, $s) . PHP_EOL;
     }
 
 
@@ -322,6 +334,50 @@ class PhpGenerator extends AbstractGenerator
         $s[]= "});";
 
         return $indent . implode(PHP_EOL.$indent, $s);
+    }
+
+    protected function compileService(proto\ServiceDescriptorProto $service, $ns)
+    {
+        $s = array();
+        $s[]= 'namespace ' . $this->normalizeNS($ns) . ' {';
+        $s[]= '';
+        $s[]= "  // @@protoc_insertion_point(scope_namespace)";
+        $s[]= "  // @@protoc_insertion_point(namespace_$ns)";
+        $s[]= '';
+
+        $cmt = $this->compiler->getComment($ns . '.' . $service->getName(), '   * ');
+        if ($cmt):
+        $s[]= "  /**";
+        $s[]= $cmt;
+        $s[]= "   */";
+        endif;
+
+        $s[]= '  interface ' . $service->getName();
+        $s[]= '  {';
+        $s[]= '    // @@protoc_insertion_point(scope_interface)';
+        $s[]= '    // @@protoc_insertion_point(interface_' . $ns . '.' . $service->getName() . ')';
+        $s[]= '';
+
+        foreach ($service->getMethodList() as $method):
+        $s[]= '    /**';
+
+        $cmt = $this->compiler->getComment($ns . '.' . $service->getName() . '.' . $method->getName(), '     * ');
+        if ($cmt):
+        $s[]= $cmt;
+        $s[]= '     * ';
+        endif;
+
+        $s[]= '     * @param ' . $this->normalizeNS($method->getInputType()) . ' $input';
+        $s[]= '     * @return ' . $this->normalizeNS($method->getOutputType());
+        $s[]= '     */';
+        $s[]= '    public function ' . $method->getName() . '(' . $this->normalizeNS($method->getInputType()) . ' $input);';
+        $s[]= '';
+        endforeach;
+        $s[]= '  }';
+        $s[]= '}';
+        $s[]= '';
+
+        return implode(PHP_EOL, $s) . PHP_EOL;
     }
 
     protected function generatePublicField(proto\FieldDescriptorProto $field, $ns, $indent)

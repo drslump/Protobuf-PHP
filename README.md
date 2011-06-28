@@ -38,6 +38,7 @@ For more information see the included man pages.
   - Packed fields
   - Reflection
   - Dynamic messages with annotations support
+  - Generates service interfaces
   - Includes comments from .proto files in the generated files
   - Pear package for easy installation
 
@@ -45,7 +46,6 @@ For more information see the included man pages.
 
   - Improve binary codec speed and memory usage
   - Lazy-loading of nested messages
-  - Service stubs
 
 ### Future
 
