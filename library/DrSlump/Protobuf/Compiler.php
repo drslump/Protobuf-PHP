@@ -19,6 +19,8 @@ class Compiler
     protected $packages = array();
     /** @var \DrSlump\Protobuf\Compiler\CommentsParser */
     protected $comments;
+    /** @var bool */
+    protected $skipImported = false;
     /** @var array */
     protected $options = array();
     /** @var array */
@@ -126,8 +128,10 @@ class Compiler
                 case 'protos':
                     $this->protos = $val;
                     break;
+                case 'skip-imported':
+                    $this->skipImported = filter_var($val, FILTER_VALIDATE_BOOLEAN);
+                    break;
                 case 'options':
-                    $this->warning(print_r($val, true));
                     $this->options = $val;
                     break;
                 default:
@@ -171,7 +175,7 @@ class Compiler
         // Run each file
         foreach ($req->getProtoFileList() as $file) {
             // Only compile those given to generate, not the imported ones
-            if (!in_array($file->getName(), $files)) {
+            if ($this->skipImported && !in_array($file->getName(), $files)) {
                 $this->notice('Skipping generation of imported file "' . $file->getName() . '"');
                 continue;
             }

@@ -15,6 +15,25 @@ class PhpGenerator extends AbstractGenerator
         $this->components[$name] = $src;
     }
 
+    /**
+     * Get an option from the compiler arguments or from the proto file.
+     *
+     * @param string $name
+     * @return string|null
+     */
+    protected function getOption($name)
+    {
+        $opt = $this->compiler->getOption($name);
+        if (NULL === $opt) {
+            $opts = $this->proto->getOptions();
+            if (!empty($opts) && isset($opts['php.' . $name])) {
+                $opt = $opts['php.' . $name];
+            }
+        }
+
+        return $opt;
+    }
+
     public function getNamespace(proto\FileDescriptorProto $proto = NULL)
     {
         $proto = $proto ?: $this->proto;
@@ -43,9 +62,6 @@ class PhpGenerator extends AbstractGenerator
         $this->components = array();
         $namespace = $proto->getPackage();
 
-        // Get options for the file
-        $opts = $proto->getOptions();
-
         // Generate Enums
         foreach ($proto->getEnumType() as $enum) {
             $src = $this->compileEnum($enum, $namespace);
@@ -59,7 +75,7 @@ class PhpGenerator extends AbstractGenerator
         }
 
         // Generate services
-        if (!empty($opts['php.generic_services']) && count($proto->hasService())):
+        if ($this->getOption('generic_services') && count($proto->hasService())):
             foreach ($proto->getServiceList() as $service) {
                 $src = $this->compileService($service, $namespace);
                 $this->addComponent($namespace, $service->getName(), $src);
@@ -91,13 +107,14 @@ class PhpGenerator extends AbstractGenerator
         // to include the extensions with the extended message file.
         $fname = pathinfo($proto->getName(), PATHINFO_FILENAME);
         $this->addComponent(null, $fname . '-extensions', $src);
+
+        // Reset extensions for next proto file
+        $this->extensions = array();
         endif;
 
 
         $files = array();
-        $opts = $proto->getOptions();
-        $multi = $this->compiler->getOption('multifile', 'bool');
-        if (!$multi && (empty($opts) || empty($opts['php.multifile']))) {
+        if (!$this->getOption('multifile')) {
             $src = '';
             foreach ($this->components as $content) {
                 $src .= $content;
@@ -116,13 +133,7 @@ class PhpGenerator extends AbstractGenerator
 
     protected function buildFile(proto\FileDescriptorProto $proto, $fname, $contents)
     {
-        $suffix = $this->compiler->getOption('suffix');
-        if (!$suffix) {
-            $opts = $proto->hasOptions() ? $proto->getOptions() : array();
-            $suffix = isset($opts['php.suffix'])
-                    ? $opts['php.suffix']
-                    : '.php';
-        }
+        $suffix = $this->getOption('suffix') ?: '.php';
         $fname .= $suffix;
 
         $file = new \google\protobuf\compiler\CodeGeneratorResponse\File();

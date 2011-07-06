@@ -109,6 +109,9 @@ class Cli
         if ($result->options['json']) {
             $args['json'] = 1;
         }
+        if ($result->options['skipImported']) {
+            $args['skip-imported'] = 1;
+        }
         if ($result->options['define']) {
             $args['options'] = array();
             foreach($result->options['define'] as $define) {
@@ -180,6 +183,13 @@ class Cli
             'action'        => 'StoreString',
             'default'       => 'protoc',
             'description'   => 'protoc compiler executable path',
+        ));
+
+        $main->addOption('skipImported', array(
+            'long_name'     => '--skip-imported',
+            'action'        => 'StoreTrue',
+            'default'       => false,
+            'description'   => 'do not generate imported proto files',
         ));
 
         $main->addOption('comments', array(
