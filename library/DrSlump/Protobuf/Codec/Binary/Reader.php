@@ -44,6 +44,9 @@ class Reader
      */
     public function read($length)
     {
+        // Protect against 0 byte reads when an EOF
+        if ($length < 1) return '';
+
         $bytes = fread($this->_fd, $length);
         if (FALSE === $bytes) {
             throw new \RuntimeException('Failed to read ' . $length . ' bytes');
