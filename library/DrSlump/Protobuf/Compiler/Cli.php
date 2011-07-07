@@ -89,7 +89,13 @@ class Cli
         // Convert proto files to absolute paths
         $protos = array();
         foreach ($result->args['protos'] as $proto) {
-            $protos[] = realpath($proto);
+            $realpath = realpath($proto);
+            if (FALSE === $realpath) {
+                fputs(STDERR, "ERROR: File '$proto' does not exists");
+                exit(1);
+            }
+
+            $protos[] = $realpath;
         }
 
         // Protoc will pass custom arguments to the plugin if they are given
@@ -97,7 +103,6 @@ class Cli
         // We make use of it to pass arguments encoded as an URI query string
 
         $args = array();
-
         if ($result->options['comments']) {
             $args['comments'] = 1;
             // Protos are only needed for comments right now
