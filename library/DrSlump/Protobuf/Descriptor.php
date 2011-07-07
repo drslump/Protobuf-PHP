@@ -73,9 +73,9 @@ class Descriptor
 
         // Loop thru all fields to find it
         foreach ($this->fields as $tag=>$field) {
-            // Build the cache map
-            $this->names[$name] = $tag;
             if ($name === $field->getName()) {
+                // Cache it for next calls
+                $this->names[$name] = $tag;
                 return $field;
             }
         }
