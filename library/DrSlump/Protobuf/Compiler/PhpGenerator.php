@@ -11,7 +11,9 @@ class PhpGenerator extends AbstractGenerator
 
     protected function addComponent($ns, $name, $src)
     {
-        $name = $this->normalizeNS($ns . '.' . $name);
+        if (NULL !== $ns) {
+            $name = $this->normalizeNS($ns . '.' . $name);
+        }
         $this->components[$name] = $src;
     }
 
@@ -24,6 +26,7 @@ class PhpGenerator extends AbstractGenerator
     protected function getOption($name)
     {
         $opt = $this->compiler->getOption($name);
+
         if (NULL === $opt) {
             $opts = $this->proto->getOptions();
             if (!empty($opts) && isset($opts['php.' . $name])) {
@@ -572,26 +575,37 @@ class PhpGenerator extends AbstractGenerator
         }
     }
 
-    protected function normalizeNS($namespace)
+    protected function normalizeNS($package)
     {
-        // Remove leading dot
-        $namespace = ltrim($namespace, '.\\');
+        // Remove leading dot (used in references)
+        $package = ltrim($package, '.');
 
-        if (!$this->compiler->hasPackage($namespace)) {
-            $found = false;
-            foreach ($this->compiler->getPackages() as $package=>$ns) {
-                if (0 === strpos($namespace, $package.'.')) {
-                    $namespace = $ns . substr($namespace, strlen($package));
-                    $found = true;
-                }
-            }
-            if (!$found) {
-                $this->compiler->warning('Non tracked package name found "' . $namespace . '"');
-            }
-        } else {
-            $namespace = $this->compiler->getPackage($namespace);
+        if ($this->compiler->hasPackage($package)) {
+            return $this->compiler->getPackage($package);
         }
 
-        return str_replace('.', '\\', $namespace);
+        // Check the currently registered packages to find a root one
+        $found = null;
+        foreach ($this->compiler->getPackages() as $pkg=>$ns) {
+            // Keep only the longest match
+            if (0 === strpos($package, $pkg.'.') && strlen($found) < strlen($pkg)) {
+                $found = $pkg;
+            }
+        }
+
+        // If no matching package was found issue a warning and use the package name
+        if (!$found) {
+            $this->compiler->warning('Non tracked package name found "' . $package . '"');
+            $namespace = str_replace('.', '\\', $package);
+        } else {
+            // Complete the namespace with the remaining package
+            $namespace = $this->compiler->getPackage($found);
+            $namespace .= substr($package, strlen($found));
+            $namespace = str_replace('.', '\\', $namespace);
+            // Set the newly found namespace in the registry
+            $this->compiler->setPackage($package, $namespace);
+        }
+
+        return $namespace;
     }
 }
