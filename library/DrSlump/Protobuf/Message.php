@@ -9,6 +9,8 @@ abstract class Message implements \ArrayAccess
     /** @var \Closure[] */
     static protected $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    protected $_descriptor;
     /** @var array Store data for extension fields */
     protected $_extensions = array();
     /** @var array Store data for unknown values */
@@ -40,9 +42,11 @@ abstract class Message implements \ArrayAccess
      */
     public function __construct($data = null)
     {
+        // Cache the descriptor instance
+        $this->_descriptor = Protobuf::getRegistry()->getDescriptor($this);
+
         // Assign default values to extensions
-        $d = static::descriptor();
-        foreach ($d->getFields() as $f) {
+        foreach ($this->_descriptor->getFields() as $f) {
            if ($f->isExtension() && $f->hasDefault()) {
                $this->_extensions[$f->getName()] = $f->getDefault();
            }
@@ -124,10 +128,8 @@ abstract class Message implements \ArrayAccess
      */
     public function _has($tag)
     {
-        $d = static::descriptor();
-
-        if ($d->hasField($tag)) {
-            $f = $d->getField($tag);
+        if ($this->_descriptor->hasField($tag)) {
+            $f = $this->_descriptor->getField($tag);
             $name = $f->getName();
 
             if ($f->isExtension()) {
@@ -153,8 +155,7 @@ abstract class Message implements \ArrayAccess
      */
     public function _get($tag, $idx = null)
     {
-        $d = static::descriptor();
-        $f = $d->getField($tag);
+        $f = $this->_descriptor->getField($tag);
 
         if (!$f) {
             return null;
@@ -189,8 +190,7 @@ abstract class Message implements \ArrayAccess
      */
     public function _set($tag, $value, $idx = null)
     {
-        $d = static::descriptor();
-        $f = $d->getField($tag);
+        $f = $this->_descriptor->getField($tag);
 
         if (!$f) {
             throw new \Exception('Unknown fields not supported');
@@ -226,8 +226,7 @@ abstract class Message implements \ArrayAccess
      */
     public function _add($tag, $value)
     {
-        $d = static::descriptor();
-        $f = $d->getField($tag);
+        $f = $this->_descriptor->getField($tag);
 
         if (!$f) {
             throw new \Exception('Unknown fields not supported');
@@ -252,8 +251,7 @@ abstract class Message implements \ArrayAccess
      */
     public function _clear($tag)
     {
-        $d = static::descriptor();
-        $f = $d->getField($tag);
+        $f = $this->_descriptor->getField($tag);
 
         if (!$f) {
             throw new \Exception('Unknown fields not supported');

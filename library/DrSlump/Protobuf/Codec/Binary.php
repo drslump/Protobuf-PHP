@@ -38,7 +38,8 @@ class Binary implements Protobuf\CodecInterface
     {
         $writer = new Binary\Writer();
 
-        $descriptor = $message->descriptor();
+        // Get message descriptor
+        $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
         foreach ($descriptor->getFields() as $tag=>$field) {
 
@@ -172,7 +173,7 @@ class Binary implements Protobuf\CodecInterface
         $reader = new Protobuf\Codec\Binary\Reader($data);
 
         // Get message descriptor
-        $descriptor = $message->descriptor();
+        $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
         while (!$reader->eof()) {
 

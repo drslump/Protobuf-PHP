@@ -20,6 +20,8 @@ class Registry
     public function setDescriptor($message, Descriptor $descriptor)
     {
         $message = is_object($message) ? get_class($message) : $message;
+        $message = ltrim($message, '\\');
+
         $this->descriptors[$message] = $descriptor;
     }
 
@@ -33,10 +35,16 @@ class Registry
     public function getDescriptor($message)
     {
         $message = is_object($message) ? get_class($message) : $message;
+        $message = ltrim($message, '\\');
 
         // Build a descriptor for the message
         if (!isset($this->descriptors[$message])) {
-            $this->descriptors[$message] = $message::descriptor();
+            $class = '\\' . $message;
+            if (!class_exists($class)) {
+                throw Protobuf\Exception('Message class "' . $class . '" not available');
+            }
+
+            $this->descriptors[$message] = $class::descriptor();
         }
 
         return $this->descriptors[$message];
@@ -49,6 +57,8 @@ class Registry
     public function hasDescriptor($message)
     {
         $message = is_object($message) ? get_class($message) : $message;
+        $message = ltrim($message, '\\');
+
         return isset($this->descriptors[$message]);
     }
 
@@ -58,6 +68,8 @@ class Registry
     public function unsetDescriptor($message)
     {
         $message = is_object($message) ? get_class($message) : $message;
+        $message = ltrim($message, '\\');
+
         unset($this->descriptors[$message]);
     }
 }
