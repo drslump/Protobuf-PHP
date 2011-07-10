@@ -121,7 +121,7 @@ class Reader
     public function sFixed32()
     {
         $bytes = $this->read(4);
-        if ($this->isBigEndian() === self::BIG_ENDIAN) {
+        if ($this->isBigEndian()) {
             $bytes = strrev($bytes);
         }
 
@@ -179,7 +179,7 @@ class Reader
     public function float()
     {
         $bytes = $this->read(4);
-        if ($this->isBigEndian() === self::BIG_ENDIAN) {
+        if ($this->isBigEndian()) {
             $bytes = strrev($bytes);
         }
 

@@ -183,7 +183,7 @@ class Writer
     }
 
     /**
-     * Checks if the current arquitecture is Big Endian
+     * Checks if the current architecture is Big Endian
      *
      * @return bool
      */
