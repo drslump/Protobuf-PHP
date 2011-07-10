@@ -112,10 +112,6 @@ class Binary implements Protobuf\CodecInterface
             case Protobuf::TYPE_INT64:
             case Protobuf::TYPE_UINT64:
             case Protobuf::TYPE_UINT32:
-                if ($value < 0) {
-                    throw new \OutOfBoundsException("Negative Int32 and Int64 types are currently not supported ($value was given)");
-                }
-
                 $writer->varint($value);
                 break;
 
@@ -134,9 +130,6 @@ class Binary implements Protobuf\CodecInterface
                 $writer->fixed64($value);
                 break;
             case Protobuf::TYPE_SFIXED64:
-                if ($value < 0) {
-                    throw new \OutOfBoundsException("SFixed64 can only store positive integers currently ($value was given)");
-                }
                 $writer->sFixed64($value);
                 break;
 

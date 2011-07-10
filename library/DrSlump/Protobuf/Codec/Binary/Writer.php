@@ -71,21 +71,27 @@ class Writer
      */
     public function varint($value)
     {
-        if ($value < 0) {
-            throw new \OutOfBoundsException("Varints can only store positive integers but $value was given");
-        }
-
         // Smaller values do not need to be encoded
-        if ($value < 128) {
+        if ($value >= 0 && $value < 0x80) {
             $this->byte($value);
             return;
         }
 
         // Build an array of bytes with the encoded values
-        $values = array();
-        while ($value > 0) {
-            $values[] = 0x80 | ($value & 0x7f);
-            $value = $value >> 7;
+        if ($value > 0) {
+            $values = array();
+            while ($value > 0) {
+                $values[] = 0x80 | ($value & 0x7f);
+                $value = $value >> 7;
+            }
+        } else if (function_exists('gmp_init')) {
+            $value = sprintf('%u', $value);
+            $values = $this->varint_gmp($value);
+        } else if (function_exists('bccomp')) {
+            $value = sprintf('%u', $value);
+            $values = $this->varint_bc($value);
+        } else {
+            throw new \OutOfBoundsException("Varints of negative integers are only supported with GMP or BC big integers PHP extensions ($value was given)");
         }
 
         // Remove the MSB flag from the last byte
@@ -96,6 +102,47 @@ class Writer
         //$bytes = call_user_func_array('pack', array_merge(array('C*'), $values));
 
         $this->write($bytes);
+    }
+
+    public function varint_gmp($value)
+    {
+        static $x00, $x7f, $x80;
+
+        if (NULL === $x00) {
+            $x00 = \gmp_init(0x00);
+            $x7f = \gmp_init(0x7f);
+            $x80 = \gmp_init(0x80);
+        }
+
+        $values = array();
+        while (\gmp_cmp($value, $x00) > 0) {
+            $values[] = \gmp_intval(\gmp_and($value, $x7f)) | 0x80;
+            $value = \gmp_div_q($value, $x80);
+        }
+
+        return $values;
+    }
+
+    public function varint_bc($value)
+    {
+        $values = array();
+        while (\bccomp($value, 0, 0) > 0) {
+            // Get the last 7bits of the number
+            $bin = '';
+            $dec = $value;
+            do {
+                $rest = bcmod($dec, 2);
+                $dec = bcdiv($dec, 2, 0);
+                $bin = $rest . $bin;
+            } while ($dec > 0 && strlen($bin) < 7);
+
+            // Pack as a decimal and apply the flag
+            $values[] = intval($bin, 2) | 0x80;
+
+            $value = bcdiv($value, 0x80, 0);
+        }
+
+        return $values;
     }
 
     /**
@@ -143,11 +190,59 @@ class Writer
      */
     public function sFixed64($value)
     {
-        if ($value < 0) {
-            throw new \OutOfBoundsException("SFixed64 can only store positive integers currently ($value was given)");
+        if ($value >= 0) {
+            $this->fixed64($value);
+        } else if (function_exists('gmp_init')) {
+            $this->sFixed64_gmp($value);
+        } else if (function_exists('bcadd')) {
+            $this->sFixed64_bc($value);
+        } else {
+            throw new \OutOfBoundsException("The signed Fixed64 type with negative integers is only supported with GMP or BC big integers PHP extensions ($value was given)");
+        }
+    }
+
+    public function sFixed64_gmp($value)
+    {
+        static $xff, $x100;
+
+        if (NULL === $xff) {
+            $xff = gmp_init(0xff);
+            $x100 = gmp_init(0x100);
         }
 
-        $this->fixed64($value);
+        $value = sprintf('%u', $value);
+        $value = gmp_init($value);
+
+        $bytes = '';
+        for ($i=0; $i<8; $i++) {
+            $bytes .= chr(gmp_intval(gmp_and($value, $xff)));
+            $value = gmp_div_q($value, $x100);
+        }
+
+        $this->write($bytes);
+    }
+
+    public function sFixed64_bc($value)
+    {
+        $value = sprintf('%u', $value);
+
+        $bytes = '';
+        for ($i=0; $i<8; $i++) {
+            // Get the last 8bits of the number
+            $bin = '';
+            $dec = $value;
+            do {
+                $bin = bcmod($dec, 2) . $bin;
+                $dec = bcdiv($dec, 2, 0);
+            } while (strlen($bin) < 8);
+
+            // Pack the byte
+            $bytes .= chr(intval($bin, 2));
+
+            $value = bcdiv($value, 0x100, 0);
+        }
+
+        $this->write($bytes);
     }
 
     /**
