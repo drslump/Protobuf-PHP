@@ -156,6 +156,7 @@ class Protobuf
     static public function decode($message, $data)
     {
         if (is_string($message)) {
+            $message = '\\' . ltrim($message, '\\');
             $message = new $message;
         }
 
