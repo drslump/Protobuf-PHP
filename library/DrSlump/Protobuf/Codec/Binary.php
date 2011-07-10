@@ -269,7 +269,7 @@ class Binary implements Protobuf\CodecInterface
             case self::WIRE_FIXED32:
                 return $reader->fixed32();
             case self::WIRE_FIXED64:
-                return $reader->fixed64;
+                return $reader->fixed64();
             case self::WIRE_GROUP_START:
             case self::WIRE_GROUP_END:
                 throw new \RuntimeException('Groups are deprecated in Protocol Buffers and unsupported by this library');
