@@ -43,6 +43,15 @@ The command accepts the following command-line options (switches).
     directory. If not set it will create the files in the working
     directory.
 
+  * `--protoc`=_path to protoc binary_:
+    If you don't happen to have the `protoc` binary in your path, you can
+    use this option to indicate a path to it.
+
+  * `--skip-imported`
+    Flags the compiler to only generate source code for the proto file
+    explicitely given on the command line. This means that imported files
+    will not be generated when using this option.
+
   * `--comments`
     Parses the .proto files looking for multiline comments (/* ... */) to
     include them in the generated files.
