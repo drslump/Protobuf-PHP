@@ -83,10 +83,12 @@ class Writer
 
         // Build an array of bytes with the encoded values
         $values = array();
-        while ($value !== 0) {
+        while ($value > 0) {
             $values[] = 0x80 | ($value & 0x7f);
             $value = $value >> 7;
         }
+
+        // Remove the MSB flag from the last byte
         $values[count($values)-1] &= 0x7f;
 
         // Convert the byte sized ints to actual bytes in a string
@@ -100,10 +102,11 @@ class Writer
      * Encodes an integer with zigzag
      *
      * @param int $value
+     * @param int $base  Either 32 or 64 bits
      */
-    public function zigzag($value)
+    public function zigzag($value, $base = 32)
     {
-        $value = ($value >> 1) ^ (-($value & 1));
+        $value = ($value << 1) ^ ($value >> $base-1);
         $this->varint($value);
     }
 
@@ -129,29 +132,33 @@ class Writer
      */
     public function fixed32($value)
     {
-        $bytes = pack('N*', $value);
+        $bytes = pack('V*', $value);
         $this->write($bytes, 4);
     }
 
     /**
-     * Encode an integer as a fixed of 62bits with sign
+     * Encode an integer as a fixed of 64bits with sign
      *
      * @param int $value
      */
     public function sFixed64($value)
     {
-        $bytes = pack('V*', $value & 0xffffffff, $value / (0xffffffff+1));
-        $this->write($bytes, 8);
+        if ($value < 0) {
+            throw new \OutOfBoundsException("SFixed64 can only store positive integers currently ($value was given)");
+        }
+
+        $this->fixed64($value);
     }
 
     /**
-     * Encode an integer as a fixed of 62bits without sign
+     * Encode an integer as a fixed of 64bits without sign
      *
      * @param int $value
      */
     public function fixed64($value)
     {
-        return $this->sFixed64($value);
+        $bytes = pack('V*', $value & 0xffffffff, $value / (0xffffffff+1));
+        $this->write($bytes, 8);
     }
 
     /**

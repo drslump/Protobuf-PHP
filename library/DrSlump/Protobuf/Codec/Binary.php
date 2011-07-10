@@ -108,16 +108,23 @@ class Binary implements Protobuf\CodecInterface
     protected function encodeSimpleType($writer, $type, $value)
     {
         switch ($type) {
+            case Protobuf::TYPE_INT32:
             case Protobuf::TYPE_INT64:
             case Protobuf::TYPE_UINT64:
-            case Protobuf::TYPE_INT32:
             case Protobuf::TYPE_UINT32:
+                if ($value < 0) {
+                    throw new \OutOfBoundsException("Negative Int32 and Int64 types are currently not supported ($value was given)");
+                }
+
                 $writer->varint($value);
                 break;
 
             case Protobuf::TYPE_SINT32: // ZigZag
-            case Protobuf::TYPE_SINT64: // ZigZag
-                $writer->zigzag($value);
+                $writer->zigzag($value, 32);
+                break;
+
+            case Protobuf::TYPE_SINT64 : // ZigZag
+                $writer->zigzag($value, 64);
                 break;
 
             case Protobuf::TYPE_DOUBLE:
@@ -127,6 +134,9 @@ class Binary implements Protobuf\CodecInterface
                 $writer->fixed64($value);
                 break;
             case Protobuf::TYPE_SFIXED64:
+                if ($value < 0) {
+                    throw new \OutOfBoundsException("SFixed64 can only store positive integers currently ($value was given)");
+                }
                 $writer->sFixed64($value);
                 break;
 
@@ -269,7 +279,7 @@ class Binary implements Protobuf\CodecInterface
             case self::WIRE_FIXED32:
                 return $reader->fixed32();
             case self::WIRE_FIXED64:
-                return $reader->fixed64;
+                return $reader->fixed64();
             case self::WIRE_GROUP_START:
             case self::WIRE_GROUP_END:
                 throw new \RuntimeException('Groups are deprecated in Protocol Buffers and unsupported by this library');
@@ -326,9 +336,9 @@ class Binary implements Protobuf\CodecInterface
                 return $reader->varint();
 
             case Protobuf::TYPE_SINT32: // ZigZag
-                return $reader->zigzag(32);
+                return $reader->zigzag();
             case Protobuf::TYPE_SINT64: // ZigZag
-                return $reader->zigzag(64);
+                return $reader->zigzag();
             case Protobuf::TYPE_DOUBLE:
                 return $reader->double();
             case Protobuf::TYPE_FIXED64:

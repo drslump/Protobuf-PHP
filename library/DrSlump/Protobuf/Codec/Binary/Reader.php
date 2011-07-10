@@ -107,10 +107,10 @@ class Reader
      *
      * @param int $bits - Either 32 or 64
      */
-    public function zigzag($bits)
+    public function zigzag()
     {
         $number = $this->varint();
-        return ($number << 1) ^ ($number >> ($bits-1));
+        return ($number >> 1) ^ (-($number & 1));
     }
 
     /**
