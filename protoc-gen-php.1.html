@@ -117,6 +117,13 @@ to configure multiple directories.</p></li>
 Tells the protoc compiler to create generated files in the given
 directory. If not set it will create the files in the working
 directory.</p></li>
+<li><p><code>--protoc</code>=<em>path to protoc binary</em>:
+If you don't happen to have the <code>protoc</code> binary in your path, you can
+use this option to indicate a path to it.</p></li>
+<li><p><code>--skip-imported</code>
+Flags the compiler to only generate source code for the proto file
+explicitely given on the command line. This means that imported files
+will not be generated when using this option.</p></li>
 <li><p><code>--comments</code>
 Parses the .proto files looking for multiline comments (/<em> ... </em>/) to
 include them in the generated files.</p></li>
@@ -166,7 +173,7 @@ the <code>php.</code> prefix shall not be used here.</p></li>
 
   <ol class='man-decor man-foot man foot'>
     <li class='tl'>Ivan -DrSlump- Montes</li>
-    <li class='tc'>June 2011</li>
+    <li class='tc'>July 2011</li>
     <li class='tr'>protoc-gen-php(1)</li>
   </ol>
 
