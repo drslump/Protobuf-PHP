@@ -64,14 +64,14 @@ class Writer
     }
 
     /**
-     * Store a positive integer encoded as varint
+     * Store an integer encoded as varint
      *
      * @throws \OutOfBoundsException
      * @param int $value
      */
     public function varint($value)
     {
-        // Smaller values do not need to be encoded
+        // Small values do not need to be encoded
         if ($value >= 0 && $value < 0x80) {
             $this->byte($value);
             return;
@@ -85,8 +85,15 @@ class Writer
                 $value = $value >> 7;
             }
         } else if (function_exists('gmp_init')) {
-            $value = sprintf('%u', $value);
+            $value = PHP_INT_SIZE < 8
+                   ? gmp_and($value, '0x0ffffffffffffffff')
+                   : sprintf('%u', $value);
+
             $values = $this->varint_gmp($value);
+        } else if (PHP_INT_SIZE < 8) {
+            throw new \OutOfBoundsException(
+                'PHP versions compiled with 32bit integers can only support negative integer encoding with GMP extension ($value was given)'
+            );
         } else if (function_exists('bccomp')) {
             $value = sprintf('%u', $value);
             $values = $this->varint_bc($value);
@@ -98,8 +105,8 @@ class Writer
         $values[count($values)-1] &= 0x7f;
 
         // Convert the byte sized ints to actual bytes in a string
-        $bytes = implode('', array_map('chr', $values));
-        //$bytes = call_user_func_array('pack', array_merge(array('C*'), $values));
+        //$bytes = implode('', array_map('chr', $values));
+        $bytes = call_user_func_array('pack', array_merge(array('C*'), $values));;
 
         $this->write($bytes);
     }
@@ -210,8 +217,9 @@ class Writer
             $x100 = gmp_init(0x100);
         }
 
-        $value = sprintf('%u', $value);
-        $value = gmp_init($value);
+        $value = PHP_INT_SIZE < 8
+               ? gmp_and($value, '0x0ffffffffffffffff')
+               : gmp_init(sprintf('%u', $value));
 
         $bytes = '';
         for ($i=0; $i<8; $i++) {
@@ -224,6 +232,12 @@ class Writer
 
     public function sFixed64_bc($value)
     {
+        if (PHP_INT_SIZE < 8) {
+            throw new \OutOfBoundsException(
+                'PHP versions compiled with 32bit integers can only support negative integer encoding with GMP extension ($value was given)'
+            );
+        }
+
         $value = sprintf('%u', $value);
 
         $bytes = '';
