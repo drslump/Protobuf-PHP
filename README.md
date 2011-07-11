@@ -91,36 +91,38 @@ repository in your computer.
 
 ### Types
 
-PHP is very weak when dealing with numbers processing. A number of work arounds have been applied
+PHP is very weak when dealing with numbers processing. Several work arounds have been applied
 to the standard binary codec to reduce incompatibilities between Protobuf types and PHP ones.
 
-  - Protobuf stores double and float values using the [IEEE 754](http://en.wikipedia.org/wiki/IEEE_754)
-    with 64bit words for the double and 32bit for the float type. PHP supports IEEE 754 natively although
+  - Protobuf stores floating point values using the [IEEE 754](http://en.wikipedia.org/wiki/IEEE_754) standard
+    with 64bit words for the `double` and 32bit for the `float` types. PHP supports IEEE 754 natively although
     the precission is platform dependant, however it typically supports 64bit doubles. It means that
     if your PHP was compiled with 64bit sized doubles (or greater) you shouldn't have any problem encoding
     and decoded float and double typed values with Protobuf.
 
   - Integer values are also [platform dependant in PHP](http://www.php.net/manual/en/language.types.integer.php).
-    The library has been developed and test against PHP binaries compiled with 64bit integers. If you only
-    use small numbers it shouldn't matter if internally they are represented as 64bit or 32bit integers.
+    The library has been developed and tested against PHP binaries compiled with 64bit integers. The encoding and
+    decoding algorithm should in theory work no matter if PHP uses 32bit or 64bit integers internally, just take
+    into account that with 32bit integers the numbers cannot exceed in any case the `PHP_INT_MAX` value (2147483647).
 
     While Protobuf supports unsigned integers PHP does not. In fact, numbers above the compiled PHP maximum
-    integer (PHP_INT_MAX, 0x7FFFFFFFFFFFFFFF for 64bits) will be automatically casted to doubles, which
+    integer (`PHP_INT_MAX`, 0x7FFFFFFFFFFFFFFF for 64bits) will be automatically casted to doubles, which
     typically will offer 53bits of decimal precission, allowing to safely work with numbers upto
-    0x20000000000000 (2^53) even if they are represented in PHP as floats instead of integers. Higher numbers
+    0x20000000000000 (2^53), even if they are represented in PHP as floats instead of integers. Higher numbers
     will loose precission or might even return an _infinity_ value, note that the library does not include
     any checking for these numbers and using them might provoke unexpected behaviour.
 
     Negative values when encoded as `int32`, `int64` or `fixed64` types require the big integer extensions
-    [GMP](http://www.php.net/gmp) or [BC Math](http://www.php.net/bc) to be available in your PHP environment.
-    The reason is that when encoding these negative numbers without using _zigzag_ the binary representation
-    uses the most significant bit for the sign, thus the numbers become above the maximum supported values in
-    PHP. The library will check for these condition and will automatically try to use GMP or BC to process the
-    value.
+    [GMP](http://www.php.net/gmp) or [BC Math](http://www.php.net/bc) (the later only for 64bit architectures)
+    to be available in your PHP environment. The reason is that when encoding these negative numbers without
+    using _zigzag_ the binary representation uses the most significant bit for the sign, thus the numbers become
+    above the maximum supported values in PHP. The library will check for these conditions and will automatically
+    try to use GMP or BC to process the value.
+
 
 ### Strings
 
-The binary codec expect strings to be encoded using UTF-8. PHP does not natively support string encodings,
+The binary codec expects strings to be encoded using UTF-8. PHP does not natively support string encodings,
 PHP's string data type is basically a length delimited stream of bytes, so it's not trivial to include
 automatic encoding conversion into the library encoding and decoding routines. Instead of trying to guess
 or offer a configuration interface for the encoding, the binary codec will process the `string` type just as
