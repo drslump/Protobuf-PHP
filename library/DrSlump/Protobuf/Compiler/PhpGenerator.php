@@ -48,8 +48,6 @@ class PhpGenerator extends AbstractGenerator
             $namespace = $this->compiler->getOption('package');
         } else if (isset($opts['php.namespace'])) {
             $namespace = $opts['php.namespace'];
-        } else if (isset($opts['php.package'])) {
-            $namespace = $opts['php.package'];
         } else {
             $namespace = parent::getNamespace($proto);
         }

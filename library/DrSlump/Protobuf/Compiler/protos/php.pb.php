@@ -6,21 +6,10 @@
 namespace {
 
   \google\protobuf\FileOptions::extension(function(){
-      // optional  php.package = 50001
-    $f = new \DrSlump\Protobuf\Field();
-    $f->number    = 50001;
-    $f->name      = "php.package";
-    $f->nameOrig  = "php.package";
-    $f->type      = 9;
-    $f->rule      = 1;
-    return $f;
-  });
-  \google\protobuf\FileOptions::extension(function(){
       // optional  php.namespace = 50002
     $f = new \DrSlump\Protobuf\Field();
     $f->number    = 50002;
     $f->name      = "php.namespace";
-    $f->nameOrig  = "php.namespace";
     $f->type      = 9;
     $f->rule      = 1;
     return $f;
@@ -30,7 +19,6 @@ namespace {
     $f = new \DrSlump\Protobuf\Field();
     $f->number    = 50003;
     $f->name      = "php.suffix";
-    $f->nameOrig  = "php.suffix";
     $f->type      = 9;
     $f->rule      = 1;
     $f->default   = ".php";

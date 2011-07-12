@@ -6,21 +6,10 @@
 namespace {
 
   \google\protobuf\FileOptions::extension(function(){
-      // optional  php.package = 50001
-    $f = new \DrSlump\Protobuf\Field();
-    $f->number    = 50101;
-    $f->name      = "json.package";
-    $f->nameOrig  = "json.package";
-    $f->type      = 9;
-    $f->rule      = 1;
-    return $f;
-  });
-  \google\protobuf\FileOptions::extension(function(){
       // optional  php.namespace = 50002
     $f = new \DrSlump\Protobuf\Field();
     $f->number    = 50102;
     $f->name      = "json.namespace";
-    $f->nameOrig  = "json.namespace";
     $f->type      = 9;
     $f->rule      = 1;
     return $f;
@@ -30,7 +19,6 @@ namespace {
     $f = new \DrSlump\Protobuf\Field();
     $f->number    = 50103;
     $f->name      = "json.suffix";
-    $f->nameOrig  = "json.suffix";
     $f->type      = 9;
     $f->rule      = 1;
     $f->default   = ".pb.js";

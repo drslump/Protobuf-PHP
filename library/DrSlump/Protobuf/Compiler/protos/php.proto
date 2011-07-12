@@ -4,8 +4,7 @@ package php;
 
 extend google.protobuf.FileOptions {
 
-    // These two are aliases and set the namespace
-    optional string package     = 50001;
+    // Set the namespace (overrides package)
     optional string namespace   = 50002;
     // Suffix for file names
     optional string suffix      = 50003 [default = ".php"];
