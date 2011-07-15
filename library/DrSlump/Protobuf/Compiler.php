@@ -165,6 +165,9 @@ class Compiler
         foreach($req->getProtoFileList() as $proto) {
             $package = $proto->getPackage();
             $namespace = $generator->getNamespace($proto);
+            if (isset($this->packages[$package]) && $namespace !== $this->packages[$package]) {
+                $this->warning("Package $package was already mapped to {$this->packages[$package]} but has now been overridden to $namespace");
+            }
             $this->packages[$package] = $namespace;
             $this->notice("Mapping $package to $namespace");
         }
