@@ -25,10 +25,10 @@ describe "JSON Codec"
 
         it "a simple message"
             $simple = new Tests\Simple();
-            $simple->foo = 'FOO';
-            $simple->bar = 1000;
+            $simple->string = 'FOO';
+            $simple->int32 = 1000;
             $json = Protobuf::encode($simple);
-            $json. should. eq. '{"foo":"FOO","bar":1000}';
+            $json. should. eq. '{"int32":1000,"string":"FOO"}';
         end.
 
          it. "a message with repeated fields"
@@ -153,11 +153,11 @@ describe "JSON Codec"
     describe "unserialize"
 
         it "should unserialize a simple message"
-            $json = '{"foo":"FOO","bar":1000}';
+            $json = '{"string":"FOO","int32":1000}';
             $simple = Protobuf::decode('Tests\Simple', $json);
             $simple should be instanceof 'Tests\Simple';
-            $simple->foo should equal 'FOO';
-            $simple->bar should equal 1000;
+            $simple->string should equal 'FOO';
+            $simple->int32 should equal 1000;
         end.
 
         it "a message with repeated fields"

@@ -2,6 +2,8 @@
 
 require_once __DIR__ . '/../library/DrSlump/Protobuf.php';
 
+error_reporting(E_ALL);
+
 use \DrSlump\Protobuf;
 
 Protobuf::autoload();
@@ -26,14 +28,68 @@ describe "Binary Codec"
 
     describe "serialize"
 
-        it "a simple message"
+        it "a simple message comparing types with protoc"
 
-            $simple = new Tests\Simple();
-            $simple->foo = 'FOO';
-            $simple->bar = 100;
-            $simple->baz = 'BAZ';
-            $bin = Protobuf::encode($simple);
-            $bin should be $W->bin_simple but not be false;
+            $max = pow(2, 54)-1;
+            $min = -$max;
+
+            $fields = array(
+                'double' => array(1, 0.1, 1.0, -1, -0.1, -100000, 123456789.12345, -123456789.12345),
+                'float'  => array(1, 0.1, 1.0, -1, -0.1, -100000, 12345.123, -12345.123),
+                'int64'  => array(0, 1, -1, 123456789123456789, -123456789123456789, $min),
+                'uint64' => array(0, 1, 1000, 123456789123456789, PHP_INT_MAX, $max),
+                'int32'  => array(0, 1, -1, 123456789, -123456789),
+                'fixed64'  => array(0, 1, 1000, 123456789123456789),
+                'fixed32'  => array(0, 1, 1000, 123456789),
+                'bool'  => array(0, 1),
+                'string'  => array("", "foo"),
+                'bytes'  => array("", "foo"),
+                'uint32'  => array(0, 1, 1000, 123456789),
+                'sfixed32'  => array(0, 1, -1, 123456789, -123456789),
+                'sfixed64'  => array(0, 1, -1, 123456789123456789, -123456789123456789),
+                'sint32'  => array(0, 1, -1, 123456789, -123456789),
+                'sint64' => array(0, 1, -1, 123456789123456789, -123456789123456789, $min, $max),
+            );
+
+
+            foreach ($fields as $field=>$values) {
+                foreach ($values as $value) {
+                    $simple = new Tests\Simple();
+                    $simple->$field = $value;
+                    $bin = Protobuf::encode($simple);
+
+                    if (is_string($value)) $value = '"' . $value . '"';
+
+                    exec("echo '$field: $value' | protoc --encode=tests.Simple -Itests tests/protos/simple.proto", $out);
+
+                    $out = implode("\n", $out);
+
+                    $printValue = var_export($value, true);
+                    bin2hex($bin) should eq (bin2hex($out)) as "Encoding $field with value $printValue";
+                }
+            }
+
+            foreach ($fields as $field=>$values) {
+                foreach ($values as $value) {
+                    $cmdValue = is_string($value)
+                              ? '"' . $value . '"'
+                              : $value;
+
+                    exec("echo '$field: $cmdValue' | protoc --encode=tests.Simple -Itests tests/protos/simple.proto", $out);
+                    $out = implode("\n", $out);
+
+                    $simple = Protobuf::decode('\tests\Simple', $out);
+
+                    // Hack the comparison for float precision
+                    if (is_float($simple->$field)) {
+                        $precision = strlen($value) - strpos($value, '.');
+                        $simple->$field = round($simple->$field, $precision);
+                    }
+
+                    $printValue = var_export($value, true);
+                    $simple->$field should eq $value as "Decoding $field with value $printValue";
+                }
+            }
         end.
 
         it. "a message with repeated fields"
@@ -106,9 +162,8 @@ describe "Binary Codec"
         it "a simple message"
             $simple = Protobuf::decode('Tests\Simple', $W->bin_simple);
             $simple should be instanceof 'Tests\Simple';
-            $simple->foo should be 'FOO';
-            $simple->bar should be 100;
-            $simple->baz should be 'BAZ';
+            $simple->string should be 'foo';
+            $simple->int32 should be -123456789;
         end.
 
         it "a message with repeated fields"

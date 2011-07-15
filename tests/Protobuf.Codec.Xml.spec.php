@@ -20,12 +20,12 @@ describe "XML Codec"
 
         it "a simple message"
             $simple = new Tests\Simple();
-            $simple->foo = 'FOO';
-            $simple->bar = 1000;
+            $simple->string = 'FOO';
+            $simple->int32 = 1000;
             $xml = Protobuf::encode($simple);
             $sxe = simplexml_load_string($xml);
-            $sxe->foo should eq "FOO";
-            $sxe->bar should eq 1000;
+            $sxe->string should eq "FOO";
+            $sxe->int32 should eq 1000;
         end.
 
          it. "a message with repeated fields"
@@ -108,13 +108,13 @@ describe "XML Codec"
 
         it "should unserialize a simple message"
             $xml = new SimpleXmlElement('<root></root>');
-            $xml->addChild('foo', 'FOO');
-            $xml->addChild('bar', 1000);
+            $xml->addChild('string', 'FOO');
+            $xml->addChild('int32', 1000);
 
             $simple = Protobuf::decode('Tests\Simple', $xml);
             $simple should be instanceof 'Tests\Simple';
-            $simple->foo should equal 'FOO';
-            $simple->bar should equal 1000;
+            $simple->string should equal 'FOO';
+            $simple->int32 should equal 1000;
         end.
 
         it "a message with repeated fields"

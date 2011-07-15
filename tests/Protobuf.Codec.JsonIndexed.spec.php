@@ -20,10 +20,10 @@ describe "JSON Indexed Codec"
 
         it "should serialize a simple message"
             $simple = new Tests\Simple();
-            $simple->foo = 'FOO';
-            $simple->bar = 'BAR';
+            $simple->string = 'FOO';
+            $simple->int32 = 1000;
             $json = Protobuf::encode($simple);
-            $json. should. eq. '["12","FOO","BAR"]';
+            $json. should. eq. '["59",1000,"FOO"]';
         end.
 
         it. "a message with repeated fields"
@@ -119,11 +119,11 @@ describe "JSON Indexed Codec"
     describe "unserialize"
 
         it "should unserialize a simple message"
-            $json = '["12","FOO","BAR"]';
+            $json = '["59",1000,"FOO"]';
             $simple = Protobuf::decode('Tests\Simple', $json);
             $simple should be instanceof 'Tests\Simple';
-            $simple->foo should equal 'FOO';
-            $simple->bar should equal 'BAR';
+            $simple->string should equal 'FOO';
+            $simple->int32 should equal 1000;
         end.
 
         it "a message with repeated fields"

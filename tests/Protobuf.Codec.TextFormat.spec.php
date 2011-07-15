@@ -20,10 +20,10 @@ describe "TextFormat Codec"
 
          it "should serialize a simple message"
              $simple = new Tests\Simple();
-             $simple->foo = 'FOO';
-             $simple->bar = 'BAR';
+             $simple->string = 'FOO';
+             $simple->int32 = 1000;
              $txt = Protobuf::encode($simple);
-             $txt . should. be. "foo: \"FOO\"\nbar: \"BAR\"\n";
+             $txt . should. be. "int32: 1000\nstring: \"FOO\"\n";
          end.
 
          it. "a message with repeated fields"
