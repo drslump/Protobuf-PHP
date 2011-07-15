@@ -204,14 +204,14 @@ class PhpGenerator extends AbstractGenerator
         // Compute a new namespace with the message name as suffix
         $ns .= '.' . $msg->getName();
 
-        $s[]= "  class " . $msg->getName() . " extends \DrSlump\Protobuf\Message {";
+        $s[]= '  class ' . $msg->getName() . ' extends \DrSlump\Protobuf\Message {';
         $s[]= "";
         $s[]= '    /** @var \Closure[] */';
         $s[]= '    protected static $__extensions = array();';
         $s[]= '';
         $s[]= '    public static function descriptor()';
         $s[]= '    {';
-        $s[]= '      $descriptor = new \DrSlump\Protobuf\Descriptor(\'\\' . $this->normalizeNS($ns) . "');";
+        $s[]= '      $descriptor = new \DrSlump\Protobuf\Descriptor(__CLASS__, \'' . $ns . '\');';
         $s[]= '';
         foreach ($msg->getField() as $field):
         $s[]=        $this->compileField($field, $ns, "      ");

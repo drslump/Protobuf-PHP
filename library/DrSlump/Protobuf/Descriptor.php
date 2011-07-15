@@ -7,7 +7,10 @@ use DrSlump\Protobuf;
 class Descriptor
 {
     /** @var String Holds the class name of the message */
-    protected $message;
+    protected $class;
+
+    /** @var String Holds the original proto name */
+    protected $name;
 
     /** @var \DrSlump\Protobuf\Field[] */
     protected $fields = array();
@@ -15,12 +18,31 @@ class Descriptor
     /** @var array - Cache the relation between names and tags */
     protected $names = array();
 
+
     /**
-     * @param string $message
+     * @param string $class
+     * @param string $name
      */
-    public function __construct($message)
+    public function __construct($class, $name = null)
     {
-        $this->message = $message;
+        $this->class = trim($class, '\\ ');
+        $this->name = $name ? trim($name, '. ') : NULL;
+    }
+
+    /**
+     * @return string
+     */
+    public function getClass()
+    {
+        return $this->class;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getName()
+    {
+        return $this->name;
     }
 
     /**
@@ -73,9 +95,11 @@ class Descriptor
 
         // Loop thru all fields to find it
         foreach ($this->fields as $tag=>$field) {
-            if ($name === $field->getName()) {
-                // Cache it for next calls
-                $this->names[$name] = $tag;
+            // Cache it for next calls
+            $fname = $field->getName();
+            $this->names[$fname] = $tag;
+
+            if ($name === $fname) {
                 return $field;
             }
         }
