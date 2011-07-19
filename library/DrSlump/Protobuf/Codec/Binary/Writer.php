@@ -92,7 +92,7 @@ class Writer
             $values = $this->varint_gmp($value);
         } else if (PHP_INT_SIZE < 8) {
             throw new \OutOfBoundsException(
-                'PHP versions compiled with 32bit integers can only support negative integer encoding with GMP extension ($value was given)'
+                "PHP versions compiled with 32bit integers can only support negative integer encoding with GMP extension ($value was given)"
             );
         } else if (function_exists('bccomp')) {
             $value = sprintf('%u', $value);
@@ -234,7 +234,7 @@ class Writer
     {
         if (PHP_INT_SIZE < 8) {
             throw new \OutOfBoundsException(
-                'PHP versions compiled with 32bit integers can only support negative integer encoding with GMP extension ($value was given)'
+                "PHP versions compiled with 32bit integers can only support negative integer encoding with GMP extension ($value was given)"
             );
         }
 
