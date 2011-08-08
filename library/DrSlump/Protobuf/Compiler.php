@@ -92,7 +92,7 @@ class Compiler
     public function camelize($name)
     {
         return preg_replace_callback(
-                    '/_([a-z])/i',
+                    '/_([a-z0-9])/i',
                     function($m){ return strtoupper($m[1]); },
                     $name
                  );
