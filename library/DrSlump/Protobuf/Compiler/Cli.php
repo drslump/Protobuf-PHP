@@ -128,6 +128,9 @@ class Cli
                 $args['options'][$parts[0]] = $parts[1];
             }
         }
+        if ($result->options['insertions']) {
+            $args['options']['insertions'] = 1;
+        }
 
         $cmd[] = '--php_out=' .
                  escapeshellarg(
@@ -201,6 +204,12 @@ class Cli
             'long_name'     => '--comments',
             'action'        => 'StoreTrue',
             'description'   => 'port .proto comments to generated code',
+        ));
+
+        $main->addOption('insertions', array(
+            'long_name'     => '--insertions',
+            'action'        => 'StoreTrue',
+            'description'   => 'generate @@protoc insertion points',
         ));
 
         $main->addOption('define', array(

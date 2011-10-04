@@ -150,6 +150,12 @@ class PhpGenerator extends AbstractGenerator
         $s[]= "";
 
         $contents = implode(PHP_EOL, $s) . PHP_EOL . $contents;
+
+        // If we don't want insertion points remove them
+        if (!$this->getOption('insertions')) {
+            $contents = preg_replace('#^\s*//\s+@@protoc_insertion_point.*$\n#m', '', $contents);
+        }
+
         $file->setContent($contents);
         return $file;
     }
@@ -205,7 +211,13 @@ class PhpGenerator extends AbstractGenerator
         $ns .= '.' . $msg->getName();
 
         $s[]= '  class ' . $msg->getName() . ' extends \DrSlump\Protobuf\Message {';
-        $s[]= "";
+        $s[]= '';
+
+        foreach ($msg->getField() as $field):
+        $s[]= $this->generatePublicField($field, $ns, "    ");
+        endforeach;
+        $s[]= '';
+
         $s[]= '    /** @var \Closure[] */';
         $s[]= '    protected static $__extensions = array();';
         $s[]= '';
@@ -236,10 +248,6 @@ class PhpGenerator extends AbstractGenerator
         //$s[]= "    );";
         //$s[]= "";
 
-        foreach ($msg->getField() as $field):
-        $s[]= $this->generatePublicField($field, $ns, "    ");
-        endforeach;
-        $s[]= "";
 
         foreach ($msg->getField() as $field):
         $s[]= $this->generateAccessors($field, $ns, "    ");
@@ -281,24 +289,31 @@ class PhpGenerator extends AbstractGenerator
 
     protected function compileField(proto\FieldDescriptorProto $field, $ns, $indent)
     {
-        switch ($field->getLabel()) {
-        case Protobuf::RULE_REQUIRED:
-            $rule = 'required';
-            break;
-        case Protobuf::RULE_OPTIONAL:
-            $rule = 'optional';
-            break;
-        case Protobuf::RULE_REPEATED:
-            $rule = 'repeated';
-            break;
+        // Fetch constants by reflecton
+        $refl = new \ReflectionClass('\DrSlump\Protobuf');
+        $constants = $refl->getConstants();
+
+        // Separate rules and types
+        $rules = $types = array();
+        foreach ($constants as $k=>$v) {
+            list($prefix, $name) = explode('_', $k, 2);
+            if ('RULE' === $prefix) {
+                $rules[$name] = $v;
+            } else if ('TYPE' === $prefix) {
+                $types[$name] = $v;
+            }
         }
 
-        $s[]= "// $rule " . $field->getTypeName() . " " . $field->getName() . " = " . $field->getNumber();
+        // Get the key for the rule and type
+        $rule = array_search($field->getLabel(), $rules);
+        $type = array_search($field->getType(), $types);
+
+        $s[]= "// $rule $type " . $field->getName() . " = " . $field->getNumber();
         $s[]= '$f = new \DrSlump\Protobuf\Field();';
         $s[]= '$f->number    = ' . $field->getNumber() . ';';
         $s[]= '$f->name      = "'. $field->getName() . '";';
-        $s[]= '$f->type      = ' . $field->getType() . ';';
-        $s[]= '$f->rule      = ' . $field->getLabel() . ';';
+        $s[]= '$f->type      = \DrSlump\Protobuf::TYPE_' . $type . ';';
+        $s[]= '$f->rule      = \DrSlump\Protobuf::RULE_' . $rule . ';';
 
         if ($field->hasTypeName()):
         $ref = $field->getTypeName();

@@ -9,13 +9,14 @@ use \DrSlump\Protobuf;
 Protobuf::autoload();
 
 include_once __DIR__ . '/protos/simple.php';
+include_once __DIR__ . '/protos/complex.php';
 include_once __DIR__ . '/protos/repeated.php';
 include_once __DIR__ . '/protos/addressbook.php';
+
 
 describe "Binary Codec"
 
     before
-
         $codec = new Protobuf\Codec\Binary();
         Protobuf::setDefaultCodec($codec);
 
@@ -90,6 +91,43 @@ describe "Binary Codec"
                     $simple->$field should eq $value as "Decoding $field with value $printValue";
                 }
             }
+        end.
+
+        it. "an enum comparing with protoc".
+
+            $complex = new Tests\Complex();
+
+            exec("echo 'enum: FOO' | protoc --encode=tests.Complex -Itests tests/protos/complex.proto", $protocbin);
+            $protocbin = implode("\n", $protocbin);
+
+            // Check encoding an enum
+            $complex->enum = Tests\Complex\Enum::FOO;
+            $encbin = Protobuf::encode($complex);
+
+            bin2hex($encbin) should eq (bin2hex($protocbin)) as "Encoding Enum field";
+
+            // Check decoding an enum
+            $complex = Protobuf::decode('\tests\Complex', $protocbin);
+            $complex->enum should eq (Tests\Complex\Enum::FOO) as "Decoding Enum field";
+
+        end.
+
+        it. "a nested message comparing with protoc"
+
+            exec("echo 'nested { foo: \"FOO\" }' | protoc --encode=tests.Complex -Itests tests/protos/complex.proto", $protocbin);
+            $protocbin = implode("\n", $protocbin);
+
+            // Encoding
+            $complex = new Tests\Complex();
+            $complex->nested = new Tests\Complex\Nested();
+            $complex->nested->foo = 'FOO';
+            $encbin = Protobuf::encode($complex);
+
+            bin2hex($encbin) should eq (bin2hex($protocbin)) as "Encoding nested message";
+
+            // Decoding
+            $complex = Protobuf::decode('\tests\Complex', $protocbin);
+            $complex->nested->foo should eq 'FOO' as "Decoding nested message";
         end.
 
         it. "a message with repeated fields"

@@ -56,6 +56,10 @@ The command accepts the following command-line options (switches).
     Parses the .proto files looking for multiline comments (/* ... */) to
     include them in the generated files.
 
+  * `--insertions`
+    Includes insertion points in the generated source code so that additional
+    protoc plugins can post-process the result.
+
   * `-Ddefine`, `-Ddefine`=_value_:
     Defines an option (defaults to true if no value given) to pass to
     the generator. See protobuf-php(5) for supported options, noting that
