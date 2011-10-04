@@ -177,7 +177,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= "   */";
         endif;
 
-        $s[]= "  class " . $enum->getName() . " {";
+        $s[]= "  class " . $enum->getName() . ' extends \DrSlump\Protobuf\Enum {';
         foreach ($enum->getValueList() as $value):
         $s[]= "    const " . $value->getName() . " = " . $value->getNumber() . ";";
         endforeach;
@@ -296,6 +296,8 @@ class PhpGenerator extends AbstractGenerator
         // Separate rules and types
         $rules = $types = array();
         foreach ($constants as $k=>$v) {
+            if (false === strpos($k, '_')) continue;
+
             list($prefix, $name) = explode('_', $k, 2);
             if ('RULE' === $prefix) {
                 $rules[$name] = $v;
