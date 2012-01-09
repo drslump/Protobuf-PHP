@@ -78,7 +78,10 @@ class Binary implements Protobuf\CodecInterface
                     $writer->write($data);
                 } else {
                     foreach($value as $val) {
-                        if ($type !== Protobuf::TYPE_MESSAGE) {
+                        // Skip nullified repeated values
+                        if (NULL === $val) {
+                            continue;
+                        } else if ($type !== Protobuf::TYPE_MESSAGE) {
                             $writer->varint($key);
                             $this->encodeSimpleType($writer, $type, $val);
                         } else {
@@ -89,16 +92,14 @@ class Binary implements Protobuf\CodecInterface
                         }
                     }
                 }
+            } else if ($type !== Protobuf::TYPE_MESSAGE) {
+                $writer->varint($key);
+                $this->encodeSimpleType($writer, $type, $value);
             } else {
-                if ($type !== Protobuf::TYPE_MESSAGE) {
-                    $writer->varint($key);
-                    $this->encodeSimpleType($writer, $type, $value);
-                } else {
-                    $writer->varint($key);
-                    $data = $this->encodeMessage($value);
-                    $writer->varint(strlen($data));
-                    $writer->write($data);
-                }
+                $writer->varint($key);
+                $data = $this->encodeMessage($value);
+                $writer->varint(strlen($data));
+                $writer->write($data);
             }
         }
 

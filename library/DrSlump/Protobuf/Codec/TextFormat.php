@@ -56,7 +56,10 @@ class TextFormat implements Protobuf\CodecInterface
 
             if ($field->isRepeated()) {
                 foreach ($value as $val) {
-                    if ($field->getType() !== Protobuf::TYPE_MESSAGE) {
+                    // Skip nullified repeated values
+                    if (NULL === $val) {
+                        continue;
+                    } else if ($field->getType() !== Protobuf::TYPE_MESSAGE) {
                         $data .= $indent . $name . ': ' . json_encode($val) . "\n";
                     } else {
                         $data .= $indent . $name . " {\n";

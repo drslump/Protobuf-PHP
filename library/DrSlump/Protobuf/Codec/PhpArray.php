@@ -70,6 +70,10 @@ class PhpArray implements Protobuf\CodecInterface
                 // Make sure the value is an array of values
                 $v = is_array($v) ? $v : array($v);
                 foreach ($v as $k=>$vv) {
+                    // Skip nullified repeated values
+                    if (NULL === $vv) {
+                        continue;
+                    }
                     $v[$k] = $this->filterValue($vv, $field);
                 }
             } else {
