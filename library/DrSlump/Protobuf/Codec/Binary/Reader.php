@@ -20,7 +20,24 @@ class Reader
      *
      * @param resource|string $fdOrString
      */
-    public function __construct($fdOrString)
+    public function __construct($fdOrString = NULL)
+    {
+        if (NULL !== $fdOrString) {
+            $this->init($fdOrString);
+        }
+    }
+
+    public function __destruct()
+    {
+        fclose($this->_fd);
+    }
+
+    /**
+     * Create a new reader from a file descriptor or a string of bytes
+     *
+     * @param resource|string $fdOrString
+     */
+    public function init($fdOrString)
     {
         if (is_resource($fdOrString)) {
             $this->_fd = $fdOrString;
@@ -30,10 +47,6 @@ class Reader
         }
     }
 
-    public function __destruct()
-    {
-        fclose($this->_fd);
-    }
 
     /**
      * Obtain a number of bytes from the string

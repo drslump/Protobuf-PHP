@@ -30,7 +30,17 @@ class Binary implements Protobuf\CodecInterface
      */
     public function decode(Protobuf\Message $message, $data)
     {
-        return $this->decodeMessage($message, $data);
+        static $reader;
+
+        // Create a single reader for all messages to be parsed
+        if (!$reader) {
+            $reader = new Protobuf\Codec\Binary\Reader();
+        }
+
+        // Initialize the reader with the current message data
+        $reader->init($data);
+
+        return $this->decodeMessage($reader, $message);
     }
 
 
@@ -167,19 +177,26 @@ class Binary implements Protobuf\CodecInterface
         }
     }
 
-
-    protected function decodeMessage(\DrSlump\Protobuf\Message $message, $data)
+    /**
+     * @param \DrSlump\Protobuf\Codec\Binary\Reader $reader
+     * @param \DrSlump\Protobuf\Message             $message
+     * @param int                                   $length 
+     * @return \DrSlump\Protobuf\Message
+     */
+    protected function decodeMessage($reader, \DrSlump\Protobuf\Message $message, $length = NULL)
     {
         /** @var $message \DrSlump\Protobuf\Message */
         /** @var $descriptor \DrSlump\Protobuf\Descriptor */
 
-        // Create a binary reader for the data
-        $reader = new Protobuf\Codec\Binary\Reader($data);
-
         // Get message descriptor
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
-        while (!$reader->eof()) {
+        // Calculate the maximum offset if we have defined a length
+        $limit = $length ? $reader->pos() + $length : NULL;
+        $pos = $reader->pos();
+
+        // Keep reading until we reach the end or the limit
+        while ($limit === NULL && !$reader->eof() || $limit !== NULL && $reader->pos() < $limit) {
 
             // Get initial varint with tag number and wire type
             $key = $reader->varint();
@@ -203,10 +220,11 @@ class Binary implements Protobuf\CodecInterface
             // flag of the message since we cannot be certain if the creator of the message
             // was using it.
             if ($wire === self::WIRE_LENGTH && $field->isRepeated() && $this->isPackable($type)) {
-                $length = $reader->varint();
-                $until = $reader->pos() + $length;
+                $len = $reader->varint();
+                $until = $reader->pos() + $len;
+                $wire = $this->getWireType($type);
                 while ($reader->pos() < $until) {
-                    $item = $this->decodeSimpleType($reader, $type, self::WIRE_VARINT);
+                    $item = $this->decodeSimpleType($reader, $type, $wire);
                     $message->_add($tag, $item);
                 }
 
@@ -220,10 +238,10 @@ class Binary implements Protobuf\CodecInterface
                     $submessage = $field->getReference();
                     $submessage = new $submessage;
 
-                    $length = $this->decodeSimpleType($reader, Protobuf::TYPE_INT64, self::WIRE_VARINT);
-                    $data = $reader->read($length);
+                    $len = $reader->varint();
 
-                    $value = $this->decodeMessage($submessage, $data);
+                    //$reader2 = new Binary\Reader( $reader->read($len) );
+                    $value = $this->decodeMessage($reader, $submessage, $len);
                 } else {
                     $value = $this->decodeSimpleType($reader, $type, $wire);
                 }
@@ -292,32 +310,28 @@ class Binary implements Protobuf\CodecInterface
 
     protected function getWireType($type, $default)
     {
-        switch ($type) {
-            case Protobuf::TYPE_INT32:
-            case Protobuf::TYPE_INT64:
-            case Protobuf::TYPE_UINT32:
-            case Protobuf::TYPE_UINT64:
-            case Protobuf::TYPE_SINT32:
-            case Protobuf::TYPE_SINT64:
-            case Protobuf::TYPE_BOOL:
-            case Protobuf::TYPE_ENUM:
-                return self::WIRE_VARINT;
-            case Protobuf::TYPE_FIXED64:
-            case Protobuf::TYPE_SFIXED64:
-            case Protobuf::TYPE_DOUBLE:
-                return self::WIRE_FIXED64;
-            case Protobuf::TYPE_STRING:
-            case Protobuf::TYPE_BYTES:
-            case Protobuf::TYPE_MESSAGE:
-                return self::WIRE_LENGTH;
-            case Protobuf::TYPE_FIXED32:
-            case Protobuf::TYPE_SFIXED32:
-            case Protobuf::TYPE_FLOAT:
-                return self::WIRE_FIXED32;
-            default:
-                // Unknown fields just return the reported wire type
-                return $default;
-        }
+        static $map = array(
+            Protobuf::TYPE_INT32 => self::WIRE_VARINT,
+            Protobuf::TYPE_INT64 => self::WIRE_VARINT,
+            Protobuf::TYPE_UINT32 => self::WIRE_VARINT,
+            Protobuf::TYPE_UINT64 => self::WIRE_VARINT,
+            Protobuf::TYPE_SINT32 => self::WIRE_VARINT,
+            Protobuf::TYPE_SINT64 => self::WIRE_VARINT,
+            Protobuf::TYPE_BOOL => self::WIRE_VARINT,
+            Protobuf::TYPE_ENUM => self::WIRE_VARINT,
+            Protobuf::TYPE_FIXED64 => self::WIRE_FIXED64,
+            Protobuf::TYPE_SFIXED64 => self::WIRE_FIXED64,
+            Protobuf::TYPE_DOUBLE => self::WIRE_FIXED64,
+            Protobuf::TYPE_STRING => self::WIRE_LENGTH,
+            Protobuf::TYPE_BYTES => self::WIRE_LENGTH,
+            Protobuf::TYPE_MESSAGE => self::WIRE_LENGTH,
+            Protobuf::TYPE_FIXED32 => self::WIRE_FIXED32,
+            Protobuf::TYPE_SFIXED32 => self::WIRE_FIXED32,
+            Protobuf::TYPE_FLOAT => self::WIRE_FIXED32
+        );
+
+        // Unknown types just return the reported wire type
+        return isset($map[$type]) ? $map[$type] : $default;
     }
 
     protected function decodeSimpleType($reader, $type, $wireType)
@@ -327,6 +341,7 @@ class Binary implements Protobuf\CodecInterface
             case Protobuf::TYPE_UINT64:
             case Protobuf::TYPE_INT32:
             case Protobuf::TYPE_UINT32:
+            case Protobuf::TYPE_ENUM:
                 return $reader->varint();
 
             case Protobuf::TYPE_SINT32: // ZigZag
@@ -351,19 +366,12 @@ class Binary implements Protobuf\CodecInterface
                 return (bool)$reader->varint();
 
             case Protobuf::TYPE_STRING:
-                $length = $reader->varint();
-                return $reader->read($length);
-
-            case Protobuf::TYPE_MESSAGE:
-                // Messages are not supported in this method
-                return null;
-
             case Protobuf::TYPE_BYTES:
                 $length = $reader->varint();
                 return $reader->read($length);
 
-            case Protobuf::TYPE_ENUM:
-                return $reader->varint();
+            case Protobuf::TYPE_MESSAGE:
+                throw new \RuntimeException('Nested messages are not supported in this method');
 
             default:
                 // Unknown type, follow wire type rules
