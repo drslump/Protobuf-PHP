@@ -29,7 +29,7 @@ class Reader
 
     public function __destruct()
     {
-        fclose($this->_fd);
+        $this->_fd && fclose($this->_fd);
     }
 
     /**
