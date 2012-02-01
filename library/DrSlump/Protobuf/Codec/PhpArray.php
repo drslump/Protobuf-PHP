@@ -133,16 +133,16 @@ class PhpArray implements Protobuf\CodecInterface
                     return $this->decodeMessage(new $nested, $value);
                 }
             case Protobuf::TYPE_BOOL:
-                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
             case Protobuf::TYPE_STRING:
             case Protobuf::TYPE_BYTES:
                 return (string)$value;
             case Protobuf::TYPE_FLOAT:
             case Protobuf::TYPE_DOUBLE:
-                return filter_var($value, FILTER_VALIDATE_FLOAT);
+                return filter_var($value, FILTER_VALIDATE_FLOAT, FILTER_NULL_ON_FAILURE);
             // Assume the rest are ints
             default:
-                return filter_var($value, FILTER_VALIDATE_INT);
+                return filter_var($value, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
         }
     }
 
