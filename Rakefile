@@ -40,7 +40,6 @@ namespace :pear do
   task :package => ['doc:build', :xml] do
 
     # Copy supporting files to the package root
-
     support_files.each do |file|
        cp file, "library/#{file}"
     end
@@ -68,6 +67,51 @@ namespace :pear do
   end
 
 end
+
+
+namespace :phar do
+
+  phar_file = "protobuf.phar"
+
+  desc "Build a phar archive"
+  task :build do
+    unless ENV['version'] then
+      puts 'Version number not given. Use "phar:build version=1.0"'
+      exit 1
+    end
+
+    puts "Creating a temporary directory with the files..."
+
+    # Create a temporary directory
+    tmp_dest = "/tmp/phar-#{Time.now.to_i}"
+    mkdir_p tmp_dest
+
+    # Copy library files there
+    cp_r "library/", tmp_dest
+
+    # Process copied files, replacing @package_version@
+    version = ENV['version'] + '-phar'
+    FileList["#{tmp_dest}/**/*.php"].each do |fpath|
+      puts fpath
+      sh "sed -i.bak 's/@package_version@/#{version}/g' #{fpath}" 
+    end
+
+    puts "Launching phar builder..."
+    sh "phar pack -f #{phar_file} -s protoc-gen-php.php -c bz2 -h sha1 #{tmp_dest}/library"
+
+    puts "Cleaning up temporary directory..."
+    rm_r tmp_dest
+  end
+
+  desc "Clean up"
+  task :clean do
+    puts "Cleaning up..."
+
+    # Remove the phar file
+    rm_f phar_file
+  end
+end
+
 
 namespace :doc do
 
