@@ -14,6 +14,28 @@ class Binary implements Protobuf\CodecInterface
     const WIRE_FIXED32     = 5;
     const WIRE_UNKNOWN     = -1;
 
+    // Table map to know if a field type is "packable"
+    static $PACKABLE = array(
+        Protobuf::TYPE_DOUBLE => true,
+        Protobuf::TYPE_FLOAT => true,
+        Protobuf::TYPE_INT64 => true,
+        Protobuf::TYPE_UINT64 => true,
+        Protobuf::TYPE_INT32 => true,
+        Protobuf::TYPE_FIXED64 => true,
+        Protobuf::TYPE_FIXED32 => true,
+        Protobuf::TYPE_BOOL => true,
+        Protobuf::TYPE_STRING => false,
+        Protobuf::TYPE_GROUP => false,
+        Protobuf::TYPE_MESSAGE => false,
+        Protobuf::TYPE_BYTES => false,
+        Protobuf::TYPE_UINT32 => true,
+        Protobuf::TYPE_ENUM => true,
+        Protobuf::TYPE_SFIXED32 => true,
+        Protobuf::TYPE_SFIXED64 => true,
+        Protobuf::TYPE_SINT32 => true,
+        Protobuf::TYPE_SINT64 => true
+    );
+
     /**
      * @param \DrSlump\Protobuf\Message $message
      * @return string
@@ -190,6 +212,8 @@ class Binary implements Protobuf\CodecInterface
 
         // Get message descriptor
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
+        // Cache locally the message fields
+        $fields = $descriptor->getFields();
 
         // Calculate the maximum offset if we have defined a length
         $limit = $length ? $reader->pos() + $length : NULL;
@@ -206,20 +230,20 @@ class Binary implements Protobuf\CodecInterface
             $tag = $key >> 3;
 
             // Find the matching field for the tag number
-            $field = $descriptor->getField($tag);
-            if (!$field) {
+            if (!isset($fields[$tag])) {
                 $data = $this->decodeUnknown($reader, $wire);
                 $unknown = new Binary\Unknown($tag, $wire, $data);
                 $message->addUnknown($unknown);
                 continue;
             }
 
+            $field = $fields[$tag];
             $type = $field->getType();
 
             // Check if we are dealing with a packed stream, we cannot rely on the packed
             // flag of the message since we cannot be certain if the creator of the message
             // was using it.
-            if ($wire === self::WIRE_LENGTH && $field->isRepeated() && $this->isPackable($type)) {
+            if ($wire === self::WIRE_LENGTH && $field->isRepeated() && self::$PACKABLE[$type]) {
                 $len = $reader->varint();
                 $until = $reader->pos() + $len;
                 $wire = $this->getWireType($type);
