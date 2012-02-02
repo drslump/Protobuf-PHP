@@ -2,6 +2,8 @@
 
 namespace DrSlump\Protobuf;
 
+use DrSlump\Protobuf;
+
 /**
  *
  * To access fields by their name you can use generated getters/setters methods if
@@ -143,7 +145,7 @@ interface MessageInterface extends \ArrayAccess
      * @param \DrSlump\Protobuf\Unknown string $field
      * @return \DrSlump\Protobuf\Message - Fluent Interface
      */
-    public function addUnknown(Unknown $field);
+    public function addUnknown(Protobuf\Unknown $field);
 
     /**
      * Obtain the list of unknown fields in this message
@@ -151,5 +153,11 @@ interface MessageInterface extends \ArrayAccess
      * @return \DrSlump\Protobuf\Unknown[]
      */
     public function getUnknown();
+
+    /**
+     * Reset the list of unknown fields
+     */
+    public function clearUnknown();
+
 }
 

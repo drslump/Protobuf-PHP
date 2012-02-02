@@ -27,7 +27,7 @@ class LazyValue
      */
     public function evaluate()
     {
-        // TODO: Implement
+        return $this->codec->lazyDecode($this->descriptor, $this->value);
     }
 
 }

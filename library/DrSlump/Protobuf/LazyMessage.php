@@ -2,6 +2,8 @@
 
 namespace DrSlump\Protobuf;
 
+use DrSlump\Protobuf;
+
 /**
  *
  * Public fields are generated as PhpDoc properties
@@ -146,13 +148,131 @@ class LazyMessage implements MessageInterface
     }
 
 
+    // Extensions public methods.
+    // @todo Check if extension name is defined
+
+    /**
+     * Checks if an extension field is set
+     *
+     * @param string $extname
+     * @return bool
+     */
+    public function hasExtension($extname)
+    {
+        return isset($this->_extensions[$extname]);
+    }
+
+    /**
+     * Get the value of an extension field
+     *
+     * @param string $extname
+     * @param int|null $idx
+     * @return mixed
+     */
+    public function getExtension($extname, $idx = null)
+    {
+        if (!isset($this->_extensions[$extname])) return NULL;
+
+        return $idx === NULL
+               ? $this->_extensions[$extname]
+               : $this->_extensions[$extname][$idx];
+    }
+
+    /**
+     * Get all the values of a repeated extension field
+     *
+     * @param string $extname
+     * @return array
+     */
+    public function getExtensionList($extname)
+    {
+        return isset($this->_extensions[$extname])
+               ? $this->_extensions[$extname]
+               : array();
+    }
+
+    /**
+     * Set the value for an extension field
+     *
+     * @param string $extname
+     * @param mixed $value
+     * @param int|null $idx
+     * @return \DrSlump\Protobuf\Message - Fluent Interface
+     */
+    public function setExtension($extname, $value, $idx = null)
+    {
+        if (NULL !== $idx) {
+            if (empty($this->_extensions)) {
+                $this->_extensions[$extname] = array();
+            }
+            $this->_extensions[$extname][$idx] = $value;
+        }
+
+        $this->_extensions[$extname] = $value;
+
+        return $this;
+    }
+
+    /**
+     * Adds a value to repeated extension field
+     *
+     * @param string $extname
+     * @param mixed $value
+     * @return \DrSlump\Protobuf\Message - Fluent Interface
+     */
+    public function addExtension($extname, $value)
+    {
+        $this->_extensions[$extname][] = $value;
+    }
+
+    /**
+     * @param  $extname
+     * @return void
+     */
+    public function clearExtension($extname)
+    {
+        unset($this->_extensions[$extname]);
+    }
+
+
+
+    // Unknown fields
+
+    /**
+     * Adds an unknown field to the message
+     * 
+     * @param \DrSlump\Protobuf\Unknown string $field
+     * @return \DrSlump\Protobuf\Message - Fluent Interface
+     */
+    public function addUnknown(Protobuf\Unknown $field)
+    {
+        $this->_unknown[] = $field;
+    }
+
+    /**
+     * Obtain the list of unknown fields in this message
+     *
+     * @return \DrSlump\Protobuf\Unknown[]
+     */
+    public function getUnknown()
+    {
+        return $this->_unknown;
+    }
+
+    public function clearUnknown()
+    {
+        $this->_unknown = array();
+    }
+
+
+
     // Magic getters and setters
 
     function __get($name) 
     {
         if (isset($this->_values[$name])) {
             $value = $this->_values[$name];
-            if ($value instanceof LazyValue) {
+            if ($value instanceof Protobuf\LazyValue) {
                 $this->_values[$name] = $value->evaluate();
             }
 
@@ -179,7 +299,7 @@ class LazyMessage implements MessageInterface
 
     function __call($name, $args) 
     {
-        $prefix = strtolower(substr($lower, 0, 3));
+        $prefix = strtolower(substr($name, 0, 3));
 
         // Check if it's a call we care about
         switch ($prefix) {
@@ -240,7 +360,13 @@ class LazyMessage implements MessageInterface
             if (!$field) {
                 throw new \Exception('Invalid field tag number ' . $offset);
             }
-            $data =& $field->isExtension() ? $this->_extensions : $this->_values;
+
+            if ($field->isExtension()) {
+                $data =& $this->_extensions;
+            } else {
+                $data =& $this->_values;
+            }
+
             $data[$field->name] = $value;
         } else {
             $this->setExtension($offset, $value);
@@ -254,8 +380,14 @@ class LazyMessage implements MessageInterface
             if (!$field) {
                 throw new \Exception('Invalid field tag number ' . $offset);
             }
-            $data =& $field->isExtension() ? $this->_extensions : $this->_values;
-            return isset($data[$field->name]) ? $data[$field->name] : NULL;
+
+            $name = $field->name;
+
+            if (!$field->isExtension()) {
+                return isset($this->$name) ? $this->$name : NULL;
+            }
+
+            return isset($this->_extensions[$name]) ? $this->_extensions[$name] : NULL;
         } else {
             return $this->getExtension($offset);
         }
@@ -268,7 +400,13 @@ class LazyMessage implements MessageInterface
             if (!$field) {
                 throw new \Exception('Invalid field tag number ' . $offset);
             }
-            $data =& $field->isExtension() ? $this->_extensions : $this->_values;
+
+            if ($field->isExtension()) {
+                $data =& $this->_extensions;
+            } else {
+                $data =& $this->_values;
+            }
+
             if (isset($data[$field->name])) {
                 unset($data[$field->name]);
             }

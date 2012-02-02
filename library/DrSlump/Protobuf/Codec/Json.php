@@ -15,21 +15,21 @@ class Json extends PhpArray
     implements Protobuf\CodecInterface
 {
     /**
-     * @param \DrSlump\Protobuf\Message $message
+     * @param \DrSlump\Protobuf\MessageInterface $message
      * @return string
      */
-    public function encode(Protobuf\Message $message)
+    public function encode(Protobuf\MessageInterface $message)
     {
         $data = $this->encodeMessage($message);
         return json_encode($data);
     }
 
     /**
-     * @param \DrSlump\Protobuf\Message $message
+     * @param \DrSlump\Protobuf\MessageInterface $message
      * @param string $data
-     * @return \DrSlump\Protobuf\Message
+     * @return \DrSlump\Protobuf\MessageInterface
      */
-    public function decode(Protobuf\Message $message, $data)
+    public function decode(Protobuf\MessageInterface $message, $data)
     {
         $data = json_decode($data);
         return $this->decodeMessage($message, $data);

@@ -2,15 +2,21 @@
 
 namespace DrSlump\Protobuf;
 
+use DrSlump\Protobuf;
 
-class LazyRepeat extends LazyValue implements \Iterator, \ArrayAccess
+
+class LazyRepeat implements \Iterator, \Countable, \ArrayAccess 
 {
     protected $_ofs = 0;
-    protected $_data = NULL;
+    protected $_data = array();
+
+    public function __construct($values = array())
+    {
+        $this->_data = $values;
+    }
 
     public function current(){
-        // TODO: Check if it's a lazy value
-        return $this->_data[$this->_ofs];
+        return $this[$this->_ofs];
     }
 
     public function key() {
@@ -26,12 +32,12 @@ class LazyRepeat extends LazyValue implements \Iterator, \ArrayAccess
     }
         
     public function valid() {
-        // This method is called before any other iterator method
-        if (NULL === $this->_data) {
-            $this->evaluate();
-        }
-
         return isset($this->_data[$this->_ofs]);
+    }
+
+
+    public function count() {
+        return count($this->_data);
     }
 
 
@@ -39,7 +45,7 @@ class LazyRepeat extends LazyValue implements \Iterator, \ArrayAccess
         if (is_null($offset)) {
             $this->_data[] = $value;
         } else {
-            $_data[$offset] = $value;
+            $this->_data[$offset] = $value;
         }
     }
 
@@ -52,21 +58,13 @@ class LazyRepeat extends LazyValue implements \Iterator, \ArrayAccess
     }
 
     public function offsetGet($offset) {
-        return isset($this->_data[$offset]) ? $this->_data[$offset] : null;
+        if (!isset($this->_data[$offset])) return NULL;
+
+        if ($this->_data[$offset] instanceof Protobuf\LazyValue) {
+            $this->_data[$offset] = $this->_data[$offset]->evaluate();
+        }
+        return $this->_data[$offset];
     }
-
-
-    /**
-     * Decodes the lazy value to obtain a valid result
-     *
-     * @return LazyRepeat - the self object but already processed
-     */
-    public function evaluate()
-    {
-        // TODO: Convert the lazy value into a valid value 
-        return $this;
-    } 
-
 
     public function toArray() {
         // TODO: We might need to do this recursively for repeated messages
