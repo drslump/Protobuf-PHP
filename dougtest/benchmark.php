@@ -44,20 +44,20 @@ class Benchmark {
         static $done = array();
 
         // Print only once per label
-        if (in_array($label, $done)) return;
+        $print = !in_array($label, $done);
         $done[] = $label;
 
-        echo "\n<<<< $label >>>>\n";
+        $print && print("\n<<<< $label >>>>\n");
         foreach ($msg->resultset as $rs) {
-            echo "Number of rows: " . count($rs->row) . PHP_EOL;
+            $print && print("Number of rows: " . count($rs->row) . PHP_EOL);
             for ($i=0; $i<10; $i++) {
                 $row = $rs->row[$i];
                 for ($j=0; $j<5; $j++) {
-                    echo $row->column[$j]->value . ' | ';
+                    $print && print($row->column[$j]->value . ' | ');
                 }
-                echo "\n";
+                $print && print("\n");
             }
-            echo "==========================================================\n";
+            $print && print("==========================================================\n");
         }
     }
 
