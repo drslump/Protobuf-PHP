@@ -13,6 +13,8 @@ include_once __DIR__ . '/MysqlQueryResult.lazy.php';
 class Benchmark {
 
     protected $tests = array(
+        'DecodeBinaryLazyDoug',
+        'DecodeJsonLazyDoug',
         'DecodeBinaryDoug',
         'DecodeJsonDoug',
         'DecodeRawJsonDoug',
@@ -37,20 +39,6 @@ class Benchmark {
         $profiler->display();
     }
 
-    protected function configDecodeBinaryDoug()
-    {
-        return array(
-            new Protobuf\Codec\LazyBinary(),
-            file_get_contents(__DIR__ . '/doug.pb')
-        );
-    }
-
-    protected function runDecodeBinaryDoug($codec, $data)
-    {
-        $out = $codec->decode(new requestd\MysqlQueryResult(), $data);
-        $this->printDoug($out, 'Binary');
-    }
-
     protected function printDoug($msg, $label)
     {
         static $done = array();
@@ -73,7 +61,36 @@ class Benchmark {
         }
     }
 
-    protected function configDecodeJsonDoug()
+    protected function configDecodeBinaryLazyDoug()
+    {
+        return array(
+            new Protobuf\Codec\LazyBinary(),
+            file_get_contents(__DIR__ . '/doug.pb')
+        );
+    }
+
+    protected function runDecodeBinaryLazyDoug($codec, $data)
+    {
+        $out = $codec->decode(new requestd\MysqlQueryResult(), $data);
+        $this->printDoug($out, 'LazyBinary');
+    }
+
+    protected function configDecodeBinaryDoug()
+    {
+        return array(
+            new Protobuf\Codec\LazyBinary(false),
+            file_get_contents(__DIR__ . '/doug.pb')
+        );
+    }
+
+    protected function runDecodeBinaryDoug($codec, $data)
+    {
+        $out = $codec->decode(new requestd\MysqlQueryResult(), $data);
+        $this->printDoug($out, 'Binary');
+    }
+
+
+    protected function configDecodeJsonLazyDoug()
     {
         $codecBin = new Protobuf\Codec\LazyBinary();
         $codecJson = new Protobuf\Codec\Json();
@@ -84,11 +101,31 @@ class Benchmark {
         return array($codecJson, $data);
     }
 
+    protected function runDecodeJsonLazyDoug($codec, $data)
+    {
+        $out = $codec->decode(new requestd\MysqlQueryResult(), $data);
+        $this->printDoug($out, 'LazyJson');
+    }
+
+    protected function configDecodeJsonDoug()
+    {
+        $codecBin = new Protobuf\Codec\LazyBinary();
+        $codecJson = new Protobuf\Codec\Json(false);
+
+        $bin = $this->configDecodeBinaryDoug();
+        $simple = $codecBin->decode(new requestd\MysqlQueryResult(), $bin[1]);
+        $data = $codecJson->encode($simple);
+        return array($codecJson, $data);
+    }
+
+
     protected function runDecodeJsonDoug($codec, $data)
     {
         $out = $codec->decode(new requestd\MysqlQueryResult(), $data);
         $this->printDoug($out, 'Json');
     }
+
+
 
     protected function configDecodeRawJsonDoug()
     {
