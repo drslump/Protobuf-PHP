@@ -260,6 +260,9 @@ PHP_MINIT_FUNCTION(pbext)
 	le_pbext_msg_desc = zend_register_list_destructors_ex(
 			pbext_msg_desc_dtor, NULL, PHP_PBEXT_MSG_DESC_RES, module_number);
 
+	/* Register constants */
+    REGISTER_LONG_CONSTANT("PBEXT_FLAG_PACKED", LWPB_IS_PACKED, CONST_CS|CONST_PERSISTENT);
+
 	return SUCCESS;
 }
 /* }}} */
@@ -314,7 +317,9 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
     long flags = 0;
     char *name = NULL;
     size_t name_len = 0;
-    zval *znested = NULL;    
+    zval *znested = NULL;
+
+    // TODO: Allow additional argument with the "default" value
     
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, 
             "rlll|slr", &zmsg, &num, &label, &type, &name, &name_len, &flags, &znested) == FAILURE) {

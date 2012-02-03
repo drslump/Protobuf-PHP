@@ -68,6 +68,10 @@ as having a binary type. The decoder will return the original encoded string wit
 analyzing it.
 
 
+### Constants
+
+    PBEXT_FLAG_PACKED - Use it as a field's flags to force packed encoding of repeated values
+
 ### resource pbext_desc_message( $name = NULL )
 
 Create a new message descriptor to whom attach field descriptors with `pbext_desc_field`.
