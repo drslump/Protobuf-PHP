@@ -272,12 +272,14 @@ PHP_MSHUTDOWN_FUNCTION(pbext) /* {{{ */
 PHP_MINFO_FUNCTION(pbext) /* {{{ */
 {
 	php_info_print_table_start();
-	php_info_print_table_header(2, "pbext support", "enabled");
+	php_info_print_table_header(2, "Protobuf-PHP's extension support", "enabled");
+    php_info_print_table_row(2, "Build Date", __DATE__);
+    php_info_print_table_row(2, "Build Time", __TIME__);
 	php_info_print_table_end();
 } /* }}} */
 
 
-// [name] : resource
+// resource : [name]
 PHP_FUNCTION(pbext_desc_message) /* {{{ */
 {
 	// TODO: Create a version using persisting resources (perhaps giving it a message name?)
@@ -302,7 +304,7 @@ PHP_FUNCTION(pbext_desc_message) /* {{{ */
     ZEND_REGISTER_RESOURCE(return_value, msg, le_pbext_msg_desc);
 } /* }}} */
 
-// msg(res), num(int), label(int), type(int), [name, [flag(int), [nested(res)]]] : bool
+// bool : msg(res), num(int), label(int), type(int), [name, [flag(int), [nested(res)]]]
 PHP_FUNCTION(pbext_desc_field) /* {{{ */
 {
     zval *zmsg;
@@ -362,7 +364,7 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
     RETURN_TRUE;
 } /* }}} */
 
-// msg(res), data : array
+// array|null : msg(res), data
 PHP_FUNCTION(pbext_decode) /* {{{ */
 {
 	zval *zmsg;

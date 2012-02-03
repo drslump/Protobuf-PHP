@@ -7,7 +7,7 @@ the decoding of binary messages to a C runtime.
 
 The extension includes a stripped down version of the 
 [Lightweight Protocol Buffers](http://code.google.com/p/lwpb/) (lwpb) library, although 
-actually the source files has been taken from the 
+actually the source files have been taken from the 
 [port available with the Python extension](https://github.com/acg/lwpb). So kudos to
 [Simon Kallweit](http://code.google.com/p/lwpb/), [Alan Grow](https://github.com/acg) and
 [Nick Vatamaniuc](https://github.com/nickva) for the good job.
@@ -15,7 +15,7 @@ actually the source files has been taken from the
 ## Status
 
 The extension is still under development although it's able to decode messages already.
-There are still tests to do regarding performance, memory leaks and a robust build setup.
+There are still tests to do regarding performance, memory leaks and a robust build setup. 
 
 That said, use it at your own risk at report back any bugs or patches!
 
@@ -57,6 +57,11 @@ to your configuration:
 While the Protobuf-PHP library already provides a _frontend_ to the functions provided 
 by the extension, it might be desirable for some extreme use cases, to bypass it completely 
 and use directly the extension.
+
+Note that since the primary use case is to be wrapped by an _user land_ class, the API design
+is very simple and more importantly, it does not check in detail the arguments given to the
+functions. If you access the exposed functions directly be extra carefull when feeding them
+arguments to make sure they work as intended.
 
 > To allow the implementation of a _lazy decoding_ scheme, just define nested message fields
 as having a binary type. The decoder will return the original encoded string without further
