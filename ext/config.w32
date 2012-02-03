@@ -1,0 +1,10 @@
+// $Id$
+// vim:ft=javascript
+
+// Otherwise, use ARG_ENABLE
+// ARG_ENABLE("pbext", "enable pbext support", "no");
+
+if (PHP_PBEXT != "no") {
+	EXTENSION("pbext", "php_pbext.c");
+}
+
