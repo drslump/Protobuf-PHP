@@ -2,9 +2,23 @@
 
 Decoding the Protocol Buffers binary format using only _user functions_ is slow
 due to the nature of the PHP language and interpreter. This C language extension
-to the PHP interpreter exposes a set of functions that allow the library to delegate
-the decoding of binary messages to a C runtime provided by the [lwpb](http://code.google.com/p/lwpb/)
-library.
+to the PHP interpreter exposes a set of functions allowing the library to delegate
+the decoding of binary messages to a C runtime.
+
+The extension includes a stripped down version of the 
+[Lightweight Protocol Buffers](http://code.google.com/p/lwpb/) (lwpb) library, although 
+actually the source files has been taken from the 
+[port available with the Python extension](https://github.com/acg/lwpb). So kudos to
+[Simon Kallweit](http://code.google.com/p/lwpb/), [Alan Grow](https://github.com/acg) and
+[Nick Vatamaniuc](https://github.com/nickva) for the good job.
+
+## Status
+
+The extension is still under development although it's able to decode messages already.
+There are still tests to do regarding performance, memory leaks and a robust build setup.
+
+That said, use it at your own risk at report back any bugs or patches!
+
 
 ## Performance
 

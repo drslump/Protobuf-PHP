@@ -199,17 +199,8 @@
 #include <lwpb/decoder.h>
 #include <lwpb/encoder2.h>
 
-/*
-#include <lwpb/core/misc.h>
-#include <lwpb/rpc/transport.h>
-#include <lwpb/rpc/client.h>
-#include <lwpb/rpc/server.h>
-#include <lwpb/utils/struct_decoder.h>
-#include <lwpb/utils/struct_map.h>
-*/
 
 /** Simple assert macro */
-
 #define LWPB_ASSERT(_expr_, _msg_)                                          \
     do {                                                                    \
         if (!(_expr_)) {                                                    \
@@ -219,7 +210,6 @@
     } while (0)
 
 /** Simple failure macro */
- 
 #define LWPB_FAIL(_msg_)                                                    \
     do {                                                                    \
         LWPB_DIAG_PRINTF(_msg_ "\n");                                       \
