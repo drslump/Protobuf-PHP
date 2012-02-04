@@ -300,7 +300,7 @@ PHP_FUNCTION(pbext_desc_message) /* {{{ */
 
     // Allocate memory for the fields
     msg->num_fields = 0;
-    msg->fields = (struct lwpb_field_desc*) emalloc(0);
+    msg->fields = (struct lwpb_field_desc*) ecalloc(1, sizeof(struct lwpb_field_desc));
 	msg->name = name_len ? estrndup(name, name_len) : NULL;
 
 	// Register and return a resource

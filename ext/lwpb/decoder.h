@@ -65,6 +65,8 @@ typedef void (*lwpb_decoder_field_handler_t)
 struct lwpb_decoder_stack_frame {
     struct lwpb_buf buf;
     const struct lwpb_msg_desc *msg_desc;
+    // Keep the last found field offset
+    int ofs;
 };
 
 /** Protocol buffer decoder */

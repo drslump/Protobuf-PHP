@@ -167,6 +167,51 @@ lwpb_err_t lwpb_decode_varint(struct lwpb_buf *buf, u64_t *varint)
     return LWPB_ERR_OK;
 }
 
+
+static inline lwpb_err_t lwpb_decode_varint_fast(struct lwpb_buf *buf, u64_t *value) 
+{
+    // First check if it's just a single byte (very common case)
+    if (buf->pos < buf->end && *(buf->pos) < 0x80) {
+
+        *value = *buf->pos;
+        buf->pos++;
+        return LWPB_ERR_OK;
+        
+    // Now lets check if we can optimize medium values
+    } else if ((buf->end - buf->pos) >= 5) {
+        u64_t result;
+        unsigned int b;
+
+        // Process the first 32bits in a speedy way
+        b = *(buf->pos++); result = (b & 0x7F)       ; if (!(b & 0x80)) goto done;
+        b = *(buf->pos++); result |= (b & 0x7F) <<  7; if (!(b & 0x80)) goto done;
+        b = *(buf->pos++); result |= (b & 0x7F) << 14; if (!(b & 0x80)) goto done;
+        b = *(buf->pos++); result |= (b & 0x7F) << 21; if (!(b & 0x80)) goto done;
+        b = *(buf->pos++); result |= (b & 0x7F) << 28; if (!(b & 0x80)) goto done;
+
+        // If we're still decoding lets continue with a slower alternative
+        int bits;
+        for (bits=35; bits < 64; bits += 7) {
+            b = *(buf->pos++); result |= (b & 0x7F) << bits; 
+            if (!(b & 0x80)) goto done;
+        }
+
+        // We have overrun the maximum size of a varint (10 bytes).  Assume
+        // the data is corrupt.
+        return LWPB_ERR_END_OF_BUF;
+
+      done:
+        *value = result;
+        return LWPB_ERR_OK;
+
+    // Fallback to the slow decoder for the remaining cases
+    } else {
+        return lwpb_decode_varint(buf, value);
+    }
+}
+
+
+
 /**
  * Decodes a 32 bit integer
  * @param buf Memory buffer
@@ -335,17 +380,20 @@ lwpb_err_t lwpb_decoder_decode(struct lwpb_decoder *decoder,
     union wire_value wire_value;
     union lwpb_value value;
     struct lwpb_decoder_stack_frame *frame, *new_frame;
-    
+
+
     // Setup initial stack frame
     decoder->depth = 1;
     decoder->packed = 0;
     frame = &decoder->stack[decoder->depth - 1];
     lwpb_buf_init(&frame->buf, data, len);
     frame->msg_desc = msg_desc;
+
+    frame->ofs = 0;
     
     while (decoder->depth >= 1) {
 decode_nested:
-        
+
         // Get current frame
         frame = &decoder->stack[decoder->depth - 1];
         
@@ -361,25 +409,41 @@ decode_nested:
                 wire_type = field_wire_type(field_desc);
             } else {
                 // Decode the field key
-                ret = lwpb_decode_varint(&frame->buf, &key);
+                ret = lwpb_decode_varint_fast(&frame->buf, &key);
                 if (ret != LWPB_ERR_OK)
                     return ret;
             
                 number = key >> 3;
                 wire_type = key & 0x07;
             
-                // Find the field descriptor
-                for (i = 0; i < frame->msg_desc->num_fields; i++)
-                    if (frame->msg_desc->fields[i].number == number) {
-                        field_desc = &frame->msg_desc->fields[i];
+                // Reset the field descriptor, otherwise we may end up confusing 
+                // unknown fields with the previous one.
+                field_desc = NULL;
+
+                // Find a matching field using a circular list. Assumes that probably 
+                // they appear in the stream in the order they have been defined.
+                // When we find a repeated field we keep the offset at the found
+                // position, otherwise we position it to the next element, this
+                // way the next iteration starts checking from an optimum position.
+                int ofs = frame->ofs % frame->msg_desc->num_fields;
+                for (i=0; i < frame->msg_desc->num_fields; i++) {
+                    if (frame->msg_desc->fields[ofs].number == number) {
+                        field_desc = &frame->msg_desc->fields[ofs];
+                        if (field_desc->opts.label != LWPB_REPEATED)
+                            ofs++;
                         break;
                     }
+                    ofs = (ofs+1) % frame->msg_desc->num_fields;
+                }
+
+                // Keep the current offset in the current frame
+                frame->ofs = ofs;
             }
             
             // Decode field's wire value
             switch(wire_type) {
             case WT_VARINT:
-                ret = lwpb_decode_varint(&frame->buf, &wire_value.varint);
+                ret = lwpb_decode_varint_fast(&frame->buf, &wire_value.varint);
                 if (ret != LWPB_ERR_OK)
                     return ret;
                 break;
@@ -389,7 +453,7 @@ decode_nested:
                     return ret;
                 break;
             case WT_STRING:
-                ret = lwpb_decode_varint(&frame->buf, &wire_value.string.len);
+                ret = lwpb_decode_varint_fast(&frame->buf, &wire_value.string.len);
                 if (ret != LWPB_ERR_OK)
                     return ret;
                 if (wire_value.string.len > lwpb_buf_left(&frame->buf))
@@ -412,9 +476,7 @@ decode_nested:
                 continue;
             
             // Handle packed repeated fields
-            if ((wire_type == WT_STRING) &&
-                LWPB_IS_PACKED_REPEATED(field_desc)) {
-                
+            if ((wire_type == WT_STRING) && LWPB_IS_PACKED_REPEATED(field_desc)) {
                 // Create new stack frame
                 new_frame = push_stack_frame(decoder);
                 lwpb_buf_init(&new_frame->buf, wire_value.string.data, wire_value.string.len);
@@ -480,7 +542,6 @@ decode_nested:
                 value.bytes.data = wire_value.string.data;
                 break;
             case LWPB_MESSAGE:
-            default:
                 if (decoder->field_handler)
                     decoder->field_handler(decoder, msg_desc, field_desc, NULL, decoder->arg);
                 
@@ -488,8 +549,12 @@ decode_nested:
                 new_frame = push_stack_frame(decoder);
                 lwpb_buf_init(&new_frame->buf, wire_value.string.data, wire_value.string.len);
                 new_frame->msg_desc = field_desc->msg_desc;
+                new_frame->ofs = 0;
                 
                 goto decode_nested;
+            default:
+                // Unknown types are simple ignored
+                break;
             }
             
             if (decoder->field_handler)
