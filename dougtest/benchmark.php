@@ -13,6 +13,9 @@ include_once __DIR__ . '/MysqlQueryResult.lazy.php';
 class Benchmark {
 
     protected $tests = array(
+        'DecodeExtBinaryLazyDoug',
+        'DecodeExtBinaryDoug',
+        'DecodeExtBinaryArrayDoug',
         'DecodeBinaryLazyDoug',
         'DecodeJsonLazyDoug',
         'DecodeBinaryDoug',
@@ -43,9 +46,15 @@ class Benchmark {
     {
         static $done = array();
 
+        return;
+
         // Print only once per label
         $print = !in_array($label, $done);
         $done[] = $label;
+
+        if (is_array($msg)) { 
+            $msg = json_decode(json_encode($msg));
+        }
 
         $print && print("\n<<<< $label >>>>\n");
         foreach ($msg->resultset as $rs) {
@@ -59,6 +68,49 @@ class Benchmark {
             }
             $print && print("==========================================================\n");
         }
+    }
+
+
+    protected function configDecodeExtBinaryLazyDoug()
+    {
+        return array(
+            new Protobuf\Codec\ExtBinary(),
+            file_get_contents(__DIR__ . '/doug.pb')
+        );
+    }
+
+    protected function runDecodeExtBinaryLazyDoug($codec, $data)
+    {
+        $out = $codec->decode(new requestd\MysqlQueryResult(), $data);
+        $this->printDoug($out, 'ExtBinaryLazy');
+    }
+
+    protected function configDecodeExtBinaryArrayDoug()
+    {
+        return array(
+            new Protobuf\Codec\ExtBinary(false),
+            file_get_contents(__DIR__ . '/doug.pb')
+        );
+    }
+
+    protected function runDecodeExtBinaryArrayDoug($codec, $data)
+    {
+        $out = $codec->decodeAsArray(new requestd\MysqlQueryResult(), $data);
+        $this->printDoug($out, 'ExtBinaryArray');
+    }
+
+    protected function configDecodeExtBinaryDoug()
+    {
+        return array(
+            new Protobuf\Codec\ExtBinary(false),
+            file_get_contents(__DIR__ . '/doug.pb')
+        );
+    }
+
+    protected function runDecodeExtBinaryDoug($codec, $data)
+    {
+        $out = $codec->decode(new requestd\MysqlQueryResult(), $data);
+        $this->printDoug($out, 'ExtBinary');
     }
 
     protected function configDecodeBinaryLazyDoug()
