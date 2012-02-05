@@ -12,8 +12,9 @@ namespace DrSlump\Protobuf\Codec\Binary;
  */
 class Reader
 {
-    /** @var resource */
-    protected $_fd;
+    protected $_str = '';
+    protected $_len = 0;
+    protected $_ofs = 0;
 
     /**
      * Create a new reader from a file descriptor or a string of bytes
@@ -29,7 +30,6 @@ class Reader
 
     public function __destruct()
     {
-        $this->_fd && fclose($this->_fd);
     }
 
     /**
@@ -40,13 +40,14 @@ class Reader
     public function init($fdOrString)
     {
         if (is_resource($fdOrString)) {
-            $this->_fd = $fdOrString;
+            $this->_str = stream_get_contents($fdOrString);
         } else {
-            // @todo Could this be faster by using a custom String wrapper?
-            $this->_fd = fopen('data://text/plain,' . urlencode($fdOrString), 'rb');
+            $this->_str = $fdOrString;
         }
-    }
 
+        $this->_len = strlen($this->_str);
+        $this->_ofs = 0;
+    }
 
     /**
      * Obtain a number of bytes from the string
@@ -60,10 +61,8 @@ class Reader
         // Protect against 0 byte reads when an EOF
         if ($length < 1) return '';
 
-        $bytes = fread($this->_fd, $length);
-        if (FALSE === $bytes) {
-            throw new \RuntimeException('Failed to read ' . $length . ' bytes');
-        }
+        $bytes = substr($this->_str, $this->_ofs, $length);
+        $this->_ofs += strlen($bytes);
 
         return $bytes;
     }
@@ -75,7 +74,7 @@ class Reader
      */
     public function eof()
     {
-        return feof($this->_fd);
+        return $this->_ofs >= $this->_len;
     }
 
     /**
@@ -85,7 +84,7 @@ class Reader
      */
     public function pos()
     {
-        return ftell($this->_fd);
+        return $this->_ofs;
     }
 
     /**
@@ -95,7 +94,8 @@ class Reader
      */
     public function byte()
     {
-        return ord($this->read(1));
+        // Optimization: Avoid a call to read() by accessing directly the string by index
+        return ord($this->_str[$this->_ofs++]);
     }
 
     /**
@@ -105,14 +105,36 @@ class Reader
      */
     public function varint()
     {
-        $result = $shift = 0;
-        do {
-            $byte = $this->byte();
-            $result |= ($byte & 0x7f) << $shift;
-            $shift += 7;
-        } while ($byte > 0x7f);
+        // Optimize common case (single byte varints)
+        $b = ord($this->_str[$this->_ofs++]);
+        if ($b < 0x80) {
+            return $b;
+        }
 
-        return $result;
+        // Work with references to avoid the evaluating $this-> each time
+        $str = &$this->_str;
+        $ofs = &$this->_ofs;
+
+        $r = $b & 0x7f;
+        $s = 7;
+
+        // Optimize 32bit varints (5bytes) by unrolling the loop
+        if ($this->_len - $ofs >= 4) {
+            $b = ord($str[$ofs++]); $r |= ($b & 0x7f) << 7;  if ($b < 0x80) return $r;
+            $b = ord($str[$ofs++]); $r |= ($b & 0x7f) << 14; if ($b < 0x80) return $r;
+            $b = ord($str[$ofs++]); $r |= ($b & 0x7f) << 21; if ($b < 0x80) return $r;
+            $b = ord($str[$ofs++]); $r |= ($b & 0x7f) << 28; if ($b < 0x80) return $r;
+            $s = 35;
+        }
+
+        // If we're just at the end of the buffer or handling a 64bit varint
+        do {
+            $b = ord($str[$ofs++]); 
+            $r |= ($b & 0x7f) << $s; 
+            $s += 7;
+        } while ($b > 0x7f);
+
+        return $r;
     }
 
     /**
@@ -162,7 +184,7 @@ class Reader
     }
 
     /**
-     * Decode a fixed 62bit integer with sign
+     * Decode a fixed 64bit integer with sign
      *
      * @return int
      */
@@ -175,7 +197,7 @@ class Reader
     }
 
     /**
-     * Decode a fixed 62bit integer without sign
+     * Decode a fixed 64bit integer without sign
      *
      * @return int
      */
