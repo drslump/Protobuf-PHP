@@ -39,6 +39,11 @@ class Field
         return $this->type;
     }
 
+    public function getRule()
+    {
+        return $this->rule;
+    }
+
     public function getName()
     {
         return $this->name;
