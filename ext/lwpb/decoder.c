@@ -388,7 +388,6 @@ lwpb_err_t lwpb_decoder_decode(struct lwpb_decoder *decoder,
     frame = &decoder->stack[decoder->depth - 1];
     lwpb_buf_init(&frame->buf, data, len);
     frame->msg_desc = msg_desc;
-
     frame->ofs = 0;
     
     while (decoder->depth >= 1) {
@@ -403,8 +402,8 @@ decode_nested:
                 decoder->msg_start_handler(decoder, frame->msg_desc, decoder->arg);
 
         // Process buffer
-        while (lwpb_buf_left(&frame->buf) > 0) {
-            
+        while ((int)lwpb_buf_left(&frame->buf) > 0) {
+
             if (decoder->packed) {
                 wire_type = field_wire_type(field_desc);
             } else {
@@ -425,19 +424,33 @@ decode_nested:
                 // When we find a repeated field we keep the offset at the found
                 // position, otherwise we position it to the next element, this
                 // way the next iteration starts checking from an optimum position.
-                int ofs = frame->ofs % frame->msg_desc->num_fields;
+                
+                int ofs = frame->ofs;
                 for (i=0; i < frame->msg_desc->num_fields; i++) {
                     if (frame->msg_desc->fields[ofs].number == number) {
                         field_desc = &frame->msg_desc->fields[ofs];
+                        //php_printf("F: %d - %d - %s W: %d\n", number, field_desc->number, field_desc->name, wire_type);
                         if (field_desc->opts.label != LWPB_REPEATED)
-                            ofs++;
+                            ofs = (ofs+1) % frame->msg_desc->num_fields;
                         break;
                     }
                     ofs = (ofs+1) % frame->msg_desc->num_fields;
                 }
 
-                // Keep the current offset in the current frame
+                // Keep the next offset in the current stack frame
                 frame->ofs = ofs;
+                
+
+                /*
+                for (i=0; i< frame->msg_desc->num_fields; i++) {
+                    if (frame->msg_desc->fields[i].number == number) {
+                        field_desc = &frame->msg_desc->fields[i];
+                        break;                   
+                    }
+                }
+                */
+
+
             }
             
             // Decode field's wire value
@@ -458,6 +471,7 @@ decode_nested:
                     return ret;
                 if (wire_value.string.len > lwpb_buf_left(&frame->buf))
                     return LWPB_ERR_END_OF_BUF;
+
                 wire_value.string.data = frame->buf.pos;
                 frame->buf.pos += wire_value.string.len;
                 break;
