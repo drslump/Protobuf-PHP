@@ -152,7 +152,7 @@ inline static zval* pbext_lwpb2zval( /* {{{ */
 			php_printf("ERROR: Unable to parse message fields yet\n");
 			return NULL;
 		default:
-			php_printf("ERROR: Unknown field type\n");
+			php_printf("ERROR: Unknown field type (%d)\n", type);
 			return NULL;
 	}
 } /* }}} */
@@ -193,7 +193,7 @@ static void pbext_field_handler( /* {{{ */
 
     if (!arg) return;
 
-	//php_printf("Field: %s\n", field->name);
+	//php_printf("Field: %s (T: %d, R: %d)\n", field->name, field->opts.typ, field->opts.label);
 
 	// Get the target array from the stack
 	dict = stack->frames[stack->count-1];
@@ -322,7 +322,7 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
     // TODO: Allow additional argument with the "default" value
     
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, 
-            "rlll|slr", &zmsg, &num, &label, &type, &name, &name_len, &flags, &znested) == FAILURE) {
+            "rlll|slz", &zmsg, &num, &label, &type, &name, &name_len, &flags, &znested) == FAILURE) {
         return;
     }
 
@@ -345,7 +345,7 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
 	}
 
 	// Check if message types supply their description
-	if (type == LWPB_MESSAGE && znested == NULL) {
+	if (type == LWPB_MESSAGE && (znested == NULL || znested->type != IS_RESOURCE)) {
  		php_error_docref(NULL TSRMLS_CC, E_WARNING, 
  				"Nested message fields must supply a message descriptor resource as 7th argument.");
         RETURN_FALSE;
@@ -361,7 +361,7 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
     f->opts.label = (unsigned int)label;
     f->opts.typ = (unsigned int)type;
     f->opts.flags = (unsigned int)flags;
-    if (NULL != znested) {
+    if (type == LWPB_MESSAGE) {
         ZEND_FETCH_RESOURCE(f->msg_desc, struct lwpb_msg_desc*, &znested, -1, PHP_PBEXT_MSG_DESC_RES, le_pbext_msg_desc);
     }
 	f->name = name_len ? estrndup(name, name_len) : NULL;
@@ -405,8 +405,6 @@ PHP_FUNCTION(pbext_decode) /* {{{ */
 
     // Perform decoding
     ret = lwpb_decoder_decode(&decoder, msg, data, data_len, NULL);
-
-    //php_printf("END!\n");
 
 	if (ret == LWPB_ERR_OK) {
 		// The return value is already set
