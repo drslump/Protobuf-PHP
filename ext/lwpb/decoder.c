@@ -178,7 +178,7 @@ static inline lwpb_err_t lwpb_decode_varint_fast(struct lwpb_buf *buf, u64_t *va
         return LWPB_ERR_OK;
         
     // Now lets check if we can optimize medium values
-    } else if ((buf->end - buf->pos) >= 5) {
+    } else if (buf->end - buf->pos >= 5) {
         u64_t result;
         unsigned int b;
 
@@ -191,7 +191,7 @@ static inline lwpb_err_t lwpb_decode_varint_fast(struct lwpb_buf *buf, u64_t *va
 
         // If we're still decoding lets continue with a slower alternative
         int bits;
-        for (bits=35; bits < 64; bits += 7) {
+        for (bits=35; buf->pos < buf->end && bits < 64; bits += 7) {
             b = *(buf->pos++); result |= (b & 0x7F) << bits; 
             if (!(b & 0x80)) goto done;
         }

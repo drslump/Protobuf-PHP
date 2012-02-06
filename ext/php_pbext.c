@@ -353,7 +353,7 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
 
 	// Grow the allocated memory for field definitions
 	m->num_fields++;
-    m->fields = (struct lwpb_field_desc*) erealloc(m->fields, m->num_fields * sizeof(struct lwpb_field_desc));
+    m->fields = (struct lwpb_field_desc*) erealloc((char*)m->fields, m->num_fields * sizeof(struct lwpb_field_desc));
 
     // Setup the field
     struct lwpb_field_desc* f = (struct lwpb_field_desc*)&m->fields[m->num_fields-1];
@@ -373,8 +373,8 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
 PHP_FUNCTION(pbext_decode) /* {{{ */
 {
 	zval *zmsg;
-	char *data;
-	size_t data_len;
+	char *data = NULL;
+	size_t data_len = 0;
 
 	pbext_stack_t stack;
     struct lwpb_decoder decoder;
