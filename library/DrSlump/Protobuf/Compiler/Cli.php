@@ -10,26 +10,40 @@ class Cli
 {
     public static function run($pluginExecutable)
     {
-        // Open STDIN in non-blocking mode
-        $fp = fopen('php://stdin', 'rb');
-        stream_set_blocking($fp, FALSE);
-
-        // Loop until STDIN is closed or we've waited too long for data
-        $cnt = 0;
         $stdin = '';
-        while (!feof($fp) && $cnt++ < 10) {
-            // give protoc some time to feed the data
-            usleep(10000);
-            // read the bytes
-            $bytes = fread($fp, 1024);
-            if (strlen($bytes)) {
-                $cnt = 0;
-                $stdin .= $bytes;
+
+        // PHP doesn't implement non-blocking stdin on Windows
+        // https://bugs.php.net/bug.php?id=34972
+        $isWin = 'WIN' === strtoupper(substr(PHP_OS, 0, 3));
+        if (!$isWin) {
+
+            // Open STDIN in non-blocking mode
+            stream_set_blocking(STDIN, FALSE);
+
+            // Loop until STDIN is closed or we've waited too long for data
+            $cnt = 0;
+            while (!feof(STDIN) && $cnt++ < 10) {
+                // give protoc some time to feed the data
+                usleep(10000);
+                // read the bytes
+                $bytes = fread(STDIN, 1024);
+                if (strlen($bytes)) {
+                    $cnt = 0;
+                    $stdin .= $bytes;
+                }
             }
+
+        // If on windows and no arguments were given
+        } else if ($_SERVER['argc'] < 2) {
+            $stdin = fread(STDIN, 1024 * 1024);
         }
+
 
         // If no input was given we launch protoc from here
         if (0 === strlen($stdin)) {
+            if ($isWin) {
+                $pluginExecutable .= '.bat';
+            }
             self::runProtoc($pluginExecutable);
             exit(0);
         }
