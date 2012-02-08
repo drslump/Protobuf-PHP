@@ -46,6 +46,8 @@ if (NULL !== $newIncludePath) {
     set_include_path($newIncludePath . PATH_SEPARATOR . get_include_path());
 }
 
+// Disable strict errors for the compiler
+error_reporting(error_reporting() & ~E_STRICT);
 
 // Setup autoloader
 require_once 'DrSlump/Protobuf.php';

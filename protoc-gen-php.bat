@@ -15,4 +15,4 @@ GOTO RUN
 set PHPBIN=%PHP_PEAR_PHP_BIN%
 
 :RUN
-"%PHPBIN%" "@bin_dir@\protoc-gen-php" %*
+"%PHPBIN%" -d display_errors=stderr -d log_errors=On -d error_log=Off "@bin_dir@\protoc-gen-php" %*
