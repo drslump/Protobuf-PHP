@@ -1,4 +1,4 @@
-#!/usr/bin/env php
+#!/usr/bin/env php -d display_errors=stderr -d log_errors=On -d error_log=Off
 <?php
 // The MIT License
 //
@@ -25,14 +25,30 @@
 // Set up default timezone
 date_default_timezone_set('GMT');
 
+$newIncludePath = null;
+
 // For non pear packaged versions use relative include path
 if (strpos('@php_bin@', '@php_bin') === 0) {
-    set_include_path(__DIR__ . DIRECTORY_SEPARATOR . 'library' . PATH_SEPARATOR . get_include_path());
+    $newIncludePath = __DIR__ . DIRECTORY_SEPARATOR . 'library';
 }
 
-require_once 'DrSlump/Protobuf.php';
+// When being executed inside a valid Phar archive use it instead
+if (class_exists('Phar')) {
+    try {
+        Phar::mapPhar('protobuf.phar');
+        $newIncludePath = 'phar://protobuf.phar';
+    } catch (PharException $e) {
+    }
+}
+
+// Modify the include path if needed
+if (NULL !== $newIncludePath) {
+    set_include_path($newIncludePath . PATH_SEPARATOR . get_include_path());
+}
+
 
 // Setup autoloader
+require_once 'DrSlump/Protobuf.php';
 \DrSlump\Protobuf::autoload();
 
 try {
@@ -44,3 +60,6 @@ try {
     fputs(STDERR, (string)$e . PHP_EOL);
     exit(1);
 }
+
+// Allow this file to be used as a Phar stub
+__HALT_COMPILER();
