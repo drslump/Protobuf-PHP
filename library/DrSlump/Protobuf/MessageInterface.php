@@ -86,6 +86,14 @@ interface MessageInterface extends \ArrayAccess
     public function initValue($name, $value);
 
     /**
+     * Initializes the fields values
+     *
+     * @param array $values
+     */
+    public function initValues($values);
+
+
+    /**
      * Initializes an extension without managing it. Mainly used by codecs.
      */
     public function initExtension($name, $value);
