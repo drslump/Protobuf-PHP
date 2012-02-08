@@ -25,7 +25,7 @@ class LazyValue
      *
      * @return mixed
      */
-    public function evaluate()
+    public function __invoke()
     {
         return $this->codec->lazyDecode($this->descriptor, $this->value);
     }

@@ -278,7 +278,7 @@ class LazyMessage implements MessageInterface
         if (isset($this->_values[$name])) {
             $value = $this->_values[$name];
             if ($value instanceof Protobuf\LazyValue) {
-                $this->_values[$name] = $value->evaluate();
+                $this->_values[$name] = $value();
             }
 
             return $this->_values[$name];

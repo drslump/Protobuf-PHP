@@ -70,7 +70,7 @@ class LazyRepeat extends LazyValue implements \Iterator, \Countable, \ArrayAcces
      *
      * @return \DrSlump\Protobuf\LazyRepeat (self)
      */
-    public function evaluate()
+    public function __invoke()
     {
         return $this;
     }
