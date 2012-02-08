@@ -53,10 +53,11 @@ class LazyMessage implements MessageInterface
     public function __construct($data = null)
     {
         // Cache the descriptor instance
+        // TODO: Avoid the call to getDescriptor() by caching it in a static property
         $this->_descriptor = Protobuf::getRegistry()->getDescriptor($this);
 
         // Assign default values to extensions
-        // TODO: Can we optimize this by having a hasExtensions in the descriptor?
+        // TODO: Remove this initialization from here, defer the use of defaults to the getters
         foreach ($this->_descriptor->getFields() as $f) {
            if ($f->isExtension() && $f->hasDefault()) {
                $this->_extensions[$f->getName()] = $f->getDefault();
@@ -101,6 +102,14 @@ class LazyMessage implements MessageInterface
     }
 
     /**
+     * Initializes a field without managing it
+     */
+    public function initValues($values)
+    {
+        $this->_values = $values;
+    }
+
+    /**
      * Initializes an extension without managing it
      */
     public function initExtension($name, $value)
@@ -136,12 +145,13 @@ class LazyMessage implements MessageInterface
      */
     public function toArray() {
         $result = array();
-        foreach (array_keys($this->_values) as $k) {
+        foreach ($this->_values as $k=>$v) {
+            // Use the magic getter to obtain a valid value
             $result[$k] = $this->$k;
-            if ($result[$k] instanceof Message) {
-                $result[$k] = $result[k]->toArray();
+            if ($result[$k] instanceof MessageInterface) {
+                $result[$k] = $result[$k]->toArray();
             } else if ($result[$k] instanceof LazyRepeat) {
-                $result[$k] = $result[k]->toArray();
+                $result[$k] = $result[$k]->toArray();
             }
         }
         return $result;
@@ -268,6 +278,7 @@ class LazyMessage implements MessageInterface
 
     // Magic getters and setters
 
+    // TODO: Manage default fields
     function __get($name) 
     {
         if (isset($this->_values[$name])) {
@@ -287,6 +298,7 @@ class LazyMessage implements MessageInterface
         $this->_values[$name] = $value;
     }
 
+    // TODO: Manage default fields
     function __isset($name) 
     {
         return isset($this->_values[$name]);
@@ -325,7 +337,7 @@ class LazyMessage implements MessageInterface
         // Do the action
         switch ($prefix) {
         case 'get':
-            return $this->$normalized;
+            return count($args) ? $this->$normalized[$args[0]] : $this->$normalized;
         case 'set':
             $this->$normalized = $args[0];
             break;
