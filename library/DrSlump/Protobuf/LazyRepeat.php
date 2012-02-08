@@ -4,7 +4,9 @@ namespace DrSlump\Protobuf;
 
 use DrSlump\Protobuf;
 
-
+// TODO: Inherit from LazyValue so we only have to define the codec and descriptor once,
+//       being the value the array of repeated field values. No need to prepopulate the
+//       array with LazyValue.
 class LazyRepeat implements \Iterator, \Countable, \ArrayAccess 
 {
     protected $_ofs = 0;
