@@ -34,8 +34,14 @@ class Registry
      */
     public function getDescriptor($message)
     {
-        $message = is_object($message) ? get_class($message) : $message;
-        $message = ltrim($message, '\\');
+        if ($message instanceof LazyMessage) {
+            $message = get_class($message);
+        } else {
+            $message = ltrim($message, '\\');
+        }
+
+        //$message = is_object($message) ? get_class($message) : $message;
+        //$message = ltrim($message, '\\');
 
         // Build a descriptor for the message
         if (!isset($this->descriptors[$message])) {
