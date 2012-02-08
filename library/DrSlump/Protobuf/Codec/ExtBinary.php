@@ -13,7 +13,7 @@ class ExtBinary implements Protobuf\CodecInterface
     public function __construct($lazy = true)
     {
         $this->_lazy = $lazy;
-        
+
         // Create a PhpArray codec to be used for non lazy messages
         if (!$lazy) {
             $this->_codec = new PhpArray(false);
@@ -74,9 +74,9 @@ class ExtBinary implements Protobuf\CodecInterface
 
         // Iterate over all the fields to setup the message
         foreach ($descriptor->getFields() as $field) {
-            
+
             $type = $field->getType();
-            
+
             // Nested messages need to be populated first
             if ($type === Protobuf::TYPE_MESSAGE) {
                 // When in lazy decoding mode we handle nested messages as binary fields
@@ -140,13 +140,9 @@ class ExtBinary implements Protobuf\CodecInterface
 
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
                 if ($field->getRule() === Protobuf::RULE_REPEATED) {
-                    foreach ($value as $k=>$v) {
-                        $value[$k] = new Protobuf\LazyValue();
-                        $value[$k]->codec = $this;
-                        $value[$k]->descriptor = $field;
-                        $value[$k]->value = $v;
-                    }
                     $value = new Protobuf\LazyRepeat($value);
+                    $value->codec = $this;
+                    $value->descriptor = $field;
                 } else {
                     $lazy = new Protobuf\LazyValue();
                     $lazy->codec = $this;

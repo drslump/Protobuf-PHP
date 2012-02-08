@@ -16,7 +16,7 @@ class LazyMessage implements MessageInterface
     static protected $__extensions = array();
 
     /** @var \DrSlump\Protobuf\Descriptor */
-    protected $_descriptor;
+    static protected $_descriptor;
 
     /** @var array Store data for message fields */
     protected $_values = array();
@@ -47,21 +47,15 @@ class LazyMessage implements MessageInterface
         static::$__extensions[] = $fn;
     }
 
+
     /**
      * @param mixed $data
      */
     public function __construct($data = null)
     {
         // Cache the descriptor instance
-        // TODO: Avoid the call to getDescriptor() by caching it in a static property
-        $this->_descriptor = Protobuf::getRegistry()->getDescriptor($this);
-
-        // Assign default values to extensions
-        // TODO: Remove this initialization from here, defer the use of defaults to the getters
-        foreach ($this->_descriptor->getFields() as $f) {
-           if ($f->isExtension() && $f->hasDefault()) {
-               $this->_extensions[$f->getName()] = $f->getDefault();
-           }
+        if (!static::$_descriptor) {
+            static::$_descriptor = Protobuf::getRegistry()->getDescriptor($this);
         }
 
         if (NULL !== $data) {
@@ -359,7 +353,7 @@ class LazyMessage implements MessageInterface
     public function offsetExists($offset)
     {
         if (is_numeric($offset)) {
-            return $this->_descriptor->getField($offset) !== NULL;
+            return static::$_descriptor->getField($offset) !== NULL;
         } else {
             return $this->hasExtension($offset);
         }
@@ -368,7 +362,7 @@ class LazyMessage implements MessageInterface
     public function offsetSet($offset, $value)
     {
         if (is_numeric($offset)) {
-            $field = $this->_descriptor->getField($offset);
+            $field = static::$_descriptor->getField($offset);
             if (!$field) {
                 throw new \Exception('Invalid field tag number ' . $offset);
             }
@@ -388,7 +382,7 @@ class LazyMessage implements MessageInterface
     public function offsetGet( $offset )
     {
         if (is_numeric($offset)) {
-            $field = $this->_descriptor->getField($offset);
+            $field = static::$_descriptor->getField($offset);
             if (!$field) {
                 throw new \Exception('Invalid field tag number ' . $offset);
             }
@@ -408,7 +402,7 @@ class LazyMessage implements MessageInterface
     public function offsetUnset( $offset )
     {
         if (is_numeric($offset)) {
-            $field = $this->_descriptor->getField($offset);
+            $field = static::$_descriptor->getField($offset);            
             if (!$field) {
                 throw new \Exception('Invalid field tag number ' . $offset);
             }

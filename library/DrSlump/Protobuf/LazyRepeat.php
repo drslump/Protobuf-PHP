@@ -4,17 +4,13 @@ namespace DrSlump\Protobuf;
 
 use DrSlump\Protobuf;
 
-// TODO: Inherit from LazyValue so we only have to define the codec and descriptor once,
-//       being the value the array of repeated field values. No need to prepopulate the
-//       array with LazyValue.
-class LazyRepeat implements \Iterator, \Countable, \ArrayAccess 
+class LazyRepeat extends LazyValue implements \Iterator, \Countable, \ArrayAccess 
 {
     protected $_ofs = 0;
-    protected $_data = array();
 
     public function __construct($values = array())
     {
-        $this->_data = $values;
+        $this->value = $values;
     }
 
     public function current(){
@@ -34,39 +30,51 @@ class LazyRepeat implements \Iterator, \Countable, \ArrayAccess
     }
         
     public function valid() {
-        return isset($this->_data[$this->_ofs]);
+        return isset($this->value[$this->_ofs]);
     }
 
 
     public function count() {
-        return count($this->_data);
+        return count($this->value);
     }
 
 
     public function offsetSet($offset, $value) {
         if (is_null($offset)) {
-            $this->_data[] = $value;
+            $this->value[] = $value;
         } else {
-            $this->_data[$offset] = $value;
+            $this->value[$offset] = $value;
         }
     }
 
     public function offsetExists($offset) {
-        return isset($this->_data[$offset]);
+        return isset($this->value[$offset]);
     }
 
     public function offsetUnset($offset) {
-        unset($this->_data[$offset]);
+        unset($this->value[$offset]);
     }
 
     public function offsetGet($offset) {
-        if (!isset($this->_data[$offset])) return NULL;
+        if (!isset($this->value[$offset])) return NULL;
 
-        if ($this->_data[$offset] instanceof Protobuf\LazyValue) {
-            $this->_data[$offset] = $this->_data[$offset]->evaluate();
+        if (is_string($this->value[$offset])) {
+            $this->value[$offset] = $this->codec->lazyDecode($this->descriptor, $this->value[$offset]);
         }
-        return $this->_data[$offset];
+
+        return $this->value[$offset];
     }
+
+    /**
+     * Decodes the lazy value to obtain a valid result
+     *
+     * @return \DrSlump\Protobuf\LazyRepeat (self)
+     */
+    public function evaluate()
+    {
+        return $this;
+    }
+
 
     public function toArray() {
         // TODO: We might need to do this recursively for repeated messages
