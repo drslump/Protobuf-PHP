@@ -34,7 +34,7 @@ class Registry
      */
     public function getDescriptor($message)
     {
-        if ($message instanceof LazyMessage) {
+        if ($message instanceof MessageInterface) {
             $message = get_class($message);
         } else {
             $message = ltrim($message, '\\');

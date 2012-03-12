@@ -1,10 +1,10 @@
 <?php
 
-namespace DrSlump\Protobuf\Codec;
+namespace DrSlump\Protobuf\Codec\Binary;
 
 use DrSlump\Protobuf;
 
-class LazyBinary implements Protobuf\CodecInterface
+class Native implements Protobuf\CodecInterface
 {
     const WIRE_VARINT      = 0;
     const WIRE_FIXED64     = 1;
@@ -43,9 +43,9 @@ class LazyBinary implements Protobuf\CodecInterface
     public function __construct($lazy = true)
     {
         $this->_lazy = $lazy;
-        $this->_reader = new Protobuf\Codec\Binary\Reader();
+        $this->_reader = new Protobuf\Codec\Binary\NativeReader();
         if ($lazy) {
-            $this->_lazyReader = new Protobuf\Codec\Binary\Reader();
+            $this->_lazyReader = new Protobuf\Codec\Binary\NativeReader();
         }
     }
 
@@ -72,12 +72,12 @@ class LazyBinary implements Protobuf\CodecInterface
     }
 
     /**
-     * @param \DrSlump\Protobuf\Codec\Binary\Reader $reader
-     * @param \DrSlump\Protobuf\MessageInterface    $message
-     * @param int                                   $length 
-     * @return \DrSlump\Protobuf\Message
+     * @param \DrSlump\Protobuf\Codec\Binary\NativeReader $reader
+     * @param \DrSlump\Protobuf\MessageInterface          $message
+     * @param int                                         $length 
+     * @return \DrSlump\Protobuf\MessageInterface
      */
-    protected function decodeMessage($reader, \DrSlump\Protobuf\MessageInterface $message, $length = NULL)
+    protected function decodeMessage($reader, Protobuf\MessageInterface $message, $length = NULL)
     {
         /** @var $message \DrSlump\Protobuf\MessageInterface */
         /** @var $descriptor \DrSlump\Protobuf\Descriptor */
@@ -86,6 +86,8 @@ class LazyBinary implements Protobuf\CodecInterface
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
         // Cache list of fields
         $fields = $descriptor->getFields();
+
+        //trigger_error(print_r($descriptor, true));
 
         // Calculate the maximum offset if we have defined a length
         $limit = $length ? $reader->pos() + $length : NULL;
@@ -111,10 +113,11 @@ class LazyBinary implements Protobuf\CodecInterface
                 $message->addUnknown($unknown);
                 continue;
             }
-            
+
             $field = $fields[$tag];
             $type = $field->getType();
             $name = $field->getName();
+
 
             // Check if we are dealing with a packed stream, we cannot rely on the packed
             // flag of the message since we cannot be certain if the creator of the message
@@ -126,7 +129,7 @@ class LazyBinary implements Protobuf\CodecInterface
                 $wire = $this->getWireType($type);
                 while ($reader->pos() < $until) {
                     $item = $this->decodeSimpleType($reader, $type, $wire);
-                    $repeated[$name][] = $item;
+                    $repeated[$tag][] = $item;
                 }
 
             } else {
@@ -137,6 +140,11 @@ class LazyBinary implements Protobuf\CodecInterface
                 // Check if it's a sub-message
                 if ($type === Protobuf::TYPE_MESSAGE) {
                     $len = $reader->varint();
+
+                    if ($this->_lazy && $field->isRepeated()) {
+                        $repeated[$tag][] = $reader->read($len);
+                        continue;
+                    }
 
                     if ($this->_lazy) {
                         $value = new Protobuf\LazyValue();
@@ -154,20 +162,27 @@ class LazyBinary implements Protobuf\CodecInterface
 
                 // Support non-packed repeated fields
                 if ($field->isRepeated()) {
-                    $repeated[$name][] = $value;
+                    $repeated[$tag][] = $value;
                 } else {
-                    $message->$name = $value;
+                    $message->initValue($name, $value);
                 }
             }
         }
 
+
         // Process any repeated fields to assign them to the message
-        foreach ($repeated as $name=>$values) {
+        foreach ($repeated as $tag=>$values) {
+
+            $field = $fields[$tag];
+
             // Only nested messages are wrapped in LazyRepeat
-            if ($this->_lazy && $values[0] instanceof Protobuf\LazyValue) {
+            if ($this->_lazy && $field->getType() === Protobuf::TYPE_MESSAGE) {
                 $values = new Protobuf\LazyRepeat($values);
+                $values->codec = $this;
+                $values->descriptor = $field;
             }
-            $message->initValue($name, $values);
+
+            $message->initValue($field->getName(), $values);
         }
 
         return $message;
@@ -306,22 +321,21 @@ class LazyBinary implements Protobuf\CodecInterface
 
     protected function encodeMessage(Protobuf\Message $message)
     {
-        $writer = new Binary\Writer();
+        $writer = new NativeWriter();
 
         // Get message descriptor
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
         foreach ($descriptor->getFields() as $tag=>$field) {
 
-            $empty = !$message->_has($tag);
-            if ($field->isRequired() && $empty) {
+            if ($field->isRequired() && !isset($message[$tag])) {
                 throw new \UnexpectedValueException(
                     'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
             // Skip empty fields
-            if ($empty) {
+            if (!isset($message[$tag])) {
                 continue;
             }
 
@@ -331,14 +345,14 @@ class LazyBinary implements Protobuf\CodecInterface
             // Compute key with tag number and wire type
             $key = $tag << 3 | $wire;
 
-            $value = $message->_get($tag);
+            $value = $message[$tag];
 
             if ($field->isRepeated()) {
 
                 // Packed fields are encoded as a length-delimited stream containing
                 // the concatenated encoding of each value.
                 if ($field->isPacked() && !empty($value)) {
-                    $subwriter = new Binary\Writer();
+                    $subwriter = new NativeWriter();
                     foreach($value as $val) {
                         $this->encodeSimpleType($subwriter, $type, $val);
                     }

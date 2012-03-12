@@ -12,6 +12,10 @@ namespace google\protobuf\compiler {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -231,6 +235,9 @@ namespace google\protobuf\compiler {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -382,6 +389,9 @@ namespace google\protobuf\compiler\CodeGeneratorResponse {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {

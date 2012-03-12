@@ -13,16 +13,18 @@ use google\protobuf as proto;
 
 class Compiler
 {
+    /** @var array Keeps a mapping of package names to target namespaces */
+    public $packages = array();
+    /** @var array Options given in the command line */
+    public $options = array();
+
     /** @var bool */
     protected $verbose = false;
-    /** @var array */
-    protected $packages = array();
+
     /** @var \DrSlump\Protobuf\Compiler\CommentsParser */
     protected $comments;
     /** @var bool */
     protected $skipImported = false;
-    /** @var array */
-    protected $options = array();
     /** @var array */
     protected $protos = array();
 
@@ -55,56 +57,15 @@ class Compiler
         $this->stderr('ERROR: ' . $str);
     }
 
-    public function getPackages()
-    {
-        return $this->packages;
-    }
-
-    public function hasPackage($package)
-    {
-        return isset($this->packages[$package]);
-    }
-
-    public function getPackage($package)
-    {
-        return $this->packages[$package];
-    }
-
-    public function setPackage($package, $namespace)
-    {
-        $this->packages[$package] = $namespace;
-    }
-
-    public function getOption($option, $type = 'string')
-    {
-        $value = isset($this->options[$option])
-                 ? $this->options[$option]
-                 : null;
-
-        switch ($type) {
-            case 'bool':
-                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
-            default:
-                return $value;
-        }
-    }
-
-    public function camelize($name)
-    {
-        return preg_replace_callback(
-                    '/_([a-z0-9])/i',
-                    function($m){ return strtoupper($m[1]); },
-                    $name
-                 );
-    }
-
     public function compile($data)
     {
-        // Parse the request
-        $req = new \google\protobuf\compiler\CodeGeneratorRequest($data);
+        // Parse the request with a non-lazy binary codec
+        $codec = new Protobuf\Codec\Binary(false);
+        $req = new \google\protobuf\compiler\CodeGeneratorRequest();
+        $req->parse($data, $codec);
 
         // Set default generator class
-        $generator = __CLASS__ . '\PhpGenerator';
+        $generator = __CLASS__ . '\TplGenerator';
 
         // Reset comments parser
         $this->comments->reset();
@@ -169,7 +130,9 @@ class Compiler
                 $this->warning("Package $package was already mapped to {$this->packages[$package]} but has now been overridden to $namespace");
             }
             $this->packages[$package] = $namespace;
-            $this->notice("Mapping $package to $namespace");
+            if ($package !== $namespace) {
+                $this->notice("Mapping $package to $namespace");
+            }
         }
 
         // Get the list of files to generate
@@ -202,7 +165,7 @@ class Compiler
 
         $comment = $this->comments->getComment($ident);
         if (0 < strlen($prefix)) {
-            $comment = $prefix . str_replace("\n", "\n$prefix", $comment);
+            $comment = str_replace("\n", "\n$prefix", $comment) . "\n";
         }
 
         return $comment;

@@ -1,10 +1,11 @@
 <?php
 
-namespace DrSlump\Protobuf\Codec;
+namespace DrSlump\Protobuf\Codec\Binary;
 
 use DrSlump\Protobuf;
+use DrSlump\Protobuf\Codec\PhpArray;
 
-class ExtBinary implements Protobuf\CodecInterface
+class Extension implements Protobuf\CodecInterface
 {
     protected $_lazy = true;
     protected $_resources = array();

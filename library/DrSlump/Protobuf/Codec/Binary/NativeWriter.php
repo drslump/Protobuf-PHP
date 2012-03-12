@@ -7,7 +7,7 @@ namespace DrSlump\Protobuf\Codec\Binary;
  *
  * @note Protobuf uses little-endian order
  */
-class Writer
+class NativeWriter
 {
     /** @var resource */
     protected $_fd;

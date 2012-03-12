@@ -12,6 +12,9 @@ namespace google\protobuf {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -114,6 +117,9 @@ namespace google\protobuf {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
@@ -554,7 +560,7 @@ namespace google\protobuf {
      *
      * @return boolean
      */
-    public function hasExtension(){
+    public function hasExtension_(){
       return $this->_has(7);
     }
     
@@ -563,7 +569,7 @@ namespace google\protobuf {
      *
      * @return \google\protobuf\FileDescriptorProto
      */
-    public function clearExtension(){
+    public function clearExtension_(){
       return $this->_clear(7);
     }
     
@@ -573,7 +579,7 @@ namespace google\protobuf {
      * @param int $idx
      * @return \google\protobuf\FieldDescriptorProto
      */
-    public function getExtension($idx = NULL){
+    public function getExtension_($idx = NULL){
       return $this->_get(7, $idx);
     }
     
@@ -583,7 +589,7 @@ namespace google\protobuf {
      * @param \google\protobuf\FieldDescriptorProto $value
      * @return \google\protobuf\FileDescriptorProto
      */
-    public function setExtension(\google\protobuf\FieldDescriptorProto $value, $idx = NULL){
+    public function setExtension_(\google\protobuf\FieldDescriptorProto $value, $idx = NULL){
       return $this->_set(7, $value, $idx);
     }
     
@@ -592,7 +598,7 @@ namespace google\protobuf {
      *
      * @return \google\protobuf\FieldDescriptorProto[]
      */
-    public function getExtensionList(){
+    public function getExtension_List(){
      return $this->_get(7);
     }
     
@@ -602,7 +608,7 @@ namespace google\protobuf {
      * @param \google\protobuf\FieldDescriptorProto $value
      * @return \google\protobuf\FileDescriptorProto
      */
-    public function addExtension(\google\protobuf\FieldDescriptorProto $value){
+    public function addExtension_(\google\protobuf\FieldDescriptorProto $value){
      return $this->_add(7, $value);
     }
     
@@ -692,6 +698,9 @@ namespace google\protobuf {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -700,7 +709,7 @@ namespace google\protobuf {
       }
 
       if (!self::$__descriptor) {
-        $descriptor = new \DrSlump\Protobuf\Descriptor("\google\protobuf\DescriptorProto");
+        $descriptor = new \DrSlump\Protobuf\Descriptor(__CLASS__, 'google.protobuf.DescriptorProto');
 
         // optional  name = 1
         $f = new \DrSlump\Protobuf\Field();
@@ -899,7 +908,7 @@ namespace google\protobuf {
      *
      * @return boolean
      */
-    public function hasExtension(){
+    public function hasExtension_(){
       return $this->_has(6);
     }
     
@@ -908,7 +917,7 @@ namespace google\protobuf {
      *
      * @return \google\protobuf\DescriptorProto
      */
-    public function clearExtension(){
+    public function clearExtension_(){
       return $this->_clear(6);
     }
     
@@ -918,7 +927,7 @@ namespace google\protobuf {
      * @param int $idx
      * @return \google\protobuf\FieldDescriptorProto
      */
-    public function getExtension($idx = NULL){
+    public function getExtension_($idx = NULL){
       return $this->_get(6, $idx);
     }
     
@@ -928,7 +937,7 @@ namespace google\protobuf {
      * @param \google\protobuf\FieldDescriptorProto $value
      * @return \google\protobuf\DescriptorProto
      */
-    public function setExtension(\google\protobuf\FieldDescriptorProto $value, $idx = NULL){
+    public function setExtension_(\google\protobuf\FieldDescriptorProto $value, $idx = NULL){
       return $this->_set(6, $value, $idx);
     }
     
@@ -937,7 +946,7 @@ namespace google\protobuf {
      *
      * @return \google\protobuf\FieldDescriptorProto[]
      */
-    public function getExtensionList(){
+    public function getExtension_List(){
      return $this->_get(6);
     }
     
@@ -947,7 +956,7 @@ namespace google\protobuf {
      * @param \google\protobuf\FieldDescriptorProto $value
      * @return \google\protobuf\DescriptorProto
      */
-    public function addExtension(\google\protobuf\FieldDescriptorProto $value){
+    public function addExtension_(\google\protobuf\FieldDescriptorProto $value){
      return $this->_add(6, $value);
     }
     
@@ -1171,6 +1180,9 @@ namespace google\protobuf\DescriptorProto {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -1301,6 +1313,9 @@ namespace google\protobuf {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
@@ -1761,6 +1776,9 @@ namespace google\protobuf {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -1963,6 +1981,9 @@ namespace google\protobuf {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -2143,6 +2164,9 @@ namespace google\protobuf {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
@@ -2345,6 +2369,9 @@ namespace google\protobuf {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
@@ -2573,6 +2600,9 @@ namespace google\protobuf {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
@@ -3076,6 +3106,9 @@ namespace google\protobuf {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -3275,6 +3308,9 @@ namespace google\protobuf {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
@@ -3585,6 +3621,9 @@ namespace google\protobuf {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -3686,6 +3725,9 @@ namespace google\protobuf {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
@@ -3789,6 +3831,9 @@ namespace google\protobuf {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -3891,6 +3936,9 @@ namespace google\protobuf {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -3992,6 +4040,9 @@ namespace google\protobuf {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
@@ -4384,6 +4435,9 @@ namespace google\protobuf\UninterpretedOption {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -4513,6 +4567,9 @@ namespace google\protobuf {
     /** @var \Closure[] */
     protected static $__extensions = array();
 
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
+
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {
       if (NULL !== $descriptor) {
@@ -4615,6 +4672,9 @@ namespace google\protobuf\SourceCodeInfo {
     protected static $__descriptor;
     /** @var \Closure[] */
     protected static $__extensions = array();
+
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $_descriptor;
 
     public static function descriptor(\DrSlump\Protobuf\Descriptor $descriptor = NULL)
     {

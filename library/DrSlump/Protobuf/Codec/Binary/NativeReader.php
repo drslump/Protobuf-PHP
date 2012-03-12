@@ -10,7 +10,7 @@ namespace DrSlump\Protobuf\Codec\Binary;
  *
  * @note Protobuf uses little-endian order
  */
-class Reader
+class NativeReader
 {
     protected $_str = '';
     protected $_len = 0;

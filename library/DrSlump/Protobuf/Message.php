@@ -4,17 +4,27 @@ namespace DrSlump\Protobuf;
 
 use DrSlump\Protobuf;
 
-abstract class Message implements \ArrayAccess
+/**
+ *
+ * Public fields are generated as PhpDoc properties
+ *
+ * @property string $string 
+ */ 
+class Message implements MessageInterface
 {
     /** @var \Closure[] */
     static protected $__extensions = array();
 
     /** @var \DrSlump\Protobuf\Descriptor */
-    protected $_descriptor;
+    static protected $_descriptor;
+
+    /** @var array Store data for message fields */
+    protected $_values = array();
     /** @var array Store data for extension fields */
     protected $_extensions = array();
     /** @var array Store data for unknown values */
     protected $_unknown = array();
+
 
     /**
      * @static
@@ -37,61 +47,29 @@ abstract class Message implements \ArrayAccess
         static::$__extensions[] = $fn;
     }
 
+
     /**
-     * @param string $data
+     * @param mixed $data
      */
     public function __construct($data = null)
     {
         // Cache the descriptor instance
-        $this->_descriptor = Protobuf::getRegistry()->getDescriptor($this);
+        if (!static::$_descriptor) {
+            static::$_descriptor = Protobuf::getRegistry()->getDescriptor($this);
+        }
 
-        // Assign default values to extensions
-        foreach ($this->_descriptor->getFields() as $f) {
-           if ($f->isExtension() && $f->hasDefault()) {
-               $this->_extensions[$f->getName()] = $f->getDefault();
-           }
+        // BACKWARDS COMPATIBILITY: Unset public properties
+        $publicfields = get_object_vars($this);
+        foreach (static::$_descriptor->getFields() as $field) {
+            $name = $field->name;
+            if (array_key_exists($name, $publicfields)) {
+                //trigger_error('DESTROYING PUBLIC FIELD: '  . $name);
+                unset($this->$name);
+            }
         }
 
         if (NULL !== $data) {
             $this->parse($data);
-        }
-    }
-
-    // Implements ArrayAccess for extensions and unknown fields
-
-    public function offsetExists($offset)
-    {
-        if (is_numeric($offset)) {
-            return $this->_has($offset);
-        } else {
-            return $this->hasExtension($offset);
-        }
-    }
-
-    public function offsetSet($offset, $value)
-    {
-        if (is_numeric($offset)) {
-            $this->_set($offset, $value);
-        } else {
-            $this->setExtension($offset, $value);
-        }
-    }
-
-    public function offsetGet( $offset )
-    {
-        if (is_numeric($offset)) {
-            return $this->_get($offset);
-        } else {
-            return $this->getExtension($offset);
-        }
-    }
-
-    public function offsetUnset( $offset )
-    {
-        if (is_numeric($offset)) {
-            $this->_clear($offset);
-        } else {
-            $this->clearExtension($offset);
         }
     }
 
@@ -119,157 +97,72 @@ abstract class Message implements \ArrayAccess
         return $codec->encode($this);
     }
 
+    /**
+     * Initializes a field without managing it
+     */
+    public function initValue($name, $value)
+    {
+        $this->_values[$name] = $value;
+    }
 
     /**
-     * Checks if the given tag number is set
-     *
-     * @param int $tag
-     * @return bool
+     * Initializes a field without managing it
      */
-    public function _has($tag)
+    public function initValues($values)
     {
-        if ($this->_descriptor->hasField($tag)) {
-            $f = $this->_descriptor->getField($tag);
-            $name = $f->getName();
+        foreach($values as $k=>$v) {
+            $this->_iniValue($k, $v);
+        }
+    }
 
-            if ($f->isExtension()) {
-                return $f->isRepeated()
-                       ? count($this->_extensions[$name]) > 0
-                       : $this->_extensions[$name] !== NULL;
-            } else {
-                return $f->isRepeated()
-                       ? count($this->$name) > 0
-                       : $this->$name !== NULL;
+    /**
+     * Initializes an extension without managing it
+     */
+    public function initExtension($name, $value)
+    {
+        $this->_extensions[$name] = $value;
+    }
+
+    /**
+     * Clears all the data in the message object
+     */
+    public function reset()
+    {
+        $this->_values = array();
+        $this->_extensions = array();
+        $this->_unknown = array();
+    }
+
+    /**
+     * Import an array with fields
+     *
+     * @param array $array
+     */
+    public function fromArray($data) {
+        foreach ($data as $k=>$v) {
+            $this->$k = $v;
+        }
+    }
+
+    /**
+     * Export the current message data as an assoc array
+     *
+     * @return array
+     */
+    public function toArray() {
+        $result = array();
+        foreach ($this->_values as $k=>$v) {
+            // Use the magic getter to obtain a valid value
+            $result[$k] = $this->$k;
+            if ($result[$k] instanceof MessageInterface) {
+                $result[$k] = $result[$k]->toArray();
+            } else if ($result[$k] instanceof LazyRepeat) {
+                $result[$k] = $result[$k]->toArray();
             }
         }
-
-        return false;
+        return $result;
     }
 
-    /**
-     * Get the value by tag number
-     *
-     * @param int $tag
-     * @param int|null $idx
-     * @return mixed
-     */
-    public function _get($tag, $idx = null)
-    {
-        $f = $this->_descriptor->getField($tag);
-
-        if (!$f) {
-            return null;
-        }
-
-        $name = $f->getName();
-
-        if (!$f->isExtension()) {
-
-            return $idx !== NULL
-                   ? $this->{$name}[$idx]
-                   : $this->$name;
-
-        } else {
-
-            return $idx !== NULL
-                   ? $this->_extensions[$name][$idx]
-                   : $this->_extensions[$name];
-
-        }
-
-    }
-
-    /**
-     * Sets the value by tag number
-     *
-     * @throws \Exception If trying to set an unknown field
-     * @param int $tag
-     * @param mixed $value
-     * @param int|null $idx
-     * @return \DrSlump\Protobuf\Message - Fluent interface
-     */
-    public function _set($tag, $value, $idx = null)
-    {
-        $f = $this->_descriptor->getField($tag);
-
-        if (!$f) {
-            throw new \Exception('Unknown fields not supported');
-        }
-
-        $name = $f->getName();
-        if (!$f->isExtension()) {
-
-            if ($idx === NULL) {
-                $this->$name = $value;
-            } else {
-                $this->{$name}[$idx] = $value;
-            }
-
-        } else {
-            if ($idx === NULL) {
-                $this->_extensions[$name] = $value;
-            } else {
-                $this->_extensions[$name][$idx] = $value;
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Adds a new value to a repeated field by tag number
-     *
-     * @throws \Exception If trying to modify an unknown field
-     * @param int $tag
-     * @param mixed $value
-     * @return Message
-     */
-    public function _add($tag, $value)
-    {
-        $f = $this->_descriptor->getField($tag);
-
-        if (!$f) {
-            throw new \Exception('Unknown fields not supported');
-        }
-
-        $name = $f->getName();
-        if (!$f->isExtension()) {
-            $this->{$name}[] = $value;
-        } else {
-            $this->_extensions[$name][] = $value;
-        }
-
-        return $this;
-    }
-
-    /**
-     * Clears/Resets a field by tag number
-     *
-     * @throws \Exception If trying to modify an unknown field
-     * @param int $tag
-     * @return \DrSlump\Protobuf\Message - Fluent interface
-     */
-    public function _clear($tag)
-    {
-        $f = $this->_descriptor->getField($tag);
-
-        if (!$f) {
-            throw new \Exception('Unknown fields not supported');
-        }
-
-        $name = $f->getName();
-        if (!$f->isExtension()) {
-            $this->$name = $f->isRepeated()
-                           ? array()
-                           : NULL;
-        } else {
-            $this->_extensions[$name] = $f->isRepeated()
-                                      ? array()
-                                      : NULL;
-        }
-
-        return $this;
-    }
 
     // Extensions public methods.
     // @todo Check if extension name is defined
@@ -358,11 +251,25 @@ abstract class Message implements \ArrayAccess
     }
 
 
-    public function addUnknown(Unknown $unknown)
+
+    // Unknown fields
+
+    /**
+     * Adds an unknown field to the message
+     * 
+     * @param \DrSlump\Protobuf\Unknown string $field
+     * @return \DrSlump\Protobuf\Message - Fluent Interface
+     */
+    public function addUnknown(Protobuf\Unknown $field)
     {
-        $this->_unknown[] = $unknown;
+        $this->_unknown[] = $field;
     }
 
+    /**
+     * Obtain the list of unknown fields in this message
+     *
+     * @return \DrSlump\Protobuf\Unknown[]
+     */
     public function getUnknown()
     {
         return $this->_unknown;
@@ -373,4 +280,187 @@ abstract class Message implements \ArrayAccess
         $this->_unknown = array();
     }
 
+
+
+    // Magic getters and setters
+
+    // TODO: Manage default fields
+    function __get($name) 
+    {
+        if (isset($this->_values[$name])) {
+            $value = $this->_values[$name];
+            if ($value instanceof Protobuf\LazyValue) {
+                $this->_values[$name] = $value();
+            }
+
+            return $this->_values[$name];
+        }
+
+        return null;
+    }
+
+    function __set($name, $value) 
+    {
+        $this->_values[$name] = $value;
+    }
+
+    // TODO: Manage default fields
+    function __isset($name) 
+    {
+        return isset($this->_values[$name]);
+    }
+
+    function __unset($name) 
+    {
+        unset($this->_values[$name]);
+    }
+
+    function __call($name, $args) 
+    {
+        $prefix = strtolower(substr($name, 0, 3));
+
+        // Check if it's a call we care about
+        switch ($prefix) {
+        case 'get':
+        case 'set':
+        case 'has':
+        case 'add':
+            $name = substr($name, 3);
+            break;
+        case 'cle':
+            if ('ar' === substr($lower, 3, 2)) {
+                $name = substr($name, 5);
+                break;
+            }
+        default: 
+            throw new \BadMethodCallException('Unknown method "' . $name . '"');
+        }
+
+        // Convert from camel-case to underscore
+        $normalized = preg_replace('/([a-z])([A-Z])/', '$1_$2', $name);
+        $normalized = strtolower($normalized);
+
+        // Do the action
+        switch ($prefix) {
+        case 'get':
+            return count($args) ? $this->$normalized[$args[0]] : $this->$normalized;
+        case 'set':
+            $this->$normalized = $args[0];
+            break;
+        case 'has':
+            return isset($this->$normalized);
+            break;
+        case 'add':
+            $this->{$normalized}[] = $args[0];
+            break;
+        case 'cle':
+            unset($this->$normalized);
+            break;
+        }
+    }
+
+
+    // Implements ArrayAccess for tag numbers and extensions
+
+    public function offsetExists($offset)
+    {
+        if (is_numeric($offset)) {
+            return static::$_descriptor->getField($offset) !== NULL;
+        } else {
+            return $this->hasExtension($offset);
+        }
+    }
+
+    public function offsetSet($offset, $value)
+    {
+        if (is_numeric($offset)) {
+            $field = static::$_descriptor->getField($offset);
+            if (!$field) {
+                throw new \Exception('Invalid field tag number ' . $offset);
+            }
+
+            if ($field->isExtension()) {
+                $data =& $this->_extensions;
+            } else {
+                $data =& $this->_values;
+            }
+
+            $data[$field->name] = $value;
+        } else {
+            $this->setExtension($offset, $value);
+        }
+    }
+
+    public function offsetGet( $offset )
+    {
+        if (is_numeric($offset)) {
+            $field = static::$_descriptor->getField($offset);
+            if (!$field) {
+                throw new \Exception('Invalid field tag number ' . $offset);
+            }
+
+            $name = $field->name;
+
+            if (!$field->isExtension()) {
+                return isset($this->$name) ? $this->$name : NULL;
+            }
+
+            return isset($this->_extensions[$name]) ? $this->_extensions[$name] : NULL;
+        } else {
+            return $this->getExtension($offset);
+        }
+    }
+
+    public function offsetUnset( $offset )
+    {
+        if (is_numeric($offset)) {
+            $field = static::$_descriptor->getField($offset);            
+            if (!$field) {
+                throw new \Exception('Invalid field tag number ' . $offset);
+            }
+
+            if ($field->isExtension()) {
+                $data =& $this->_extensions;
+            } else {
+                $data =& $this->_values;
+            }
+
+            if (isset($data[$field->name])) {
+                unset($data[$field->name]);
+            }
+        } else {
+            $this->clearExtension($offset);
+        }
+    }
+
+
+    // Backwards compatibility API
+
+    public function _has($idx)
+    {
+        return isset($this[$idx]);
+    }
+
+    public function _get($idx)
+    {
+        return $this[$idx];
+    }
+
+    public function _set($idx, $val)
+    {
+        $this[$idx] = $val;
+    }
+
+    public function _add($idx, $val)
+    {
+        $v = $this[$idx];
+        $v[] = $val;
+        $this[$idx] = $v;
+    }
+
+    public function _clear($idx)
+    {
+        $this[$idx] = null;
+    }
 }
+
