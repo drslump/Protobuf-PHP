@@ -1,10 +1,10 @@
 --TEST--
-Check for pbext presence
+Check for protobuf extension presence
 --FILE--
 <?php
-extension_loaded('pbext') or dl('pbext.' . PHP_SHLIB_SUFFIX);
+extension_loaded('protobuf') or dl('protobuf.' . PHP_SHLIB_SUFFIX);
 
-extension_loaded('pbext') and print("pbext extension is available");
+extension_loaded('protobuf') and print("protobuf extension is available");
 ?>
 --EXPECT--
-pbext extension is available
+protobuf extension is available

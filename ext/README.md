@@ -39,7 +39,7 @@ please feel free to provide them if you have the knowledge.
 The following steps should get the extension ready to be used in your PHP installation:
 
     phpize
-    ./configure --enable-pbext
+    ./configure --enable-protobuf
     make
     make test
     make install
@@ -49,7 +49,7 @@ should have the compiled shared library containing the extension in the correct 
 Now it's only a matter of enabling it in your `php.ini` file. Just add the following line
 to your configuration:
 
-    extension=pbext.so
+    extension=protobuf.so
 
 
 ## API
@@ -70,11 +70,11 @@ analyzing it.
 
 ### Constants
 
-    PBEXT_FLAG_PACKED - Use it as a field's flags to force packed encoding of repeated values
+    PROTOBUF_FLAG_PACKED - Use it as a field's flags to force packed encoding of repeated values
 
-### resource pbext_desc_message( $name = NULL )
+### resource protobuf_desc_message( $name = NULL )
 
-Create a new message descriptor to whom attach field descriptors with `pbext_desc_field`.
+Create a new message descriptor to whom attach field descriptors with `protobuf_desc_field`.
 The return value of this function is a `resource`, as such it's opaque in the PHP user land, 
 it's need however to bind field descriptors to messages and to define nested messages.
 
@@ -84,11 +84,11 @@ Optionally you can assign a descriptive name to the message descriptor.
   remember to store the returned value somewhere instead of creating a descriptor every time
   you want to decode a given message.
 
-### void pbext_desc_field( $message, $number, $label, $type, $name = NULL, $flags = 0, $nested = NULL )
+### void protobuf_desc_field( $message, $number, $label, $type, $name = NULL, $flags = 0, $nested = NULL )
 
 TBD
 
-### mixed pbext_decode( $message, $data )
+### mixed protobuf_decode( $message, $data )
 
 TBD
 

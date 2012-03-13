@@ -22,11 +22,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef PHP_PBEXT_H
-#define PHP_PBEXT_H
+#ifndef PHP_PROTOBUF_H
+#define PHP_PROTOBUF_H
 
-extern zend_module_entry pbext_module_entry;
-#define pbext_module_ptr &pbext_module_entry
+extern zend_module_entry protobuf_module_entry;
+#define protobuf_module_ptr &protobuf_module_entry
 
 #ifdef PHP_WIN32
 #	define PHP_MODULE_API __declspec(dllexport)
@@ -45,19 +45,19 @@ extern zend_module_entry pbext_module_entry;
 
 
 /* Define the extension resource types */
-#define PHP_PBEXT_MSG_DESC_RES "PBExt Message descriptor"
+#define PHP_PROTOBUF_MSG_DESC_RES "Protobuf Message descriptor"
 
 
-PHP_MINIT_FUNCTION(pbext);
-PHP_MSHUTDOWN_FUNCTION(pbext);
-PHP_RINIT_FUNCTION(pbext);
-PHP_RSHUTDOWN_FUNCTION(pbext);
-PHP_MINFO_FUNCTION(pbext);
+PHP_MINIT_FUNCTION(protobuf);
+PHP_MSHUTDOWN_FUNCTION(protobuf);
+PHP_RINIT_FUNCTION(protobuf);
+PHP_RSHUTDOWN_FUNCTION(protobuf);
+PHP_MINFO_FUNCTION(protobuf);
 
 
-PHP_FUNCTION(pbext_desc_message);
-PHP_FUNCTION(pbext_desc_field);
-PHP_FUNCTION(pbext_decode);
+PHP_FUNCTION(protobuf_desc_message);
+PHP_FUNCTION(protobuf_desc_field);
+PHP_FUNCTION(protobuf_decode);
 
 /* In every utility function you add that needs to use variables 
    in php_module_globals, call TSRMLS_FETCH(); after declaring other 
@@ -70,10 +70,10 @@ PHP_FUNCTION(pbext_decode);
 */
 
 #ifdef ZTS
-#define PBEXT_G(v) TSRMG(module_globals_id, zend_module_globals *, v)
+#define PROTOBUF_G(v) TSRMG(module_globals_id, zend_module_globals *, v)
 #else
-#define PBEXT_G(v) (module_globals.v)
+#define PROTOBUF_G(v) (module_globals.v)
 #endif
 
-#endif	/* PHP_PBEXT_H */
+#endif	/* PHP_PROTOBUF_H */
 

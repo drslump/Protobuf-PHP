@@ -30,7 +30,7 @@
 #include "php_ini.h"
 #include "ext/standard/info.h"
 
-#include "php_pbext.h"
+#include "php_protobuf.h"
 
 /* PHP_FE_END is not always defined in PHP headers */
 #ifndef PHP_FE_END
@@ -39,35 +39,35 @@
 
 
 /* True global resources - no need for thread safety here */
-static int le_pbext;
-static int le_pbext_msg_desc;
+static int le_protobuf;
+static int le_protobuf_msg_desc;
 
 
-/* {{{ pbext_functions[]
+/* {{{ protobuf_functions[]
  *
- * Every user visible function must have an entry in pbext_functions[].
+ * Every user visible function must have an entry in protobuf_functions[].
  */
-const zend_function_entry pbext_functions[] = {
-    PHP_FE(pbext_desc_message, NULL)
-    PHP_FE(pbext_desc_field, NULL)
-    PHP_FE(pbext_decode, NULL)
-    PHP_FE_END	/* Must be the last line in pbext_functions[] */
+const zend_function_entry protobuf_functions[] = {
+    PHP_FE(protobuf_desc_message, NULL)
+    PHP_FE(protobuf_desc_field, NULL)
+    PHP_FE(protobuf_decode, NULL)
+    PHP_FE_END	/* Must be the last line in protobuf_functions[] */
 };
 /* }}} */
 
-/* {{{ pbext_module_entry
+/* {{{ protobuf_module_entry
  */
-zend_module_entry pbext_module_entry = {
+zend_module_entry protobuf_module_entry = {
 #if ZEND_MODULE_API_NO >= 20010901
 	STANDARD_MODULE_HEADER,
 #endif
-	"pbext",
-	pbext_functions,
-	PHP_MINIT(pbext),
-	PHP_MSHUTDOWN(pbext),
-	NULL, //PHP_RINIT(pbext),		/* Replace with NULL if there's nothing to do at request start */
-	NULL, //PHP_RSHUTDOWN(pbext),	/* Replace with NULL if there's nothing to do at request end */
-	PHP_MINFO(pbext),
+	"protobuf",
+	protobuf_functions,
+	PHP_MINIT(protobuf),
+	PHP_MSHUTDOWN(protobuf),
+	NULL, //PHP_RINIT(protobuf),		/* Replace with NULL if there's nothing to do at request start */
+	NULL, //PHP_RSHUTDOWN(protobuf),	/* Replace with NULL if there's nothing to do at request end */
+	PHP_MINFO(protobuf),
 #if ZEND_MODULE_API_NO >= 20010901
 	"0.1", /* Replace with version number for your extension */
 #endif
@@ -75,8 +75,8 @@ zend_module_entry pbext_module_entry = {
 };
 /* }}} */
 
-#ifdef COMPILE_DL_PBEXT
-ZEND_GET_MODULE(pbext)
+#ifdef COMPILE_DL_PROTOBUF
+ZEND_GET_MODULE(protobuf)
 #endif
 
 
@@ -84,11 +84,11 @@ ZEND_GET_MODULE(pbext)
 typedef struct {
 	size_t count;
 	zval * frames[LWPB_MAX_DEPTH];
-} pbext_stack_t;
+} protobuf_stack_t;
 
 
 /* Destructor for the message descriptor resource */
-static void pbext_msg_desc_dtor( /* {{{ */
+static void protobuf_msg_desc_dtor( /* {{{ */
   zend_rsrc_list_entry *rsrc TSRMLS_DC) 
 {
     struct lwpb_msg_desc *msg = (struct lwpb_msg_desc*)rsrc->ptr;
@@ -110,7 +110,7 @@ static void pbext_msg_desc_dtor( /* {{{ */
 } /* }}} */
 
 
-inline static zval* pbext_lwpb2zval( /* {{{ */
+inline static zval* protobuf_lwpb2zval( /* {{{ */
   unsigned int type, 
   union lwpb_value *value)
 {
@@ -162,14 +162,14 @@ inline static zval* pbext_lwpb2zval( /* {{{ */
 	}
 } /* }}} */
 
-static void pbext_msg_start_handler( /* {{{ */
+static void protobuf_msg_start_handler( /* {{{ */
   struct lwpb_decoder *decoder,
   const struct lwpb_msg_desc *msg,
   void *arg)
 {
 } /* }}} */
 
-static void pbext_msg_end_handler( /* {{{ */
+static void protobuf_msg_end_handler( /* {{{ */
   struct lwpb_decoder *decoder,
   const struct lwpb_msg_desc *msg,
   void *arg)
@@ -178,14 +178,14 @@ static void pbext_msg_end_handler( /* {{{ */
 
 	if (!decoder->packed) {
 		// Pop the current message from the stack
-		pbext_stack_t *stack = arg;
+		protobuf_stack_t *stack = arg;
 		stack->count--;
 		stack->frames[stack->count] = NULL;
 		//php_printf("POP: %d\n", stack->count);
 	}
 } /* }}} */
 
-static void pbext_field_handler( /* {{{ */
+static void protobuf_field_handler( /* {{{ */
   struct lwpb_decoder *decoder,
   const struct lwpb_msg_desc *msg,
   const struct lwpb_field_desc *field,
@@ -194,7 +194,7 @@ static void pbext_field_handler( /* {{{ */
 {
 	zval *zv;
     zval *dict;
-    pbext_stack_t *stack = arg;
+    protobuf_stack_t *stack = arg;
 
     if (!arg) return;
 
@@ -206,10 +206,10 @@ static void pbext_field_handler( /* {{{ */
 	// A NULL value means we're handling a message field
 	if (value) {
 		// Convert the value to a zval
-		zv = pbext_lwpb2zval(field->opts.typ, value);
+		zv = protobuf_lwpb2zval(field->opts.typ, value);
 		if (!zv) { 
 			php_error_docref(NULL TSRMLS_CC, E_WARNING, 
-					"PBExt: Unable to convert value for field \"%s\" (number: %d, type: %d) in message \"%s\".", 
+					"Protobuf: Unable to convert value for field \"%s\" (number: %d, type: %d) in message \"%s\".", 
 					field->name, (int)field->number, field->opts.typ, msg->name);
 			return;
 		}
@@ -259,25 +259,25 @@ static void pbext_field_handler( /* {{{ */
 
 /* {{{ PHP_MINIT_FUNCTION
  */
-PHP_MINIT_FUNCTION(pbext)
+PHP_MINIT_FUNCTION(protobuf)
 {
 	/* Register resources */
-	le_pbext_msg_desc = zend_register_list_destructors_ex(
-			pbext_msg_desc_dtor, NULL, PHP_PBEXT_MSG_DESC_RES, module_number);
+	le_protobuf_msg_desc = zend_register_list_destructors_ex(
+			protobuf_msg_desc_dtor, NULL, PHP_PROTOBUF_MSG_DESC_RES, module_number);
 
 	/* Register constants */
-    REGISTER_LONG_CONSTANT("PBEXT_FLAG_PACKED", LWPB_IS_PACKED, CONST_CS|CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("PROTOBUF_FLAG_PACKED", LWPB_IS_PACKED, CONST_CS|CONST_PERSISTENT);
 
 	return SUCCESS;
 }
 /* }}} */
 
-PHP_MSHUTDOWN_FUNCTION(pbext) /* {{{ */
+PHP_MSHUTDOWN_FUNCTION(protobuf) /* {{{ */
 {
 	return SUCCESS;
 } /* }}} */
 
-PHP_MINFO_FUNCTION(pbext) /* {{{ */
+PHP_MINFO_FUNCTION(protobuf) /* {{{ */
 {
 	php_info_print_table_start();
 	php_info_print_table_header(2, "Protobuf-PHP's extension support", "enabled");
@@ -288,7 +288,7 @@ PHP_MINFO_FUNCTION(pbext) /* {{{ */
 
 
 // resource : [name]
-PHP_FUNCTION(pbext_desc_message) /* {{{ */
+PHP_FUNCTION(protobuf_desc_message) /* {{{ */
 {
 	// TODO: Create a version using persisting resources (perhaps giving it a message name?)
     char *name = NULL;
@@ -309,11 +309,11 @@ PHP_FUNCTION(pbext_desc_message) /* {{{ */
 	msg->name = name_len ? estrndup(name, name_len) : NULL;
 
 	// Register and return a resource
-    ZEND_REGISTER_RESOURCE(return_value, msg, le_pbext_msg_desc);
+    ZEND_REGISTER_RESOURCE(return_value, msg, le_protobuf_msg_desc);
 } /* }}} */
 
 // bool : msg(res), num(int), label(int), type(int), [name, [flag(int), [nested(res)]]]
-PHP_FUNCTION(pbext_desc_field) /* {{{ */
+PHP_FUNCTION(protobuf_desc_field) /* {{{ */
 {
     zval *zmsg;
     long num;
@@ -333,7 +333,7 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
 
     // Get the message description
 	struct lwpb_msg_desc *m;
-    ZEND_FETCH_RESOURCE(m, struct lwpb_msg_desc*, &zmsg, -1, PHP_PBEXT_MSG_DESC_RES, le_pbext_msg_desc);
+    ZEND_FETCH_RESOURCE(m, struct lwpb_msg_desc*, &zmsg, -1, PHP_PROTOBUF_MSG_DESC_RES, le_protobuf_msg_desc);
 
     // Check the field number is ok
     if (num < 0) {
@@ -367,7 +367,7 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
     f->opts.typ = (unsigned int)type;
     f->opts.flags = (unsigned int)flags;
     if (type == LWPB_MESSAGE) {
-        ZEND_FETCH_RESOURCE(f->msg_desc, struct lwpb_msg_desc*, &znested, -1, PHP_PBEXT_MSG_DESC_RES, le_pbext_msg_desc);
+        ZEND_FETCH_RESOURCE(f->msg_desc, struct lwpb_msg_desc*, &znested, -1, PHP_PROTOBUF_MSG_DESC_RES, le_protobuf_msg_desc);
     }
 	f->name = name_len ? estrndup(name, name_len) : NULL;
 
@@ -375,13 +375,13 @@ PHP_FUNCTION(pbext_desc_field) /* {{{ */
 } /* }}} */
 
 // array|null : msg(res), data
-PHP_FUNCTION(pbext_decode) /* {{{ */
+PHP_FUNCTION(protobuf_decode) /* {{{ */
 {
 	zval *zmsg;
 	char *data = NULL;
 	size_t data_len = 0;
 
-	pbext_stack_t stack;
+	protobuf_stack_t stack;
     struct lwpb_decoder decoder;
     lwpb_err_t ret;
 
@@ -393,7 +393,7 @@ PHP_FUNCTION(pbext_decode) /* {{{ */
 
     // Get the message description
     struct lwpb_msg_desc *msg;
-    ZEND_FETCH_RESOURCE(msg, struct lwpb_msg_desc*, &zmsg, -1, PHP_PBEXT_MSG_DESC_RES, le_pbext_msg_desc);
+    ZEND_FETCH_RESOURCE(msg, struct lwpb_msg_desc*, &zmsg, -1, PHP_PROTOBUF_MSG_DESC_RES, le_protobuf_msg_desc);
 
 
     // Initialize the return value as an array 
@@ -405,8 +405,8 @@ PHP_FUNCTION(pbext_decode) /* {{{ */
 
     // Set up the decoder
     lwpb_decoder_arg(&decoder, &stack);
-    lwpb_decoder_msg_handler(&decoder, pbext_msg_start_handler, pbext_msg_end_handler);
-    lwpb_decoder_field_handler(&decoder, pbext_field_handler);
+    lwpb_decoder_msg_handler(&decoder, protobuf_msg_start_handler, protobuf_msg_end_handler);
+    lwpb_decoder_field_handler(&decoder, protobuf_field_handler);
 
     // Perform decoding
     ret = lwpb_decoder_decode(&decoder, msg, data, data_len, NULL);
