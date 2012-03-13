@@ -37,19 +37,19 @@ namespace <?=$this->ns($namespace)?> {
             $descriptor = new \DrSlump\Protobuf\Descriptor(__CLASS__, '<?=$ns?>');
 
             <? if (!empty($data->field)): foreach ($data->field as $f): ?> 
-            // <?=$this->rule($f)?> <?=$this->type($f)?> = <?=$f->number?> 
+            // <?=$this->rule($f)?> <?=$this->type($f)?> <?=$f->name?> = <?=$f->number?> 
             $f = new \DrSlump\Protobuf\Field();
             $f->number = <?=$f->number?>;
             $f->name   = "<?=$this->fieldname($f)?>";
-            $f->rule   = \DrSlump\Protobuf::RULE_<?=$this->rule($f)?>;
-            $f->type   = \DrSlump\Protobuf::TYPE_<?=$this->type($f)?>;
+            $f->rule   = \DrSlump\Protobuf::RULE_<?=strtoupper($this->rule($f))?>;
+            $f->type   = \DrSlump\Protobuf::TYPE_<?=strtoupper($this->type($f))?>;
             <? if (!empty($f->type_name)):
                 $ref = $f->type_name;
                 if (substr($ref, 0, 1) !== '.') {
                     throw new \RuntimeException("Only fully qualified names are supported but found '$ref' at $ns");
                 }
             ?> 
-            $f->reference = '\<?=$this->ns($f->reference)?>';
+            $f->reference = '\<?=$this->ns($ref)?>';
             <? endif ?>
 
             <?
@@ -63,12 +63,12 @@ namespace <?=$this->ns($namespace)?> {
                 break;
                 case \DrSlump\Protobuf::TYPE_STRING:
             ?> 
-            $f->default = "' . <?=addcslashes($f->default_value, '"\\')?>;
+            $f->default = '<?=addcslashes($f->default_value, "'\\")?>';
             <?
                 break;
                 case \DrSlump\Protobuf::TYPE_ENUM:
             ?> 
-            $f->default = \\<?=$this->ns($f->type_name)?>::<?=$f->default_value?>;
+            $f->default = \<?=$this->ns($f->type_name)?>::<?=$f->default_value?>;
             <?
                 break;
                 default: // Numbers

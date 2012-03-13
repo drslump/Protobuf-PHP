@@ -285,7 +285,7 @@ class Message implements MessageInterface
     // Magic getters and setters
 
     // TODO: Manage default fields
-    function __get($name) 
+    function &__get($name) 
     {
         if (isset($this->_values[$name])) {
             $value = $this->_values[$name];
@@ -296,7 +296,8 @@ class Message implements MessageInterface
             return $this->_values[$name];
         }
 
-        return null;
+        $foo = null;
+        return $foo;
     }
 
     function __set($name, $value) 

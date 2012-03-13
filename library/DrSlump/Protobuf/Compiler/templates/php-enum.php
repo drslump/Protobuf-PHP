@@ -17,9 +17,9 @@ namespace <?=$this->ns($namespace)?> {
      * <?=$this->comment($ns, '     *')?> 
      */
     <? endif ?>
-    class <?=$data->name?> extends \DrSlump\Protobuf\Enum 
+    class <?=$data->name?> extends \DrSlump\Protobuf\Enum
     {
-        <? foreach ($data->getValueList() as $value): ?>
+        <? foreach ($data->value as $value): ?>
         const <?=$value->name?> = <?=$value->number?>;
         <? endforeach ?>
 

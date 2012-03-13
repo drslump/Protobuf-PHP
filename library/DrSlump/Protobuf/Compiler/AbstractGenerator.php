@@ -259,7 +259,7 @@ abstract class AbstractGenerator
      */
     public function type(proto\FieldDescriptorProto $field)
     {
-        switch ($field->label) {
+        switch ($field->type) {
         case Protobuf::TYPE_DOUBLE: return 'double';
         case Protobuf::TYPE_FLOAT: return 'float';
         case Protobuf::TYPE_INT64: return 'int64';

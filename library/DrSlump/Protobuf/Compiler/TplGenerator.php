@@ -52,21 +52,22 @@ class TplGenerator extends AbstractGenerator
 
 
         $result = array();
-
-        // Generate Messages
-        if (!empty($proto->message_type)) {
-            $result += $this->generateMessages($proto->message_type, $ns);
-        }
+        
 
         // Generate Enums
         if (!empty($proto->enum_type)) {
             $result += $this->generateEnums($proto->enum_type, $ns);
         }
 
+        // Generate Messages
+        if (!empty($proto->message_type)) {
+            $result += $this->generateMessages($proto->message_type, $ns);
+        }
+
         // Collect extensions
         if (!empty($proto->extension_)) {
-            foreach ($proto->getExtension_List() as $field) {
-                $this->extensions[$field->getExtendee()][] = array($ns, $field);
+            foreach ($proto->extension_ as $field) {
+                $this->extensions[$field->getExtendee()][] = $field;
             }
         }
 
@@ -172,8 +173,8 @@ class TplGenerator extends AbstractGenerator
             $ns = $namespace . '.' . $msg->name;
             $result[$ns] = $this->template('message', $msg, $namespace);
 
-            if (!empty($msg->enum_types)) {
-                $result += $this->generateEnums($msg->getEnumTypes(), $ns);
+            if (!empty($msg->enum_type)) {
+                $result += $this->generateEnums($msg->getEnumType(), $ns);
             }
             if (!empty($msg->nested_type)) {
                 $result += $this->generateMessages($msg->getNestedType(), $ns);
@@ -182,7 +183,7 @@ class TplGenerator extends AbstractGenerator
             // Collect extensions
             if (!empty($msg->extension_)) {
                 foreach ($msg->extension_ as $field) {
-                    $this->extensions[$field->getExtendee()][] = array($ns, $field);
+                    $this->extensions[$field->getExtendee()][] = $field;
                 }
             }
         }

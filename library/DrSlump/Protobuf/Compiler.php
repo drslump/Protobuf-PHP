@@ -3,10 +3,9 @@
 namespace DrSlump\Protobuf;
 
 // Load descriptor messages
-require_once __DIR__ . '/Compiler/protos/descriptor.pb.php';
-require_once __DIR__ . '/Compiler/protos/plugin.pb.php';
-require_once __DIR__ . '/Compiler/protos/php.pb.php';
-require_once __DIR__ . '/Compiler/protos/json.pb.php';
+require_once __DIR__ . '/Compiler/protos/descriptor.php';
+require_once __DIR__ . '/Compiler/protos/plugin.php';
+require_once __DIR__ . '/Compiler/protos/php.php';
 
 use DrSlump\Protobuf;
 use google\protobuf as proto;
@@ -123,7 +122,7 @@ class Compiler
 
         // First iterate over all the protos to get a map of namespaces
         $this->packages = array();
-        foreach($req->getProtoFileList() as $proto) {
+        foreach($req->proto_file as $proto) {
             $package = $proto->getPackage();
             $namespace = $generator->getNamespace($proto);
             if (isset($this->packages[$package]) && $namespace !== $this->packages[$package]) {
@@ -139,7 +138,7 @@ class Compiler
         $files = $req->getFileToGenerate();
 
         // Run each file
-        foreach ($req->getProtoFileList() as $file) {
+        foreach ($req->proto_file as $file) {
             // Only compile those given to generate, not the imported ones
             if ($this->skipImported && !in_array($file->getName(), $files)) {
                 $this->notice('Skipping generation of imported file "' . $file->getName() . '"');

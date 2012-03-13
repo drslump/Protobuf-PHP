@@ -7,11 +7,11 @@
 
     */ ?>
  
-<? foreach ($data as $ns=>$f): ?>
+<? foreach ($data as $f): ?>
 
 \<?=$this->ns($f->extendee)?>::extension(function(){
     
-    // <?=$this->rule($f)?> <?=$this->type($f)?> = <?=$f->number?>
+    // <?=$this->rule($f)?> <?=$this->type($f)?> <?=$f->name?> = <?=$f->number?> 
     $f = new \DrSlump\Protobuf\Field();
     $f->number = <?=$f->number?>;
     $f->name   = "<?=$f->name?>";
@@ -25,28 +25,27 @@
     ?>
     $f->reference = '\<?=$this->ns($f->reference)?>';
     <? endif ?>
-
     <?
     if ($f->hasDefaultValue()):
         switch ($f->type) {
-        case Protobuf::TYPE_BOOL:
+        case \DrSlump\Protobuf::TYPE_BOOL:
             $bool = filter_var($f->default_value, FILTER_VALIDATE_BOOLEAN);
-    ?>
+    ?> 
     $f->default = <?=$bool ? 'true' : 'false'?>;
     <?
         break;
-        case Protobuf::TYPE_STRING:
-    ?>
-    $f->default = "' . <?=addcslashes($f->default_value, '"\\')?>;
+        case \DrSlump\Protobuf::TYPE_STRING:
+    ?> 
+    $f->default = '<?=addcslashes($f->default_value, "'\\")?>';
     <?
         break;
-        case Protobuf::TYPE_ENUM:
-    ?>
-    $f->default = \\<?=$this->ns($f->type_name)?>::<?=$f->default_value?>;
+        case \DrSlump\Protobuf::TYPE_ENUM:
+    ?> 
+    $f->default = \<?=$this->ns($f->type_name)?>::<?=$f->default_value?>;
     <?
         break;
         default: // Numbers
-    ?>
+    ?> 
     $f->default = <?=$f->default_value?>;
     <?
         } // switch
@@ -54,7 +53,7 @@
     ?>
 
     // @@protoc_insertion_point(scope_extension)
-    // @@protoc_insertion_point(extension_<?=$ns?>:<?=$f->name?>)
+    // @@protoc_insertion_point(extension_<?=$namespace?>:<?=$f->name?>)
     
     return $f;
 });
