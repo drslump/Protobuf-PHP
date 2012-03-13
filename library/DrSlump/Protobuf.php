@@ -164,3 +164,8 @@ class Protobuf
         return $codec->decode($message, $data);
     }
 }
+
+// Register the autoloader automatically if not disabled via a constant
+if (!defined('DRSLUMP_PROTOBUF_AUTOLOAD') || DRSLUMP_PROTOBUF_AUTOLOAD) {
+    Protobuf::autoload();
+}
