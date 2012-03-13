@@ -32,6 +32,11 @@
 
 #include "php_pbext.h"
 
+/* PHP_FE_END is not always defined in PHP headers */
+#ifndef PHP_FE_END
+#define PHP_FE_END { NULL, NULL, NULL, 0, 0 }
+#endif
+
 
 /* True global resources - no need for thread safety here */
 static int le_pbext;
