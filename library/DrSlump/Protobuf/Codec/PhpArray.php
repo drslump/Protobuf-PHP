@@ -75,7 +75,7 @@ class PhpArray implements Protobuf\CodecInterface
             $key = $this->useTagNumber ? $field->getNumber() : $field->getName();
             $v = $message[$tag];
 
-            if ($v === NULL || $v === $field->getDefault()) {
+            if (NULL === $v) {
                 continue;
             }
 

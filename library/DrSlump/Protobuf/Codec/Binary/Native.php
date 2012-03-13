@@ -87,8 +87,6 @@ class Native implements Protobuf\CodecInterface
         // Cache list of fields
         $fields = $descriptor->getFields();
 
-        //trigger_error(print_r($descriptor, true));
-
         // Calculate the maximum offset if we have defined a length
         $limit = $length ? $reader->pos() + $length : NULL;
         $pos = $reader->pos();
@@ -334,7 +332,7 @@ class Native implements Protobuf\CodecInterface
                 );
             }
 
-            // Skip empty fields
+            // Skip unknown fields
             if (!isset($message[$tag])) {
                 continue;
             }
@@ -346,6 +344,10 @@ class Native implements Protobuf\CodecInterface
             $key = $tag << 3 | $wire;
 
             $value = $message[$tag];
+
+            if (NULL === $value) {
+                continue;
+            }
 
             if ($field->isRepeated()) {
 

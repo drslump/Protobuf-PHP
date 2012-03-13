@@ -55,7 +55,7 @@ class TextFormat implements Protobuf\CodecInterface
             $name = $field->getName();
             $value = $message[$tag];
 
-            if ($value === NULL || $value === $field->getDefault()) {
+            if ($value === NULL) {
                 continue;
             }
 

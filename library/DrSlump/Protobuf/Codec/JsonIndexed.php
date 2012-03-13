@@ -28,12 +28,13 @@ class JsonIndexed extends Json
                 );
             }
 
+            // Skip unknown
             if ($empty) {
                 continue;
             }
 
             $value = $message[$tag];
-            if ($value === NULL || $value === $field->getDefault()) {
+            if ($value === NULL) {
                 continue;
             }
 
