@@ -73,7 +73,7 @@ For more information see the [included man pages](http://drslump.github.com/Prot
     $data = $codec->encode($book);
     // ... or ...
     $data = $book->serialize($codec);
-``
+```
 
 ## Installation
 
@@ -85,6 +85,11 @@ Install with Pear
 You can also get the latest version by checking out a copy of the
 repository in your computer.
 
+The library will register an autoloader to include its dependencies by default. If 
+you prefer to handle this manually set the following define before including the 
+`DrSlump/Protobuf.php` file:
+
+    define('DRSLUMP_PROTOBUF_AUTOLOAD', false);
 
 
 ## Known issues
