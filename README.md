@@ -29,9 +29,7 @@ For more information see the [included man pages](http://drslump.github.com/Prot
 ### Working
 
   - Standard types (numbers, string, enums, messages, etc)
-  - Extensions
-  - Unknown fields
-  - Packed fields
+  - Extensions, Unknown and Packed fields
   - Generate service interfaces
   - Protoc compiler plugin to generate the PHP classes
   - Template based code generation. Go crazy and customize the generated code :)
