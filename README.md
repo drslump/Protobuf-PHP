@@ -29,34 +29,35 @@ For more information see the [included man pages](http://drslump.github.com/Prot
 ### Working
 
   - Standard types (numbers, string, enums, messages, etc)
+  - Extensions
+  - Unknown fields
+  - Packed fields
+  - Generate service interfaces
+  - Protoc compiler plugin to generate the PHP classes
+  - Template based code generation. Go crazy and customize the generated code :)
+  - Include comments from .proto files in the generated files
   - Pluggable serialization backends (codecs)
-    - Standard Binary
+    - Standard Binary -- with optional [high performant C extension based decoding](ext/)
     - Standard TextFormat ¹
     - PhpArray
     - JSON
     - [ProtoJson](https://github.com/drslump/ProtoJson) (_TagMap_ and _Indexed_ variants)
     - XML
-  - Protoc compiler plugin to generate the PHP classes
-  - Extensions
-  - Unknown fields
-  - Packed fields
-  - Reflection
-  - Dynamic messages with annotations support
-  - Generates service interfaces
-  - Includes comments from .proto files in the generated files
+  - Reflection capabilities
+  - Dynamic messages with annotations support (no code generation step required)
+  - Lazy decoding of messages to improve the performance in real world scenarios
   - Pear package for easy installation
 
-¹ Only serialization is supported
+¹ Only serialization is supported in this codec
 
 ### Future
 
   - Speed optimized code generation mode
-  - Support numbers beyond PHP's native limits
-
 
 
 ## Example usage
 
+```php
     $person = new Tutorial\Person();
     $person->name = 'DrSlump';
     $person->setId(12);
@@ -68,11 +69,11 @@ For more information see the [included man pages](http://drslump.github.com/Prot
     $data = $book->serialize();
 
     // Use custom codec
-    $codec = new \DrSlump\Protobuf\Codec\Binary();
+    $codec = new \DrSlump\Protobuf\Codec\Json();
     $data = $codec->encode($book);
     // ... or ...
     $data = $book->serialize($codec);
-
+``
 
 ## Installation
 
@@ -87,7 +88,6 @@ repository in your computer.
 
 
 ## Known issues
-
 
 ### Types
 
@@ -132,16 +132,15 @@ character set.
 ### Memory usage
 
 Large messages might be troublesome since the way the library is modelled does not allow to parse or
-serialize messages as a streams, instead the whole operation is performed in memory, which allows for faster
-processing but could consume too much RAM if messages are too large.
-
+serialize messages as streams, instead the whole operation is performed in memory, which allows for 
+faster processing but could consume too much RAM if messages are too large.
 
 ### Unknown fields
 
-Since wire types are different across different codec's formats, it's not possible to transcode unkwnon
-fields consumed in one codec to another. This means, for example, that when consuming a message using the
-binary codec, if it contains unknown fields, they won't be included when serializing the message using the
-Json codec.
+Since wire types are different across different codec's formats, it's not possible to transcode 
+unkwnon fields consumed in one codec to another. This means, for example, that when consuming a 
+message using the binary codec, if it contains unknown fields they won't be included when 
+serializing the message using the Json codec.
 
 
 ## Generating PHP classes
@@ -160,7 +159,7 @@ depend on where you've installed this library.
 
 In order to make your life easier, the supplied protoc plugin offers an additional
 execution mode, where it acts as a wrapper for the `protoc` invocation. It will
-automatically include the `php.proto` path so that you don't need to worry about it.
+automatically include the `php.proto` path so you don't need to worry about it.
 
     protoc-gen-php -o ./build tutorial.proto
 
@@ -169,7 +168,7 @@ automatically include the `php.proto` path so that you don't need to worry about
 
     The MIT License
 
-    Copyright (c) 2011 Iván -DrSlump- Montes
+    Copyright (c) 2011, 2012 Iván -DrSlump- Montes
 
     Permission is hereby granted, free of charge, to any person obtaining
     a copy of this software and associated documentation files (the
@@ -189,9 +188,5 @@ automatically include the `php.proto` path so that you don't need to worry about
     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-
-
 
 
