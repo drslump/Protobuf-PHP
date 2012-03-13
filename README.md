@@ -58,21 +58,21 @@ For more information see the [included man pages](http://drslump.github.com/Prot
 ## Example usage
 
 ```php
-    $person = new Tutorial\Person();
-    $person->name = 'DrSlump';
-    $person->setId(12);
+$person = new Tutorial\Person();
+$person->name = 'DrSlump';
+$person->setId(12);
 
-    $book = new Tutorial\AddressBook();
-    $book->addPerson($person);
+$book = new Tutorial\AddressBook();
+$book->addPerson($person);
 
-    // Use default codec
-    $data = $book->serialize();
+// Use default codec
+$data = $book->serialize();
 
-    // Use custom codec
-    $codec = new \DrSlump\Protobuf\Codec\Json();
-    $data = $codec->encode($book);
-    // ... or ...
-    $data = $book->serialize($codec);
+// Use custom codec
+$codec = new \DrSlump\Protobuf\Codec\Json();
+$data = $codec->encode($book);
+// ... or ...
+$data = $book->serialize($codec);
 ```
 
 ## Installation
