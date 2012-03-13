@@ -55,7 +55,7 @@ class Extension implements Protobuf\CodecInterface
         $name = $descriptor->getName();
 
         $res = $this->_describe($descriptor);
-        return \pbext_decode($res, $data);
+        return \protobuf_decode($res, $data);
     }
 
 
@@ -68,7 +68,7 @@ class Extension implements Protobuf\CodecInterface
         }
 
         // Create the message descriptor resource
-        $res = \pbext_desc_message($name);
+        $res = \protobuf_desc_message($name);
     
         // Add the resource immediately in the dictionary to support cyclic references
         $this->_resources[$name] = $res;
@@ -93,16 +93,16 @@ class Extension implements Protobuf\CodecInterface
                 }
             }
 
-            //printf("N: %d R: %d T: %d Name: %s P: %d\n", $field->getNumber(), $field->getRule(), $type, $field->getName(), $field->isPacked() ? PBEXT_FLAG_PACKED : 0);
+            //printf("N: %d R: %d T: %d Name: %s P: %d\n", $field->getNumber(), $field->getRule(), $type, $field->getName(), $field->isPacked() ? PROTOBUF_FLAG_PACKED : 0);
 
             // Append the field definition to the message
-            \pbext_desc_field(
+            \protobuf_desc_field(
                 $res, 
                 $field->getNumber(),
                 $field->getRule(),
                 $type,
                 $field->getName(),
-                $field->isPacked() ? PBEXT_FLAG_PACKED : 0,
+                $field->isPacked() ? PROTOBUF_FLAG_PACKED : 0,
                 $type === Protobuf::TYPE_MESSAGE ? $nested : NULL
             );
         }
@@ -121,7 +121,7 @@ class Extension implements Protobuf\CodecInterface
         $name = $descriptor->getName();
 
         $res = $this->_describe($descriptor);
-        $ret = \pbext_decode($res, $data);
+        $ret = \protobuf_decode($res, $data);
 
 
         // In non lazy mode we just pass the returned array thru the PhpArray codec

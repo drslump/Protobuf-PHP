@@ -15,7 +15,7 @@ class Binary implements Protobuf\CodecInterface
 
     public function __construct($lazy = true)
     {
-        if (extension_loaded('pbext')) {
+        if (extension_loaded('protobuf')) {
             $this->_impl = new Binary\Extension($lazy);
         } else {
             $this->_impl = new Binary\Native($lazy);
