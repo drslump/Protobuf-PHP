@@ -57,6 +57,9 @@ For more information see the [included man pages](http://drslump.github.com/Prot
 
 ## Example usage
 
+    require_once 'DrSlump/Protobuf.php';
+    \DrSlump\Protobuf::autoload();
+
     $person = new Tutorial\Person();
     $person->name = 'DrSlump';
     $person->setId(12);
