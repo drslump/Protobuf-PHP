@@ -20,6 +20,9 @@ class Xml extends PhpArray
     protected $root;
 
     /**
+     * TODO: Codecs should use the same signature for the constructor. We should move the
+     *       setOption method to the Codec interface.
+     *
      * @param array $options
      */
     public function __construct(array $options = array())
@@ -50,10 +53,10 @@ class Xml extends PhpArray
     }
 
     /**
-     * @param \DrSlump\Protobuf\Message $message
+     * @param \DrSlump\Protobuf\MessageInterface $message
      * @return string | \SimpleXMLElement
      */
-    public function encode(Protobuf\Message $message)
+    public function encode(Protobuf\MessageInterface $message)
     {
         // Generate an associative array
         $data = $this->encodeMessage($message);
@@ -90,11 +93,11 @@ class Xml extends PhpArray
     }
 
     /**
-     * @param \DrSlump\Protobuf\Message $message
+     * @param \DrSlump\Protobuf\MessageInterface $message
      * @param string | \SimpleXMLElement $xml
-     * @return \DrSlump\Protobuf\Message
+     * @return \DrSlump\Protobuf\MessageInterface
      */
-    public function decode(Protobuf\Message $message, $xml)
+    public function decode(Protobuf\MessageInterface $message, $xml)
     {
         if (is_string($xml)) {
             $xml = new \SimpleXMLElement($xml);
