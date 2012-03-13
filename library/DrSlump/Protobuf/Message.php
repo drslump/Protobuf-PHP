@@ -284,7 +284,6 @@ class Message implements MessageInterface
 
     // Magic getters and setters
 
-    // TODO: Manage default fields
     function &__get($name) 
     {
         if (isset($this->_values[$name])) {
@@ -296,8 +295,19 @@ class Message implements MessageInterface
             return $this->_values[$name];
         }
 
-        $foo = null;
-        return $foo;
+        $field = static::$_descriptor->getFieldByName($name);
+        if (!$field) {
+            trigger_error("Protobuf message " . static::$_descriptor->getName() . " doesn't have any field named '$name'.", E_USER_NOTICE);
+            return null;
+        }
+
+        if ($field && $field->hasDefault()) {
+            $this->_values[$name] = $field->getDefault();
+        } else if ($field && $field->isRepeated()) {
+            $this->_values[$name] = array();
+        }
+
+        return $this->_values[$name];
     }
 
     function __set($name, $value) 
@@ -305,10 +315,18 @@ class Message implements MessageInterface
         $this->_values[$name] = $value;
     }
 
-    // TODO: Manage default fields
     function __isset($name) 
     {
-        return isset($this->_values[$name]);
+        if (array_key_exists($name, $this->_values)) {
+            return isset($this->_values[$name]);
+        }
+        
+        $field = static::$_descriptor->getFieldByName($name);
+        if ($field->hasDefault()) {
+            return $field->getDefault() !== NULL;
+        }
+
+        return false;
     }
 
     function __unset($name) 
@@ -377,7 +395,8 @@ class Message implements MessageInterface
         if (is_numeric($offset)) {
             $field = static::$_descriptor->getField($offset);
             if (!$field) {
-                throw new \Exception('Invalid field tag number ' . $offset);
+                trigger_error("Protobuf message " . static::$_descriptor->getName() . " doesn't have any field with a tag number of $offset", E_USER_NOTICE);
+                return;
             }
 
             if ($field->isExtension()) {
@@ -397,7 +416,8 @@ class Message implements MessageInterface
         if (is_numeric($offset)) {
             $field = static::$_descriptor->getField($offset);
             if (!$field) {
-                throw new \Exception('Invalid field tag number ' . $offset);
+                trigger_error("Protobuf message " . static::$_descriptor->getName() . " doesn't have any field with a tag number of $offset", E_USER_NOTICE);
+                return null;
             }
 
             $name = $field->name;
@@ -417,7 +437,8 @@ class Message implements MessageInterface
         if (is_numeric($offset)) {
             $field = static::$_descriptor->getField($offset);            
             if (!$field) {
-                throw new \Exception('Invalid field tag number ' . $offset);
+                trigger_error("Protobuf message " . static::$_descriptor->getName() . " doesn't have any field with a tag number of $offset", E_USER_NOTICE);
+                return;
             }
 
             if ($field->isExtension()) {
@@ -434,34 +455,5 @@ class Message implements MessageInterface
         }
     }
 
-
-    // Backwards compatibility API
-
-    public function _has($idx)
-    {
-        return isset($this[$idx]);
-    }
-
-    public function _get($idx)
-    {
-        return $this[$idx];
-    }
-
-    public function _set($idx, $val)
-    {
-        $this[$idx] = $val;
-    }
-
-    public function _add($idx, $val)
-    {
-        $v = $this[$idx];
-        $v[] = $val;
-        $this[$idx] = $v;
-    }
-
-    public function _clear($idx)
-    {
-        $this[$idx] = null;
-    }
 }
 
