@@ -75,6 +75,10 @@ class PhpArray implements Protobuf\CodecInterface
             $key = $this->useTagNumber ? $field->getNumber() : $field->getName();
             $v = $message[$tag];
 
+            if ($v === NULL || $v === $field->getDefault()) {
+                continue;
+            }
+
             if ($field->isRepeated()) {
                 // Make sure the value is iterable
                 if (!is_array($v) && !($v instanceof \Traversable)) {
@@ -122,13 +126,15 @@ class PhpArray implements Protobuf\CodecInterface
                 // Make sure the value is an array of values
                 $v = is_array($v) && is_int(key($v)) ? $v : array($v);
 
-                foreach ($v as $k=>$vv) {
-                    $v[$k] = $this->filterValue($vv, $field);
-                }
-
                 // If we are packing lazy values use a LazyRepeat as container
-                if ($v[0] instanceof Protobuf\LazyValue) {
+                if ($this->isLazy && $field->getType() === Protobuf::TYPE_MESSAGE) {
                     $v = new Protobuf\LazyRepeat($v);
+                    $v->codec = $this;
+                    $v->descriptor = $field;
+                } else {
+                    foreach ($v as $k=>$vv) {
+                        $v[$k] = $this->filterValue($vv, $field);
+                    }
                 }
 
             } else {

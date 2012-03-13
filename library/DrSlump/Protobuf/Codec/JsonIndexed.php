@@ -21,7 +21,7 @@ class JsonIndexed extends Json
         $index = '';
         $data = array();
         foreach ($descriptor->getFields() as $tag=>$field) {
-            $empty = !$message->_has($tag);
+            $empty = !isset($message[$tag]);
             if ($field->isRequired() && $empty) {
                 throw new \UnexpectedValueException(
                     'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
@@ -32,9 +32,13 @@ class JsonIndexed extends Json
                 continue;
             }
 
-            $index .= $this->i2c($tag + 48);
+            $value = $message[$tag];
+            if ($value === NULL || $value === $field->getDefault()) {
+                continue;
+            }
 
-            $value = $message->_get($tag);
+            // Add the item to the index
+            $index .= $this->i2c($tag + 48);
 
             if ($field->isRepeated()) {
                 $repeats = array();
@@ -84,19 +88,21 @@ class JsonIndexed extends Json
                 continue;
             }
 
+            $name = $field->getName();
+
             if ($field->getType() === Protobuf::TYPE_MESSAGE) {
                 $nested = $field->getReference();
                 if ($field->isRepeated()) {
-                    foreach ($v as $vv) {
-                        $obj = $this->decodeMessage(new $nested, $vv);
-                        $message->_add($k, $obj);
+                    foreach ($v as $kk=>$vv) {
+                        $v[$kk] = $this->decodeMessage(new $nested, $vv);
                     }
+                    $message->initValue($name, $v);
                 } else {
                     $obj = $this->decodeMessage(new $nested, $v);
-                    $message->_set($k, $obj);
+                    $message->initValue($name, $obj);
                 }
             } else {
-                $message->_set($k, $v);
+                $message->initValue($name, $v);
             }
         }
 

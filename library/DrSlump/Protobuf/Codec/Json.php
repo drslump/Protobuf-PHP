@@ -31,7 +31,7 @@ class Json extends PhpArray
      */
     public function decode(Protobuf\MessageInterface $message, $data)
     {
-        $data = json_decode($data);
+        $data = json_decode($data, true);
         return $this->decodeMessage($message, $data);
     }
 

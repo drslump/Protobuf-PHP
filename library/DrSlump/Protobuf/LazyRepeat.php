@@ -8,6 +8,9 @@ class LazyRepeat extends LazyValue implements \Iterator, \Countable, \ArrayAcces
 {
     protected $_ofs = 0;
 
+    /** @var array - Flag array elements already decoded */
+    protected $_decoded = array();
+
     public function __construct($values = array())
     {
         $this->value = $values;
@@ -42,9 +45,12 @@ class LazyRepeat extends LazyValue implements \Iterator, \Countable, \ArrayAcces
     public function offsetSet($offset, $value) {
         if (is_null($offset)) {
             $this->value[] = $value;
+            $offset = count($this->value)-1;
         } else {
             $this->value[$offset] = $value;
         }
+
+        $this->_decoded[$offset] = true;
     }
 
     public function offsetExists($offset) {
@@ -58,8 +64,9 @@ class LazyRepeat extends LazyValue implements \Iterator, \Countable, \ArrayAcces
     public function offsetGet($offset) {
         if (!isset($this->value[$offset])) return NULL;
 
-        if (is_string($this->value[$offset])) {
+        if (empty($this->_decoded[$offset])) {
             $this->value[$offset] = $this->codec->lazyDecode($this->descriptor, $this->value[$offset]);
+            $this->_decoded[$offset] = true;
         }
 
         return $this->value[$offset];

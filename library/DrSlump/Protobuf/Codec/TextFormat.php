@@ -12,10 +12,10 @@ use DrSlump\Protobuf;
 class TextFormat implements Protobuf\CodecInterface
 {
     /**
-     * @param \DrSlump\Protobuf\Message $message
+     * @param \DrSlump\Protobuf\MessageInterface $message
      * @return string
      */
-    public function encode(Protobuf\Message $message)
+    public function encode(Protobuf\MessageInterface $message)
     {
         return $this->encodeMessage($message);
     }
@@ -23,16 +23,17 @@ class TextFormat implements Protobuf\CodecInterface
     /**
      *
      * @throw \DrSlump\Protobuf\Exception - Decoding is not supported
-     * @param \DrSlump\Protobuf\Message $message
+     * @param \DrSlump\Protobuf\MessageInterface $message
      * @param String $data
-     * @return \DrSlump\Protobuf\Message
+     * @return \DrSlump\Protobuf\MessageInterface
      */
-    public function decode(Protobuf\Message $message, $data)
+    public function decode(Protobuf\MessageInterface $message, $data)
     {
         throw new \BadMethodCallException('TextFormat codec does not support decoding');
     }
 
-    protected function encodeMessage(Protobuf\Message $message, $level = 0)
+
+    protected function encodeMessage(Protobuf\MessageInterface $message, $level = 0)
     {
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
@@ -40,10 +41,10 @@ class TextFormat implements Protobuf\CodecInterface
         $data = '';
         foreach ($descriptor->getFields() as $tag=>$field) {
 
-            $empty = !$message->_has($tag);
+            $empty = !isset($message[$tag]);
             if ($field->isRequired() && $empty) {
                 throw new \UnexpectedValueException(
-                    'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
+                    'Message ' . $descriptor->getName() . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
@@ -52,7 +53,11 @@ class TextFormat implements Protobuf\CodecInterface
             }
 
             $name = $field->getName();
-            $value = $message->_get($tag);
+            $value = $message[$tag];
+
+            if ($value === NULL || $value === $field->getDefault()) {
+                continue;
+            }
 
             if ($field->isRepeated()) {
                 foreach ($value as $val) {

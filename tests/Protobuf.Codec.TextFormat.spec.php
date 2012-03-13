@@ -94,7 +94,6 @@ describe "TextFormat Codec"
                     email: "john.doe@gmail.com"
                     phone {
                         number: "1231231212"
-                        type: 1
                     }
                     phone {
                         number: "55512321312"

@@ -127,8 +127,12 @@ namespace <?=$this->ns($namespace)?> {
          *
          * @return <?=$this->doctype($f)?>[]
          */
-        public function get<?=$Name?>()
+        public function get<?=$Name?>($idx = null)
         {
+            if (NULL !== $idx) {
+                return $this-><?=$name?>[$idx];
+            }
+
             return $this-><?=$name?>;
         }
 

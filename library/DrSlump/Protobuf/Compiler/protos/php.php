@@ -12,8 +12,8 @@
     $f = new \DrSlump\Protobuf\Field();
     $f->number = 50002;
     $f->name   = "namespace";
-    $f->rule   = \DrSlump\Protobuf::RULE_optional;
-    $f->type   = \DrSlump\Protobuf::TYPE_string;
+    $f->rule   = \DrSlump\Protobuf::RULE_OPTIONAL;
+    $f->type   = \DrSlump\Protobuf::TYPE_STRING;
     
     return $f;
 });
@@ -25,8 +25,8 @@
     $f = new \DrSlump\Protobuf\Field();
     $f->number = 50003;
     $f->name   = "suffix";
-    $f->rule   = \DrSlump\Protobuf::RULE_optional;
-    $f->type   = \DrSlump\Protobuf::TYPE_string;
+    $f->rule   = \DrSlump\Protobuf::RULE_OPTIONAL;
+    $f->type   = \DrSlump\Protobuf::TYPE_STRING;
          
     $f->default = '.php';
     
@@ -40,8 +40,8 @@
     $f = new \DrSlump\Protobuf\Field();
     $f->number = 50004;
     $f->name   = "multifile";
-    $f->rule   = \DrSlump\Protobuf::RULE_optional;
-    $f->type   = \DrSlump\Protobuf::TYPE_bool;
+    $f->rule   = \DrSlump\Protobuf::RULE_OPTIONAL;
+    $f->type   = \DrSlump\Protobuf::TYPE_BOOL;
          
     $f->default = false;
     
@@ -55,8 +55,8 @@
     $f = new \DrSlump\Protobuf\Field();
     $f->number = 50005;
     $f->name   = "generic_services";
-    $f->rule   = \DrSlump\Protobuf::RULE_optional;
-    $f->type   = \DrSlump\Protobuf::TYPE_bool;
+    $f->rule   = \DrSlump\Protobuf::RULE_OPTIONAL;
+    $f->type   = \DrSlump\Protobuf::TYPE_BOOL;
          
     $f->default = false;
     

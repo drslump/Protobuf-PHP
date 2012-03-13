@@ -97,7 +97,7 @@ describe "JSON Codec"
                         "id":2051,
                         "email":"john.doe@gmail.com",
                         "phone":[
-                            {"number":"1231231212","type":1},
+                            {"number":"1231231212"},
                             {"number":"55512321312","type":0}
                         ]
                     },
