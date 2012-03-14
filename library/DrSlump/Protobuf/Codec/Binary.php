@@ -330,7 +330,7 @@ class Binary implements Protobuf\CodecInterface
         }
     }
 
-    protected function getWireType($type, $default)
+    protected function getWireType($type, $default = null)
     {
         static $map = array(
             Protobuf::TYPE_INT32 => self::WIRE_VARINT,
