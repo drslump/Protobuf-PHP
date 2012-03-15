@@ -425,7 +425,8 @@ class PhpGenerator extends AbstractGenerator
             if ($field->hasDefaultValue()) {
                 switch ($field->getType()) {
                 case Protobuf::TYPE_BOOL:
-                    $default = $field->getDefaultValue() ? 'true' : 'false';
+                    $bool = filter_var($field->getDefaultValue(), FILTER_VALIDATE_BOOLEAN);
+                    $default = $bool ? 'true' : 'false';
                     break;
                 case Protobuf::TYPE_STRING:
                     $default = '"' . addcslashes($field->getDefaultValue(), '"\\') . '"';
