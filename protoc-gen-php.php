@@ -51,7 +51,6 @@ error_reporting(error_reporting() & ~E_STRICT);
 
 // Setup autoloader
 require_once 'DrSlump/Protobuf.php';
-\DrSlump\Protobuf::autoload();
 
 try {
     // Run the cli interface
