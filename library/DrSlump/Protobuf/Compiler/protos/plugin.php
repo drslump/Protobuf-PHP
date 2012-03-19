@@ -10,7 +10,7 @@ namespace google\protobuf\compiler {
     class CodeGeneratorRequest extends \DrSlump\Protobuf\Message {
                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -209,7 +209,7 @@ namespace google\protobuf\compiler {
     class CodeGeneratorResponse extends \DrSlump\Protobuf\Message {
                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -348,7 +348,7 @@ namespace google\protobuf\compiler\CodeGeneratorResponse {
     class File extends \DrSlump\Protobuf\Message {
                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();

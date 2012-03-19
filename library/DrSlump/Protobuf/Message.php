@@ -14,10 +14,11 @@ class Message implements MessageInterface
 {
     /** @var \Closure[] */
     static protected $__extensions = array();
+    /** @var \DrSlump\Protobuf\Descriptor */
+    static protected $__descriptor;
 
     /** @var \DrSlump\Protobuf\Descriptor */
-    static protected $_descriptor;
-
+    protected $_descriptor;
     /** @var array Store data for message fields */
     protected $_values = array();
     /** @var array Store data for extension fields */
@@ -53,14 +54,17 @@ class Message implements MessageInterface
      */
     public function __construct($data = null)
     {
-        // Cache the descriptor instance
-        if (!static::$_descriptor) {
-            static::$_descriptor = Protobuf::getRegistry()->getDescriptor($this);
+        // Cache the descriptor instance for this class
+        if (!static::$__descriptor) {
+            static::$__descriptor = Protobuf::getRegistry()->getDescriptor($this);
         }
+
+        // Alias the descriptor to this object instance since it's faster to access
+        $this->_descriptor = static::$__descriptor;
 
         // BACKWARDS COMPATIBILITY: Unset public properties
         $publicfields = get_object_vars($this);
-        foreach (static::$_descriptor->getFields() as $field) {
+        foreach ($this->_descriptor->getFields() as $field) {
             $name = $field->name;
             if (array_key_exists($name, $publicfields)) {
                 //trigger_error('DESTROYING PUBLIC FIELD: '  . $name);
@@ -295,9 +299,9 @@ class Message implements MessageInterface
             return $this->_values[$name];
         }
 
-        $field = static::$_descriptor->getFieldByName($name);
+        $field = $this->_descriptor->getFieldByName($name);
         if (!$field) {
-            trigger_error("Protobuf message " . static::$_descriptor->getName() . " doesn't have any field named '$name'.", E_USER_NOTICE);
+            trigger_error("Protobuf message " . $this->_descriptor->getName() . " doesn't have any field named '$name'.", E_USER_NOTICE);
             return null;
         }
 
@@ -321,7 +325,7 @@ class Message implements MessageInterface
             return isset($this->_values[$name]);
         }
         
-        $field = static::$_descriptor->getFieldByName($name);
+        $field = $this->_descriptor->getFieldByName($name);
         if ($field->hasDefault()) {
             return $field->getDefault() !== NULL;
         }
@@ -384,7 +388,7 @@ class Message implements MessageInterface
     public function offsetExists($offset)
     {
         if (is_numeric($offset)) {
-            return static::$_descriptor->getField($offset) !== NULL;
+            return $this->_descriptor->getField($offset) !== NULL;
         } else {
             return $this->hasExtension($offset);
         }
@@ -393,9 +397,9 @@ class Message implements MessageInterface
     public function offsetSet($offset, $value)
     {
         if (is_numeric($offset)) {
-            $field = static::$_descriptor->getField($offset);
+            $field = $this->_descriptor->getField($offset);
             if (!$field) {
-                trigger_error("Protobuf message " . static::$_descriptor->getName() . " doesn't have any field with a tag number of $offset", E_USER_NOTICE);
+                trigger_error("Protobuf message " . $this->_descriptor->getName() . " doesn't have any field with a tag number of $offset", E_USER_NOTICE);
                 return;
             }
 
@@ -414,9 +418,9 @@ class Message implements MessageInterface
     public function offsetGet( $offset )
     {
         if (is_numeric($offset)) {
-            $field = static::$_descriptor->getField($offset);
+            $field = $this->_descriptor->getField($offset);
             if (!$field) {
-                trigger_error("Protobuf message " . static::$_descriptor->getName() . " doesn't have any field with a tag number of $offset", E_USER_NOTICE);
+                trigger_error("Protobuf message " . $this->_descriptor->getName() . " doesn't have any field with a tag number of $offset", E_USER_NOTICE);
                 return null;
             }
 
@@ -435,9 +439,9 @@ class Message implements MessageInterface
     public function offsetUnset( $offset )
     {
         if (is_numeric($offset)) {
-            $field = static::$_descriptor->getField($offset);            
+            $field = $this->_descriptor->getField($offset);            
             if (!$field) {
-                trigger_error("Protobuf message " . static::$_descriptor->getName() . " doesn't have any field with a tag number of $offset", E_USER_NOTICE);
+                trigger_error("Protobuf message " . $this->_descriptor->getName() . " doesn't have any field with a tag number of $offset", E_USER_NOTICE);
                 return;
             }
 

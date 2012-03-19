@@ -26,11 +26,9 @@ namespace <?=$this->ns($namespace)?> {
         <? endforeach; endif; ?>
      
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
-
+        protected static $__descriptor;
         /** @var \Closure[] */
         protected static $__extensions = array();
-
 
         public static function descriptor()
         {

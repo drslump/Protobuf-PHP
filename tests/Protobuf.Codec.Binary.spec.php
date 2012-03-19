@@ -6,8 +6,6 @@ error_reporting(E_ALL);
 
 use \DrSlump\Protobuf;
 
-Protobuf::autoload();
-
 include_once __DIR__ . '/protos/simple.php';
 include_once __DIR__ . '/protos/complex.php';
 include_once __DIR__ . '/protos/repeated.php';

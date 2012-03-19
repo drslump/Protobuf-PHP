@@ -6,6 +6,9 @@ use DrSlump\Protobuf;
 
 abstract class AnnotatedMessage extends Message
 {
+    /** @var array - A map of class names and descriptor instances */
+    static $__descriptors = array();
+
     static public function descriptor()
     {
         $class = get_called_class();
@@ -112,4 +115,31 @@ abstract class AnnotatedMessage extends Message
         return $descriptor;
     }
 
+    /**
+     * @param mixed $data
+     */
+    public function __construct($data = null)
+    {
+        // Use a previously generated descriptor if available
+        $class = get_class($this);
+        if (!empty(self::$__descriptors[$class])) {
+            $this->_descriptor = self::$__descriptors[$class];
+        } else {
+            $this->_descriptor = static::descriptor();
+            self::$__descriptors[$class] = $this->_descriptor;
+        }
+
+        // Remove public fields defined in the descriptor
+        $public = get_object_vars($this);
+        foreach ($this->_descriptor->getFields() as $field) {
+            $fieldname = $field->getName();
+            if (array_key_exists($fieldname, $public)) {
+                unset($this->$fieldname);
+            }
+        }
+
+        if (NULL !== $data) {
+            $this->parse($data);
+        }
+    }
 }

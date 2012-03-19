@@ -10,7 +10,7 @@ namespace google\protobuf {
     class FileDescriptorSet extends \DrSlump\Protobuf\Message {
                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -99,7 +99,7 @@ namespace google\protobuf {
     class FileDescriptorProto extends \DrSlump\Protobuf\Message {
                                                                                                                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -638,7 +638,7 @@ namespace google\protobuf {
     class DescriptorProto extends \DrSlump\Protobuf\Message {
                                                                                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -1077,7 +1077,7 @@ namespace google\protobuf\DescriptorProto {
     class ExtensionRange extends \DrSlump\Protobuf\Message {
                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -1204,7 +1204,7 @@ namespace google\protobuf {
     class FieldDescriptorProto extends \DrSlump\Protobuf\Message {
                                                                                                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -1674,7 +1674,7 @@ namespace google\protobuf {
     class EnumDescriptorProto extends \DrSlump\Protobuf\Message {
                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -1865,7 +1865,7 @@ namespace google\protobuf {
     class EnumValueDescriptorProto extends \DrSlump\Protobuf\Message {
                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -2044,7 +2044,7 @@ namespace google\protobuf {
     class ServiceDescriptorProto extends \DrSlump\Protobuf\Message {
                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -2235,7 +2235,7 @@ namespace google\protobuf {
     class MethodDescriptorProto extends \DrSlump\Protobuf\Message {
                                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -2464,7 +2464,7 @@ namespace google\protobuf {
     class FileOptions extends \DrSlump\Protobuf\Message {
                                                                                                                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -2984,7 +2984,7 @@ namespace google\protobuf {
     class MessageOptions extends \DrSlump\Protobuf\Message {
                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -3179,7 +3179,7 @@ namespace google\protobuf {
     class FieldOptions extends \DrSlump\Protobuf\Message {
                                                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -3487,7 +3487,7 @@ namespace google\protobuf {
     class EnumOptions extends \DrSlump\Protobuf\Message {
                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -3576,7 +3576,7 @@ namespace google\protobuf {
     class EnumValueOptions extends \DrSlump\Protobuf\Message {
                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -3665,7 +3665,7 @@ namespace google\protobuf {
     class ServiceOptions extends \DrSlump\Protobuf\Message {
                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -3754,7 +3754,7 @@ namespace google\protobuf {
     class MethodOptions extends \DrSlump\Protobuf\Message {
                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -3843,7 +3843,7 @@ namespace google\protobuf {
     class UninterpretedOption extends \DrSlump\Protobuf\Message {
                                                                                                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -4232,7 +4232,7 @@ namespace google\protobuf\UninterpretedOption {
     class NamePart extends \DrSlump\Protobuf\Message {
                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -4359,7 +4359,7 @@ namespace google\protobuf {
     class SourceCodeInfo extends \DrSlump\Protobuf\Message {
                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
@@ -4448,7 +4448,7 @@ namespace google\protobuf\SourceCodeInfo {
     class Location extends \DrSlump\Protobuf\Message {
                                              
         /** @var \DrSlump\Protobuf\Descriptor */
-        protected static $_descriptor;   
+        protected static $__descriptor;   
 
         /** @var \Closure[] */
         protected static $__extensions = array();
