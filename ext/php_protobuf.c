@@ -126,7 +126,7 @@ inline static zval* protobuf_lwpb2zval( /* {{{ */
     	case LWPB_FLOAT:
       		ZVAL_DOUBLE(ret, (double)value->float_);
       		return ret;
-      	// TODO: Shall we case to Double large integers?
+      	// TODO: Shall we cast to Double large integers?
 		case LWPB_INT64:
 		case LWPB_SINT64:
 		case LWPB_SFIXED64:
