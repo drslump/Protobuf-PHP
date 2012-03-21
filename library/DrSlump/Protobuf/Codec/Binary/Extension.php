@@ -5,30 +5,13 @@ namespace DrSlump\Protobuf\Codec\Binary;
 use DrSlump\Protobuf;
 use DrSlump\Protobuf\Codec\PhpArray;
 
-class Extension implements Protobuf\CodecInterface
+
+// Extends Binary/Native to use it's encoding mechanism. Only decoding
+// is performed with the help of the C extension at this point.
+class Extension extends Native
 {
-    protected $_lazy = true;
     protected $_resources = array();
     protected $_codec = NULL;
-
-    public function __construct($lazy = true)
-    {
-        $this->_lazy = $lazy;
-
-        // Create a PhpArray codec to be used for non lazy messages
-        if (!$lazy) {
-            $this->_codec = new PhpArray(false);
-        }
-    }
-
-    /**
-     * @param \DrSlump\Protobuf\MessageInterface $message
-     * @return string
-     */
-    public function encode(Protobuf\MessageInterface $message)
-    {
-        throw new \Exception('Not implemented');
-    }
 
     /**
      * @param String|\DrSlump\Protobuf\MessageInterface $message
@@ -37,7 +20,7 @@ class Extension implements Protobuf\CodecInterface
      */
     public function decode(Protobuf\MessageInterface $message, $data)
     {
-        return $this->decodeMessage($message, $data);
+        return $this->_decodeMessage($message, $data);
     }
 
     /**
@@ -73,6 +56,8 @@ class Extension implements Protobuf\CodecInterface
         // Add the resource immediately in the dictionary to support cyclic references
         $this->_resources[$name] = $res;
 
+        $lazy = $this->getOption('lazy');
+
         // Iterate over all the fields to setup the message
         foreach ($descriptor->getFields() as $field) {
 
@@ -81,7 +66,7 @@ class Extension implements Protobuf\CodecInterface
             // Nested messages need to be populated first
             if ($type === Protobuf::TYPE_MESSAGE) {
                 // When in lazy decoding mode we handle nested messages as binary fields
-                if ($this->_lazy) {
+                if ($lazy) {
                     $type = Protobuf::TYPE_BYTES;
                 } else {
                     // Try to obtain the message descriptor resource for this field
@@ -115,7 +100,7 @@ class Extension implements Protobuf\CodecInterface
      * @param string                                $data
      * @return \DrSlump\Protobuf\MessageInterface
      */
-    protected function decodeMessage(\DrSlump\Protobuf\MessageInterface $message, $data)
+    protected function _decodeMessage(\DrSlump\Protobuf\MessageInterface $message, $data)
     {
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
         $name = $descriptor->getName();
@@ -123,9 +108,13 @@ class Extension implements Protobuf\CodecInterface
         $res = $this->_describe($descriptor);
         $ret = \protobuf_decode($res, $data);
 
-
         // In non lazy mode we just pass the returned array thru the PhpArray codec
-        if (!$this->_lazy) {
+        if (!$this->getOption('lazy')) {
+            if (!$this->_codec) {
+                $this->_codec = new PhpArray();
+                $this->_codec->setOption('lazy', false);
+            }
+
             return $this->_codec->decode($message, $ret);
         }
 
@@ -164,7 +153,7 @@ class Extension implements Protobuf\CodecInterface
         if ($field->getType() === Protobuf::TYPE_MESSAGE) {
             $msg = $field->getReference();
             $msg = new $msg;
-            return $this->decodeMessage($msg, $bytes);
+            return $this->_decodeMessage($msg, $bytes);
         }
 
         throw new \RuntimeException('Only message types are supported to be decoded lazily');

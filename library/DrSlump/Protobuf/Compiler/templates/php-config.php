@@ -4,8 +4,7 @@
 
     Receives the following variables:
 
-        $namespace - The current namespace (aka package) for the file
-        $data - A google.protobuf.FileProto object
+        $data - A google.protobuf.compiler.CodeGeneratorRequest object
 */ 
 
 $this->setNamespaceSeparator('\\');

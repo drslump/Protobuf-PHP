@@ -31,6 +31,12 @@ abstract class AbstractGenerator
         $this->compiler = $compiler;
     }
 
+    /**
+     * Initialize the generator to serve files for the given request
+     *
+     * @param google\protobuf\compiler\CodeGeneratorRequest $req
+     */
+    abstract public function init(proto\compiler\CodeGeneratorRequest $req);
 
     /**
      * Implement this method in your custom generator
@@ -49,21 +55,12 @@ abstract class AbstractGenerator
      */
     public function getNamespace(proto\FileDescriptorProto $proto)
     {
-        $copts = $this->compiler->options;
-        $popts = $proto->options;
+        // Assign the proto to the generator so we can use the options method
+        $this->proto = $proto;
 
-        if (isset($copts['namespace'])) {
-            $namespace = $copts['namespace'];
-        } else if (isset($copts['package'])) {
-            $namespace = $copts['package'];
-        } else if (!empty($popts) && isset($popts[$this->prefix . '.namespace'])) {
-            $namespace = $popts[$this->prefix . '.namespace'];
-        } else if (!empty($popts) && isset($popts[$this->prefix . '.package'])) {
-            $namespace = $popts[$this->prefix . '.package'];
-        } else {
-            $namespace = $proto->package;
-        }
-
+        // Fetch the configured namespace via the options system, defaulting
+        // to the original proto package.
+        $namespace = $this->option('namespace', $proto->package);
         $namespace = trim(trim($namespace, '.'), $this->nsSep);
         return str_replace('.', $this->nsSep, $namespace);
     }
@@ -137,8 +134,7 @@ abstract class AbstractGenerator
             $opt = $this->compiler->options[$name];
         // otherwise check the current proto file
         } else if (!empty($this->proto->options)) {
-            $opts = $this->proto->options;
-            $name = $this->prefix . '.' . $name; 
+            $opts = $this->proto->options->toArray();
             if (isset($opts[$this->prefix . '.' . $name])) {
                 $opt = $opts[$this->prefix . '.' . $name];
             } else if (isset($opts[$name])) {

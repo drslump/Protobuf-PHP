@@ -326,7 +326,7 @@ class Message implements MessageInterface
         }
         
         $field = $this->_descriptor->getFieldByName($name);
-        if ($field->hasDefault()) {
+        if ($field && $field->hasDefault()) {
             return $field->getDefault() !== NULL;
         }
 
@@ -360,12 +360,17 @@ class Message implements MessageInterface
         }
 
         // Convert from camel-case to underscore
-        $normalized = preg_replace('/([a-z])([A-Z])/', '$1_$2', $name);
+        $normalized = preg_replace('/([a-z])([A-Z0-9])/', '$1_$2', $name);
         $normalized = strtolower($normalized);
 
         // Do the action
         switch ($prefix) {
         case 'get':
+            // Support for getXxxxList() style calls for repeated fields
+            if ('_list' === substr($name, -5)) {
+                $args = array();
+            }
+
             return count($args) ? $this->$normalized[$args[0]] : $this->$normalized;
         case 'set':
             $this->$normalized = $args[0];
@@ -388,10 +393,14 @@ class Message implements MessageInterface
     public function offsetExists($offset)
     {
         if (is_numeric($offset)) {
-            return $this->_descriptor->getField($offset) !== NULL;
-        } else {
-            return $this->hasExtension($offset);
+            $field = $this->_descriptor->getField($offset);
+            if (!$field) return NULL;
+            if (!$field->extension) {
+                return isset($this->_values[$field->name]);
+            }
         }
+        
+        return $this->hasExtension($offset);
     }
 
     public function offsetSet($offset, $value)

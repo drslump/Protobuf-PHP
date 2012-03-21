@@ -14,10 +14,9 @@ use DrSlump\Protobuf;
 class JsonTagMap extends Json
     implements Protobuf\CodecInterface
 {
-
-    public function __construct()
-    {
-        // Setup the codec to use tag numbers as keys
-        $this->useTagNumberAsKey(true);
-    }
+    protected $options = array(
+        'lazy'      => true,
+        'tags'      => true,
+        'strict'    => true,
+    );
 }

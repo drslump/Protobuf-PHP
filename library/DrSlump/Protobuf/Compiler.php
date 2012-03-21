@@ -116,6 +116,7 @@ class Compiler
 
         /** @var $generator \DrSlump\Protobuf\Compiler\AbstractGenerator */
         $generator = new $generator($this);
+        $generator->init($req);
 
         // Setup response object
         $resp = new \google\protobuf\compiler\CodeGeneratorResponse();
@@ -125,6 +126,7 @@ class Compiler
         foreach($req->proto_file as $proto) {
             $package = $proto->getPackage();
             $namespace = $generator->getNamespace($proto);
+            $this->notice('FOO: ' . $namespace);
             if (isset($this->packages[$package]) && $namespace !== $this->packages[$package]) {
                 $this->warning("Package $package was already mapped to {$this->packages[$package]} but has now been overridden to $namespace");
             }

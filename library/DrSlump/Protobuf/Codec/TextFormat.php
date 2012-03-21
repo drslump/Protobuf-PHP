@@ -9,7 +9,8 @@ use DrSlump\Protobuf;
  * is not supported.
  *
  */
-class TextFormat implements Protobuf\CodecInterface
+class TextFormat extends Protobuf\CodecAbstract
+    implements Protobuf\CodecInterface
 {
     /**
      * @param \DrSlump\Protobuf\MessageInterface $message
@@ -37,18 +38,20 @@ class TextFormat implements Protobuf\CodecInterface
     {
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
+        $strict = $this->getOption('strict');
+
         $indent = str_repeat('  ', $level);
         $data = '';
         foreach ($descriptor->getFields() as $tag=>$field) {
 
             $empty = !isset($message[$tag]);
-            if ($field->isRequired() && $empty) {
+            if ($strict && $empty && $field->isRequired() && !$field->hasDefault()) {
                 throw new \UnexpectedValueException(
                     'Message ' . $descriptor->getName() . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
-            if ($empty) {
+            if ($empty && !$field->hasDefault()) {
                 continue;
             }
 

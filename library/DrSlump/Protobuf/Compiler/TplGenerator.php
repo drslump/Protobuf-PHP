@@ -24,6 +24,17 @@ class TplGenerator extends AbstractGenerator
         }
     }
 
+    /**
+     * Initialize the generator to serve files for the given request
+     *
+     * @param google\protobuf\compiler\CodeGeneratorRequest $req
+     */
+    public function init(proto\compiler\CodeGeneratorRequest $req)
+    {
+        // Run the template's configure script
+        $this->template('config', $req, null);
+    }
+
     public function setTemplate($tpl)
     {
         $this->tpl = $tpl;
@@ -46,13 +57,7 @@ class TplGenerator extends AbstractGenerator
         // Reset the extensions dictionary
         $this->extensions = array();
 
-
-        // Run the template's configure script
-        $this->template('config', $proto, $ns);
-
-
         $result = array();
-        
 
         // Generate Enums
         if (!empty($proto->enum_type)) {

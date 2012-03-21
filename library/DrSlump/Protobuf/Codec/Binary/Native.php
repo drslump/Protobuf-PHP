@@ -4,7 +4,8 @@ namespace DrSlump\Protobuf\Codec\Binary;
 
 use DrSlump\Protobuf;
 
-class Native implements Protobuf\CodecInterface
+class Native extends Protobuf\CodecAbstract
+    implements Protobuf\CodecInterface
 {
     const WIRE_VARINT      = 0;
     const WIRE_FIXED64     = 1;
@@ -36,17 +37,14 @@ class Native implements Protobuf\CodecInterface
         Protobuf::TYPE_SINT64 => true
     );
 
-    protected $_lazy = true;
     protected $_reader = NULL;
-    protected $_lazyReader = NULL;
 
-    public function __construct($lazy = true)
+
+    public function __construct($options = array())
     {
-        $this->_lazy = $lazy;
+        parent::__construct($options);
+
         $this->_reader = new Protobuf\Codec\Binary\NativeReader();
-        if ($lazy) {
-            $this->_lazyReader = new Protobuf\Codec\Binary\NativeReader();
-        }
     }
 
     /**
@@ -82,6 +80,8 @@ class Native implements Protobuf\CodecInterface
         /** @var $message \DrSlump\Protobuf\MessageInterface */
         /** @var $descriptor \DrSlump\Protobuf\Descriptor */
 
+        $lazy = $this->getOption('lazy');
+
         // Get message descriptor
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
         // Cache list of fields
@@ -107,7 +107,7 @@ class Native implements Protobuf\CodecInterface
             // Find the matching field for the tag number
             if (!isset($fields[$tag])) {
                 $data = $this->decodeUnknown($reader, $wire);
-                $unknown = new Binary\Unknown($tag, $wire, $data);
+                $unknown = new Unknown($tag, $wire, $data);
                 $message->addUnknown($unknown);
                 continue;
             }
@@ -139,12 +139,12 @@ class Native implements Protobuf\CodecInterface
                 if ($type === Protobuf::TYPE_MESSAGE) {
                     $len = $reader->varint();
 
-                    if ($this->_lazy && $field->isRepeated()) {
+                    if ($lazy && $field->isRepeated()) {
                         $repeated[$tag][] = $reader->read($len);
                         continue;
                     }
 
-                    if ($this->_lazy) {
+                    if ($lazy) {
                         $value = new Protobuf\LazyValue();
                         $value->codec = $this;
                         $value->descriptor = $field;
@@ -174,7 +174,7 @@ class Native implements Protobuf\CodecInterface
             $field = $fields[$tag];
 
             // Only nested messages are wrapped in LazyRepeat
-            if ($this->_lazy && $field->getType() === Protobuf::TYPE_MESSAGE) {
+            if ($lazy && $field->getType() === Protobuf::TYPE_MESSAGE) {
                 $values = new Protobuf\LazyRepeat($values);
                 $values->codec = $this;
                 $values->descriptor = $field;
@@ -188,11 +188,17 @@ class Native implements Protobuf\CodecInterface
 
     public function lazyDecode($field, $bytes)
     {
+        static $reader;
+
+        if (!$reader) {
+            $reader = new Protobuf\Codec\Binary\NativeReader();
+        }
+
         if ($field->getType() === Protobuf::TYPE_MESSAGE) {
             $msg = $field->getReference();
             $msg = new $msg;
-            $this->_lazyReader->init($bytes);
-            return $this->decodeMessage($this->_lazyReader, $msg); 
+            $reader->init($bytes);
+            return $this->decodeMessage($reader, $msg); 
         }
 
         throw new \RuntimeException('Only message types are supported to be decoded lazily');
@@ -324,16 +330,20 @@ class Native implements Protobuf\CodecInterface
         // Get message descriptor
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
+        $strict = $this->getOption('strict');
+
         foreach ($descriptor->getFields() as $tag=>$field) {
 
-            if ($field->isRequired() && !isset($message[$tag])) {
+            $empty = !isset($message[$tag]);
+
+            if ($strict && $empty && $field->isRequired() && !$field->hasDefault()) {
                 throw new \UnexpectedValueException(
                     'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
             // Skip unknown fields
-            if (!isset($message[$tag])) {
+            if ($empty && !$field->hasDefault()) {
                 continue;
             }
 

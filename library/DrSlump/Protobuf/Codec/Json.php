@@ -14,6 +14,12 @@ use DrSlump\Protobuf;
 class Json extends PhpArray
     implements Protobuf\CodecInterface
 {
+    protected $options = array(
+        'lazy'      => true,
+        'tags'      => false,
+        'strict'    => true,
+    );
+
     /**
      * @param \DrSlump\Protobuf\MessageInterface $message
      * @return string

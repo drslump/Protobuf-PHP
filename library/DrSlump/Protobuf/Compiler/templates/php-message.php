@@ -135,6 +135,16 @@ namespace <?=$this->ns($namespace)?> {
         }
 
         /**
+         * Get "<?=$name?>" list of values
+         *
+         * @return <?=$this->doctype($f)?>[]
+         */
+        public function get<?=$Name?>List()
+        {
+            return $this->get<?=$Name?>();
+        }
+
+        /**
          * Set "<?=$name?>" value
          *
          * @param <?=$this->doctype($f)?>[] $value

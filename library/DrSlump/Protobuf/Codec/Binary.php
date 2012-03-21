@@ -8,17 +8,43 @@ use DrSlump\Protobuf;
  * Acts as a proxy to the actual binary codec implementation, either using the
  * extension or the native PHP implementation
  */
-class Binary implements Protobuf\CodecInterface
+class Binary extends Protobuf\CodecAbstract
+    implements Protobuf\CodecInterface
 {
+    protected $options = array(
+        'extension' => 'protobuf'
+    );
+
     /** @var \DrSlump\Protobuf\CodecInterface */
     protected $_impl;
 
-    public function __construct($lazy = true)
+
+    public function __construct($options = array())
     {
-        if (extension_loaded('protobuf')) {
-            $this->_impl = new Binary\Extension($lazy);
+        parent::__construct($options);
+
+        if (extension_loaded($this->getOption('extension'))) {
+            $this->_impl = new Binary\Extension($options);
         } else {
-            $this->_impl = new Binary\Native($lazy);
+            $this->_impl = new Binary\Native($options);
+        }
+    }
+
+    public function setOption($name, $value)
+    {
+        if ($this->_impl) {
+            $this->_impl->setOption($name, $value);
+        } else {
+            parent::setOption($name, $value);
+        }
+    }
+
+    public function getOption($name, $default = null)
+    {
+        if ($this->_impl) {
+            return $this->_impl->getOption($name, $default);
+        } else {
+            return parent::getOption($name, $default);
         }
     }
 

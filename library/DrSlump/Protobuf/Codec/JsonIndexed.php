@@ -18,18 +18,22 @@ class JsonIndexed extends Json
     {
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
+        $strict = $this->getOption('strict');
+
         $index = '';
         $data = array();
+
         foreach ($descriptor->getFields() as $tag=>$field) {
+
             $empty = !isset($message[$tag]);
-            if ($field->isRequired() && $empty) {
+            if ($strict && $empty && $field->isRequired() && !$field->hasDefault()) {
                 throw new \UnexpectedValueException(
                     'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
             // Skip unknown
-            if ($empty) {
+            if ($empty && !$field->hasDefault()) {
                 continue;
             }
 
