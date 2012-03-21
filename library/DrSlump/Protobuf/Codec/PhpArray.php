@@ -9,31 +9,19 @@ use DrSlump\Protobuf;
  * arrays, allowing it to be used as a base for an arbitrary number
  * of different serializations (json, yaml, ini, xml ...).
  *
+ * Options:
+ *  - lazy (bool) : Use lazy decoding (true by default)
+ *  - tags (bool) : Use tag numbers as keys
+ *  - strict (bool) : Be strict on non defined required fields
+ *
  */
-class PhpArray implements Protobuf\CodecInterface
+class PhpArray extends Protobuf\CodecAbstract
 {
-    /** @var bool */
-    protected $isLazy = true;
-
-    /** @var bool */
-    protected $useTagNumber = false;
-
-    public function __construct($lazy = true, $useTagNumberAsKey = false)
-    {
-        $this->isLazy = $lazy;
-        $this->useTagNumber = $useTagNumberAsKey;
-    }
-
-    /**
-     * Tells the codec to expect the array keys to contain the
-     * field's tag number instead of the name.
-     *
-     * @param bool $useIt
-     */
-    public function useTagNumberAsKey($useIt = true)
-    {
-        $this->useTagNumber = $useIt;
-    }
+    protected $options = array(
+        'lazy'      => true,
+        'tags'      => false,
+        'strict'    => false
+    );
 
     /**
      * @param \DrSlump\Protobuf\MessageInterface $message
@@ -58,21 +46,25 @@ class PhpArray implements Protobuf\CodecInterface
     {
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
+        $strict = $this->getOption('strict');
+        $useTagNumber = $this->getOption('tags');
+
         $data = array();
         foreach ($descriptor->getFields() as $tag=>$field) {
 
             $empty = !isset($message[$tag]);
-            if ($field->isRequired() && $empty) {
+
+            if ($strict && $empty && $field->isRequired() && !$field->hasDefault()) {
                 throw new \UnexpectedValueException(
                     'Message ' . get_class($message) . '\'s field tag ' . $tag . '(' . $field->getName() . ') is required but has no value'
                 );
             }
 
-            if ($empty) {
+            if ($empty && !$field->hasDefault()) {
                 continue;
             }
 
-            $key = $this->useTagNumber ? $field->getNumber() : $field->getName();
+            $key = $useTagNumber ? $field->getNumber() : $field->getName();
             $v = $message[$tag];
 
             if (NULL === $v) {
@@ -108,10 +100,13 @@ class PhpArray implements Protobuf\CodecInterface
         // Get message descriptor
         $descriptor = Protobuf::getRegistry()->getDescriptor($message);
 
+        $isLazy = $this->getOption('lazy');
+        $useTagNumber = $this->getOption('tags');
+
         foreach ($data as $key=>$v) {
 
             // Get the field by tag number or name
-            $field = $this->useTagNumber
+            $field = $useTagNumber
                    ? $descriptor->getField($key)
                    : $descriptor->getFieldByName($key);
 
@@ -127,7 +122,7 @@ class PhpArray implements Protobuf\CodecInterface
                 $v = is_array($v) && is_int(key($v)) ? $v : array($v);
 
                 // If we are packing lazy values use a LazyRepeat as container
-                if ($this->isLazy && $field->getType() === Protobuf::TYPE_MESSAGE) {
+                if ($isLazy && $field->getType() === Protobuf::TYPE_MESSAGE) {
                     $v = new Protobuf\LazyRepeat($v);
                     $v->codec = $this;
                     $v->descriptor = $field;
@@ -162,7 +157,7 @@ class PhpArray implements Protobuf\CodecInterface
                     return $this->encodeMessage($value);
                 } else {
                     // Check if we are decoding in lazy mode
-                    if ($this->isLazy) {
+                    if ($this->getOption('lazy')) {
                         $lazy = new Protobuf\LazyValue();
                         $lazy->codec = $this;
                         $lazy->descriptor = $field;
@@ -173,8 +168,13 @@ class PhpArray implements Protobuf\CodecInterface
                         return $this->decodeMessage(new $nested, $value);
                     }
                 }
+
             case Protobuf::TYPE_BOOL:
-                return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                if ($value === true || $value === false) {
+                    return $value;
+                }
+                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+
             case Protobuf::TYPE_STRING:
             case Protobuf::TYPE_BYTES:
                 return (string)$value;
@@ -186,6 +186,4 @@ class PhpArray implements Protobuf\CodecInterface
                 return filter_var($value, FILTER_VALIDATE_INT, FILTER_NULL_ON_FAILURE);
         }
     }
-
-
 }
