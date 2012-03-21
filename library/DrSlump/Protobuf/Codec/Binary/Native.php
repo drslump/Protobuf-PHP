@@ -88,7 +88,7 @@ class Native extends Protobuf\CodecAbstract
         $fields = $descriptor->getFields();
 
         // Calculate the maximum offset if we have defined a length
-        $limit = $length ? $reader->pos() + $length : NULL;
+        $limit = $length !== NULL ? $reader->pos() + $length : NULL;
         $pos = $reader->pos();
 
         // Dictionary of repeated fields
@@ -138,6 +138,11 @@ class Native extends Protobuf\CodecAbstract
                 // Check if it's a sub-message
                 if ($type === Protobuf::TYPE_MESSAGE) {
                     $len = $reader->varint();
+
+                    // Protect against completely empty nested messages
+                    if (!$len) {
+                        continue;
+                    }
 
                     if ($lazy && $field->isRepeated()) {
                         $repeated[$tag][] = $reader->read($len);
