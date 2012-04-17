@@ -109,6 +109,9 @@ class Binary implements Protobuf\CodecInterface
                     $writer->varint(strlen($data));
                     $writer->write($data);
                 } else {
+                    
+                    // Make sure the value is an array of values
+                    $value = is_array($value) ? $value : array($value);
                     foreach($value as $val) {
                         // Skip nullified repeated values
                         if (NULL === $val) {
