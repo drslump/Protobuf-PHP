@@ -13,6 +13,11 @@ include_once __DIR__ . '/protos/complex.php';
 include_once __DIR__ . '/protos/repeated.php';
 include_once __DIR__ . '/protos/addressbook.php';
 
+// Include some hamcrest matchers manually since they are not included by default
+// TODO: Fix spec4php to include them
+include_once 'Hamcrest/Core/IsNot.php';
+include_once 'Hamcrest/Core/AllOf.php';
+
 
 describe "Binary Codec"
 
