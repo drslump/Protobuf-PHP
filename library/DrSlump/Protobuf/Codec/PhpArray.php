@@ -133,7 +133,10 @@ class PhpArray implements Protobuf\CodecInterface
                     return $this->decodeMessage(new $nested, $value);
                 }
             case Protobuf::TYPE_BOOL:
-                return !!$value;
+                if ($value === true || $value === false) {
+                    return $value;
+                }
+                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
             case Protobuf::TYPE_STRING:
             case Protobuf::TYPE_BYTES:
                 return (string)$value;
