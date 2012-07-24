@@ -1,4 +1,4 @@
-<? /*
+<?php /*
 
     Receives the following variables:
 
@@ -6,24 +6,24 @@
         $data - A google.protobuf.DescriptorProto object
 
     */ ?>
-namespace <?=$this->ns($namespace)?> {
+namespace <?php echo $this->ns($namespace)?> {
 
     // @@protoc_insertion_point(scope_namespace)
-    // @@protoc_insertion_point(namespace_<?=$namespace?>)
+    // @@protoc_insertion_point(namespace_<?php echo $namespace?>)
 
-    <?
+    <?php
     // Compute a new namespace with the message name as suffix
     $ns = $namespace . '.' . $data->name;
     ?>
-    <? if ($this->comment($ns)): ?>
+    <?php if ($this->comment($ns)): ?>
     /**
-     * <?=$this->comment($ns, '     * ')?> 
+     * <?php echo $this->comment($ns, '     * ')?> 
      */
-    <? endif ?> 
-    class <?=$data->name?> extends \DrSlump\Protobuf\Message {
-        <? if (!empty($data->field)): foreach ($data->field as $field): ?>
-        <? // Nothing to do ?>
-        <? endforeach; endif; ?>
+    <?php endif ?> 
+    class <?php echo $data->name?> extends \DrSlump\Protobuf\Message {
+        <?php if (!empty($data->field)): foreach ($data->field as $field): ?>
+        <?php // Nothing to do ?>
+        <?php endforeach; endif; ?>
      
         /** @var \DrSlump\Protobuf\Descriptor */
         protected static $__descriptor;
@@ -32,166 +32,166 @@ namespace <?=$this->ns($namespace)?> {
 
         public static function descriptor()
         {
-            $descriptor = new \DrSlump\Protobuf\Descriptor(__CLASS__, '<?=$ns?>');
+            $descriptor = new \DrSlump\Protobuf\Descriptor(__CLASS__, '<?php echo $ns?>');
 
-            <? if (!empty($data->field)): foreach ($data->field as $f): ?> 
-            // <?=$this->rule($f)?> <?=$this->type($f)?> <?=$f->name?> = <?=$f->number?> 
+            <?php if (!empty($data->field)): foreach ($data->field as $f): ?> 
+            // <?php echo $this->rule($f)?> <?php echo $this->type($f)?> <?php echo $f->name?> = <?php echo $f->number?> 
             $f = new \DrSlump\Protobuf\Field();
-            $f->number = <?=$f->number?>;
-            $f->name   = "<?=$this->fieldname($f)?>";
-            $f->rule   = \DrSlump\Protobuf::RULE_<?=strtoupper($this->rule($f))?>;
-            $f->type   = \DrSlump\Protobuf::TYPE_<?=strtoupper($this->type($f))?>;
-            <? if (!empty($f->type_name)):
+            $f->number = <?php echo $f->number?>;
+            $f->name   = "<?php echo $this->fieldname($f)?>";
+            $f->rule   = \DrSlump\Protobuf::RULE_<?php echo strtoupper($this->rule($f))?>;
+            $f->type   = \DrSlump\Protobuf::TYPE_<?php echo strtoupper($this->type($f))?>;
+            <?php if (!empty($f->type_name)):
                 $ref = $f->type_name;
                 if (substr($ref, 0, 1) !== '.') {
                     throw new \RuntimeException("Only fully qualified names are supported but found '$ref' at $ns");
                 }
             ?> 
-            $f->reference = '\<?=$this->ns($ref)?>';
-            <? endif ?>
+            $f->reference = '\<?php echo $this->ns($ref)?>';
+            <?php endif ?>
 
-            <?
+            <?php
             if (isset($f->default_value)):
                 switch ($f->type) {
                 case \DrSlump\Protobuf::TYPE_BOOL:
                     $bool = filter_var($f->default_value, FILTER_VALIDATE_BOOLEAN);
             ?> 
-            $f->default = <?=$bool ? 'true' : 'false'?>;
-            <?
+            $f->default = <?php echo $bool ? 'true' : 'false'?>;
+            <?php
                 break;
                 case \DrSlump\Protobuf::TYPE_STRING:
             ?> 
-            $f->default = '<?=addcslashes($f->default_value, "'\\")?>';
-            <?
+            $f->default = '<?php echo addcslashes($f->default_value, "'\\")?>';
+            <?php
                 break;
                 case \DrSlump\Protobuf::TYPE_ENUM:
             ?> 
-            $f->default = \<?=$this->ns($f->type_name)?>::<?=$f->default_value?>;
-            <?
+            $f->default = \<?php echo $this->ns($f->type_name)?>::<?php echo $f->default_value?>;
+            <?php
                 break;
                 default: // Numbers
             ?> 
-            $f->default = <?=$f->default_value?>;
-            <?
+            $f->default = <?php echo $f->default_value?>;
+            <?php
                 } // switch
             endif;
             ?>
 
             // @@protoc_insertion_point(scope_field)
-            // @@protoc_insertion_point(field_<?=$ns?>:<?=$f->name?>)
+            // @@protoc_insertion_point(field_<?php echo $ns?>:<?php echo $f->name?>)
 
             $descriptor->addField($f);
-            <? endforeach; endif; ?>
+            <?php endforeach; endif; ?>
 
             foreach (self::$__extensions as $cb) {
                 $descriptor->addField($cb(), true);
             }
 
             // @@protoc_insertion_point(scope_descriptor)';
-            // @@protoc_insertion_point(descriptor_<?=$ns?>)
+            // @@protoc_insertion_point(descriptor_<?php echo $ns?>)
 
             return $descriptor;
         }
 
 
-        <? if (!empty($data->field)): foreach ($data->getField() as $f): ?>
-        <?
+        <?php if (!empty($data->field)): foreach ($data->getField() as $f): ?>
+        <?php
             $name = $this->fieldname($f);
             $Name = $this->camelize(ucfirst($name));
         ?>
 
         /**
-         * Check if "<?=$name?>" has a value
+         * Check if "<?php echo $name?>" has a value
          *
          * @return boolean
          */
-        public function has<?=$Name?>()
+        public function has<?php echo $Name?>()
         {
-            return isset($this-><?=$name?>);
+            return isset($this-><?php echo $name?>);
         }
 
         /**
-         * Clear "<?=$name?>" value
+         * Clear "<?php echo $name?>" value
          */
-        public function clear<?=$Name?>()
+        public function clear<?php echo $Name?>()
         {
-            unset($this-><?=$name?>);
+            unset($this-><?php echo $name?>);
         }
 
-        <? if ($f->label === \DrSlump\Protobuf::RULE_REPEATED): ?>
+        <?php if ($f->label === \DrSlump\Protobuf::RULE_REPEATED): ?>
 
         /**
-         * Get "<?=$name?>" value
+         * Get "<?php echo $name?>" value
          *
-         * @return <?=$this->doctype($f)?>[]
+         * @return <?php echo $this->doctype($f)?>[]
          */
-        public function get<?=$Name?>($idx = null)
+        public function get<?php echo $Name?>($idx = null)
         {
             if (NULL !== $idx) {
-                return $this-><?=$name?>[$idx];
+                return $this-><?php echo $name?>[$idx];
             }
 
-            return $this-><?=$name?>;
+            return $this-><?php echo $name?>;
         }
 
         /**
-         * Get "<?=$name?>" list of values
+         * Get "<?php echo $name?>" list of values
          *
-         * @return <?=$this->doctype($f)?>[]
+         * @return <?php echo $this->doctype($f)?>[]
          */
-        public function get<?=$Name?>List()
+        public function get<?php echo $Name?>List()
         {
-            return $this->get<?=$Name?>();
+            return $this->get<?php echo $Name?>();
         }
 
         /**
-         * Set "<?=$name?>" value
+         * Set "<?php echo $name?>" value
          *
-         * @param <?=$this->doctype($f)?>[] $value
+         * @param <?php echo $this->doctype($f)?>[] $value
          */
-        public function set<?=$Name?>($value)
+        public function set<?php echo $Name?>($value)
         {
-            return $this-><?=$name?> = $value;
+            return $this-><?php echo $name?> = $value;
         }
 
         /**
-         * Add a new element to "<?=$name?>"
+         * Add a new element to "<?php echo $name?>"
          *
-         * @param <?=$this->doctype($f)?> $value
+         * @param <?php echo $this->doctype($f)?> $value
          */
-        public function add<?=$Name?>($value)
+        public function add<?php echo $Name?>($value)
         {
-            $this-><?=$name?>[] = $value;
+            $this-><?php echo $name?>[] = $value;
         }
 
-        <? else: ?>
+        <?php else: ?>
 
         /**
-         * Get "<?=$name?>" value
+         * Get "<?php echo $name?>" value
          *
-         * @return <?=$this->doctype($f)?> 
+         * @return <?php echo $this->doctype($f)?> 
          */
-        public function get<?=$Name?>()
+        public function get<?php echo $Name?>()
         {
-            return $this-><?=$name?>;
+            return $this-><?php echo $name?>;
         }
 
         /**
-         * Set "<?=$name?>" value
+         * Set "<?php echo $name?>" value
          *
-         * @param <?=$this->doctype($f)?> $value
+         * @param <?php echo $this->doctype($f)?> $value
          */
-        public function set<?=$Name?>($value)
+        public function set<?php echo $Name?>($value)
         {
-            return $this-><?=$f->name?> = $value;
+            return $this-><?php echo $f->name?> = $value;
         }
 
-        <? endif ?>
+        <?php endif ?>
 
-        <? endforeach; endif; ?>
+        <?php endforeach; endif; ?>
 
         // @@protoc_insertion_point(scope_class)
-        // @@protoc_insertion_point(class_<?=$ns?>)
+        // @@protoc_insertion_point(class_<?php echo $ns?>)
     }
 }
 

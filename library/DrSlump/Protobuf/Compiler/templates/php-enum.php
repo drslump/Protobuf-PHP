@@ -1,4 +1,4 @@
-<? /*
+<?php /*
 
     Receives the following variables:
 
@@ -6,25 +6,25 @@
         $data      - A google.protobuf.EnumDescriptorProto object
 
     */ ?>
-namespace <?=$this->ns($namespace)?> {
+namespace <?php echo $this->ns($namespace)?> {
 
     // @@protoc_insertion_point(scope_namespace)
-    // @@protoc_insertion_point(namespace_<?=$namespace?>)
+    // @@protoc_insertion_point(namespace_<?php echo $namespace?>)
 
-    <? $ns = $namespace . '.' . $data->name; ?>
-    <? if ($this->comment($ns)): ?>
+    <?php $ns = $namespace . '.' . $data->name; ?>
+    <?php if ($this->comment($ns)): ?>
     /**
-     * <?=$this->comment($ns, '     *')?> 
+     * <?php echo $this->comment($ns, '     *')?> 
      */
-    <? endif ?>
-    class <?=$data->name?> extends \DrSlump\Protobuf\Enum
+    <?php endif ?>
+    class <?php echo $data->name?> extends \DrSlump\Protobuf\Enum
     {
-        <? foreach ($data->value as $value): ?>
-        const <?=$value->name?> = <?=$value->number?>;
-        <? endforeach ?>
+        <?php foreach ($data->value as $value): ?>
+        const <?php echo $value->name?> = <?php echo $value->number?>;
+        <?php endforeach ?>
 
         // @@protoc_insertion_point(scope_class)";
-        // @@protoc_insertion_point(class_<?=$ns?>)
+        // @@protoc_insertion_point(class_<?php echo $ns?>)
     }
 }
  

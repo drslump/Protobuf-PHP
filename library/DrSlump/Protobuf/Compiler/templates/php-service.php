@@ -1,4 +1,4 @@
-<? /*
+<?php /*
 
     Receives the following variables:
 
@@ -6,31 +6,31 @@
         $data      - A google.protobuf.ServiceDescriptorProto object
 
     */ ?>
-namespace <?=$this->ns($namespace)?> {
+namespace <?php echo $this->ns($namespace)?> {
 
     // @@protoc_insertion_point(scope_namespace)
-    // @@protoc_insertion_point(namespace_<?=$namespace?>)
+    // @@protoc_insertion_point(namespace_<?php echo $namespace?>)
 
-    <? $ns = $namespace . '.' . $data->name; ?>
-    <? if ($this->comment($ns)): ?>
+    <?php $ns = $namespace . '.' . $data->name; ?>
+    <?php if ($this->comment($ns)): ?>
     /**
-     * <?=$this->comment($ns, '     * ')?> 
+     * <?php echo $this->comment($ns, '     * ')?> 
      */
-    <? endif ?>
-    interface <?=$data->name?> 
+    <?php endif ?>
+    interface <?php echo $data->name?> 
     {
         // @@protoc_insertion_point(scope_interface)
-        // @@protoc_insertion_point(interface_<?=$ns?>)
+        // @@protoc_insertion_point(interface_<?php echo $ns?>)
         
-        <? foreach ($data->method_list as $method): ?>
+        <?php foreach ($data->method_list as $method): ?>
         /**
-         * <?= $this->comment($ns . '.' . $method->name, '         * '); ?>
+         * <?php echo  $this->comment($ns . '.' . $method->name, '         * '); ?>
          * 
-         * @param <?=$this->ns($method->input_type)?> $input
-         * @return <?=$this->ns($method->output_type)?>
+         * @param <?php echo $this->ns($method->input_type)?> $input
+         * @return <?php echo $this->ns($method->output_type)?>
          */
-        public function <?=$method->name?>(<?=$this->ns($method->input_type)?> $input);
-        <? endforeach; ?>
+        public function <?php echo $method->name?>(<?php echo $this->ns($method->input_type)?> $input);
+        <?php endforeach; ?>
     }
 }
  

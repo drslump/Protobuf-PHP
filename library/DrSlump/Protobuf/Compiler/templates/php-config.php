@@ -1,4 +1,4 @@
-<? 
+<?php
 /*
     Configures the generator with defaults suitable for these templates.
 
