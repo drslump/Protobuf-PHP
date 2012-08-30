@@ -219,7 +219,7 @@ class Binary implements Protobuf\CodecInterface
         $fields = $descriptor->getFields();
 
         // Calculate the maximum offset if we have defined a length
-        $limit = $length ? $reader->pos() + $length : NULL;
+        $limit = !is_null($length) ? $reader->pos() + $length : NULL;
         $pos = $reader->pos();
 
         // Keep reading until we reach the end or the limit
