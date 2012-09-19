@@ -10,6 +10,7 @@ include_once __DIR__ . '/protos/simple.php';
 include_once __DIR__ . '/protos/complex.php';
 include_once __DIR__ . '/protos/repeated.php';
 include_once __DIR__ . '/protos/addressbook.php';
+include_once __DIR__ . '/protos/extension.php';
 
 
 describe "Binary Codec"
@@ -23,6 +24,7 @@ describe "Binary Codec"
         $W->bin_repeated_string = file_get_contents(__DIR__ . '/protos/repeated-string.bin');
         $W->bin_repeated_int32 = file_get_contents(__DIR__ . '/protos/repeated-int32.bin');
         $W->bin_repeated_nested = file_get_contents(__DIR__ . '/protos/repeated-nested.bin');
+        $W->bin_ext = file_get_contents(__DIR__ . '/protos/extension.bin');
     end;
 
     describe "serialize"
@@ -191,6 +193,14 @@ describe "Binary Codec"
 
         end.
 
+        it 'a message with extended fields'
+            $ext = new Tests\ExtA();
+            $ext->first = 'FIRST';
+            $ext['tests\ExtB\second'] = 'SECOND';
+            $bin = Protobuf::encode($ext);
+            $bin should eq $W->bin_ext but not be false;
+        end
+
     end;
 
     describe "unserialize"
@@ -226,6 +236,12 @@ describe "Binary Codec"
             $complex->getPerson(1)->name should eq 'Iván Montes';
             $complex->getPerson(0)->getPhone(1)->number should eq '55512321312';
         end.
+
+        it 'a message with extended fields'
+            $ext = Protobuf::decode('Tests\ExtA', $W->bin_ext);
+            $ext->first should eq 'FIRST';
+            $ext['tests\ExtB\second'] should eq 'SECOND';
+        end
 
     end;
 
