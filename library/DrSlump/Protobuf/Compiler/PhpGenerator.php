@@ -279,7 +279,7 @@ class PhpGenerator extends AbstractGenerator
         // Collect extensions
         if ($msg->hasExtension()) {
             foreach ($msg->getExtensionList() as $field) {
-                $this->_extensions[$field->getExtendee()][] = array($ns, $field);
+                $this->extensions[$field->getExtendee()][] = array($ns, $field);
             }
         }
 
