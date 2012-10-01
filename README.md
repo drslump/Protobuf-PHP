@@ -57,25 +57,27 @@ For more information see the [included man pages](http://drslump.github.com/Prot
 
 ## Example usage
 
-    require_once 'DrSlump/Protobuf.php';
-    \DrSlump\Protobuf::autoload();
+```php
+<?php
+require_once 'DrSlump/Protobuf.php';
+\DrSlump\Protobuf::autoload();
 
-    $person = new Tutorial\Person();
-    $person->name = 'DrSlump';
-    $person->setId(12);
+$person = new Tutorial\Person();
+$person->name = 'DrSlump';
+$person->setId(12);
 
-    $book = new Tutorial\AddressBook();
-    $book->addPerson($person);
+$book = new Tutorial\AddressBook();
+$book->addPerson($person);
 
-    // Use default codec
-    $data = $book->serialize();
+// Use default codec
+$data = $book->serialize();
 
-    // Use custom codec
-    $codec = new \DrSlump\Protobuf\Codec\Binary();
-    $data = $codec->encode($book);
-    // ... or ...
-    $data = $book->serialize($codec);
-
+// Use custom codec
+$codec = new \DrSlump\Protobuf\Codec\Binary();
+$data = $codec->encode($book);
+// ... or ...
+$data = $book->serialize($codec);
+```
 
 ## Installation
 
