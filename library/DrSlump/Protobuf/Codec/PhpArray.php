@@ -119,7 +119,7 @@ class PhpArray extends Protobuf\CodecAbstract
 
             if ($field->isRepeated()) {
                 // Make sure the value is an array of values
-                $v = is_array($v) && is_int(key($v)) ? $v : array($v);
+                $v = is_array($v) && (empty($v) || is_int(key($v))) ? $v : array($v);
 
                 // If we are packing lazy values use a LazyRepeat as container
                 if ($isLazy && $field->getType() === Protobuf::TYPE_MESSAGE) {
