@@ -7,7 +7,8 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "DrSlump",
+            "name": "Iván -DrSlump- Montes",
+            "email": "drslump@pollinimini.net",
             "homepage": "https://github.com/drslump/Protobuf-PHP"
         }
     ],
