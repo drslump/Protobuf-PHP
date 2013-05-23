@@ -11,6 +11,7 @@
             "homepage": "https://github.com/drslump/Protobuf-PHP"
         }
     ],
+    "bin": ["protoc-gen-php.bat", "protoc-gen-php.php"],
     "require": {
         "php": ">=5.3.0"
     },
