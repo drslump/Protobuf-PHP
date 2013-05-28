@@ -399,7 +399,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= '     * @param ' . $this->normalizeNS($method->getInputType()) . ' $input';
         $s[]= '     * @return ' . $this->normalizeNS($method->getOutputType());
         $s[]= '     */';
-        $s[]= '    public function ' . $method->getName() . '(' . $this->normalizeNS($method->getInputType()) . ' $input);';
+        $s[]= '    public function ' . $method->getName() . '(\\' . $this->normalizeNS($method->getInputType()) . ' $input);';
         $s[]= '';
         endforeach;
         $s[]= '  }';
