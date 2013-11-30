@@ -20,7 +20,7 @@ class EnumTests extends \PHPUnit_Framework_TestCase
     {
         $enum = Tests\Complex\Enum::getInstance();
         $this->assertInternalType('array', $enum->toArray());
-        $this->assertEquals(count($enum->toArray(), 3);
+        $this->assertEquals(count($enum->toArray()), 3);
 
         $arr = $enum->toArray();
         foreach ($enum as $k=>$v) {

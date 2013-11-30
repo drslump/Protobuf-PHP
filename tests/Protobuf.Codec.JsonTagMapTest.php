@@ -11,7 +11,7 @@ include_once __DIR__ . '/protos/repeated.php';
 include_once __DIR__ . '/protos/addressbook.php';
 
 
-class JsonIndexedCodecTests extends \PHPUnit_Framework_TestCase
+class JsonTagMapCodecTests extends \PHPUnit_Framework_TestCase
 {
     function setUp()
     {

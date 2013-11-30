@@ -6,7 +6,8 @@ use DrSlump\Protobuf;
 
 Protobuf::autoload();
 
-class EnumTests extends \PHPUnit_Framework_TestCase
+
+class ProtobufTests extends \PHPUnit_Framework_TestCase
 {
     function testAutoloadClasses()
     {

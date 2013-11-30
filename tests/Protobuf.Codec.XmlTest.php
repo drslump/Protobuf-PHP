@@ -11,7 +11,7 @@ include_once __DIR__ . '/protos/repeated.php';
 include_once __DIR__ . '/protos/addressbook.php';
 
 
-class TextFormatCodecTests extends \PHPUnit_Framework_TestCase
+class XmlCodecTests extends \PHPUnit_Framework_TestCase
 {
     function setUp()
     {
