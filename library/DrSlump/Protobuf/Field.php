@@ -83,4 +83,9 @@ class Field
     {
         return $this->extension;
     }
+    
+    public function isMessage()
+    {
+        return $this->type === Protobuf::TYPE_MESSAGE;
+    }
 }
