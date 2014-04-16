@@ -1,8 +1,8 @@
 {
-    "name": "DrSlump/Protobuf-PHP",
+    "name": "datto/protobuf-php",
     "description": "PHP implementation of Google's Protocol Buffers",
     "keywords": ["protobuf", "protocol buffer", "serializing"],
-    "homepage": "https://github.com/drslump/Protobuf-PHP",
+    "homepage": "https://github.com/datto/Protobuf-PHP",
     "type": "library",
     "license": "MIT",
     "authors": [
