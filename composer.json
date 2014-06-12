@@ -18,10 +18,5 @@
     },
     "autoload": {
         "psr-0": {"DrSlump": "library/"}
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "1.0"
-        }
     }
 }
