@@ -4,11 +4,11 @@
     http://pear.php.net/dtd/package-2.0
     http://pear.php.net/dtd/package-2.0.xsd">
  <name>Protobuf</name>
- <channel>pear.pollinimini.net</channel>
+ <channel>__uri</channel>
  <summary>PHP implementation of Google's Protocol Buffers</summary>
  <description>
-Protobuf for PHP is an implementation of Google's Protocol Buffers for the 
-PHP language, supporting its binary data serialization and including a 
+Protobuf for PHP is an implementation of Google's Protocol Buffers for the
+PHP language, supporting its binary data serialization and including a
 protoc plugin to generate PHP classes from .proto files.
  </description>
  <lead>
