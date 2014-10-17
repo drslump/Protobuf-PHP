@@ -220,6 +220,8 @@ class PhpGenerator extends AbstractGenerator
 
         $s[]= '    /** @var \Closure[] */';
         $s[]= '    protected static $__extensions = array();';
+        $s[]= '    /** @var \DrSlump\Protobuf\Descriptor */';
+        $s[]= '    static protected $__descriptor;';
         $s[]= '';
         $s[]= '    public static function descriptor()';
         $s[]= '    {';
@@ -314,8 +316,8 @@ class PhpGenerator extends AbstractGenerator
         $s[]= '$f = new \DrSlump\Protobuf\Field();';
         $s[]= '$f->number    = ' . $field->getNumber() . ';';
         $s[]= '$f->name      = "'. $field->getName() . '";';
-        $s[]= '$f->type      = \DrSlump\Protobuf::TYPE_' . $type . ';';
-        $s[]= '$f->rule      = \DrSlump\Protobuf::RULE_' . $rule . ';';
+        $s[]= '$f->type      = \DrSlump\Protobuf\Protobuf::TYPE_' . $type . ';';
+        $s[]= '$f->rule      = \DrSlump\Protobuf\Protobuf::RULE_' . $rule . ';';
 
         if ($field->hasTypeName()):
         $ref = $field->getTypeName();
