@@ -52,11 +52,10 @@ class Binary implements Protobuf\CodecInterface
      */
     public function decode(Protobuf\Message $message, $data)
     {
-        static $reader;
-
-        // Create a single reader for all messages to be parsed
-        if (!$reader) {
-            $reader = new Protobuf\Codec\Binary\Reader();
+        if (is_resource($data)) {
+            $reader = new Protobuf\Codec\Binary\FileReader();
+        } else {
+            $reader = new Protobuf\Codec\Binary\StringReader();
         }
 
         // Initialize the reader with the current message data
