@@ -266,7 +266,11 @@ class Binary implements Protobuf\CodecInterface
                     $submessage = new $submessage;
 
                     $len = $reader->varint();
-                    $value = $this->decodeMessage($reader, $submessage, $len);
+                    if ($len) {
+                       $value = $this->decodeMessage($reader, $submessage, $len);
+                    } else {
+                       $value = $submessage;
+                    }
                 } else {
                     $value = $this->decodeSimpleType($reader, $type, $wire);
                 }
