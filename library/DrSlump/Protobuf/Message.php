@@ -107,6 +107,13 @@ abstract class Message implements \ArrayAccess
         $codec->decode($this, $data);
     }
 
+    public static function deserialize($data,
+                                       Protobuf\CodecInterface $codec = null){
+      $retval = new static();
+      $retval->parse($data, $codec);
+      return $retval;
+    }
+
     /**
      * Serialize the current object data
      *

@@ -82,6 +82,10 @@ class PhpGenerator extends AbstractGenerator
                 $this->addComponent($namespace, $service->getName(), $src);
             }
         endif;
+        foreach($proto->getServiceList() as $service) {
+          $src = $this->compileStub($service, $namespace);
+          $this->addComponent($namespace, $service->getName() . 'Stub', $src);
+        }
 
         // Collect extensions
         if ($proto->hasExtension()) {
@@ -407,6 +411,69 @@ class PhpGenerator extends AbstractGenerator
         $s[]= '';
 
         return implode(PHP_EOL, $s) . PHP_EOL;
+    }
+
+    protected function compileStub(proto\ServiceDescriptorProto $service, $ns){
+      $s = array();
+      $s[] = 'namespace ' . $this->normalizeNS($ns) . ' {';
+      $s[] = '';
+      $s[]= "  // @@protoc_insertion_point(scope_namespace)";
+      $s[]= "  // @@protoc_insertion_point(namespace_$ns)";
+      $s[]= '';
+
+      $cmt = $this->compiler->getComment($ns . '.' . $service->getName(), '   * ');
+      if($cmt){
+        $s[]= "  /**";
+        $s[]= $cmt;
+        $s[]= "   */";
+      }
+      $s[] = '  class ' . $service->getName() . 'Client{';
+      $s[] = '';
+      $s[] = '    private $rpc_impl;';
+      $s[] = '';
+      $s[] = '    public function __construct($rpc_impl) {';
+      $s[] = '      $this->rpc_impl = $rpc_impl;';
+      $s[] = '    }';
+
+      foreach ($service->getMethodList() as $method){
+        $ns_input = $this->normalizeNS($method->getInputType());
+        $ns_output = $this->normalizeNS($method->getOutputType());
+        $s[]= '    /**';
+
+        $cmt = $this->compiler->getComment($ns . '.' . $service->getName() . '.' . $method->getName(), '     * ');
+        if ($cmt){
+          $s[]= $cmt;
+          $s[]= '     * ';
+        }
+
+        $s[]= '     * @param ' . $ns_input . ' $input';
+        $s[]= '     */';
+        $server_stream = $method->getServerStreaming();
+        $client_stream = $method->getClientStreaming();
+        $service_fqn = $ns . '.' . $service->getName();
+        if($client_stream){
+          if($server_stream){
+            $s[]= '    public function ' . $method->getName() . '($metadata = array()) {';
+            $s[]= '      return $this->rpc_impl->_bidiRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', \'\\' . $ns_output . '::deserialize\', $metadata);';
+          } else {
+            $s[]= '    public function ' . $method->getName() . '($arguments, $metadata = array()) {';
+            $s[]= '      return $this->rpc_impl->_clientStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $arguments, \'\\' . $ns_output . '::deserialize\', $metadata);';
+          }
+        } else {
+          if($server_stream){
+            $s[]= '    public function ' . $method->getName() . '($argument, $metadata = array()) {';
+            $s[]= '      return $this->rpc_impl->_serverStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata);';
+          } else {
+            $s[]= '    public function ' . $method->getName() . '(\\' . $ns_input . ' $argument, $metadata = array()) {';
+            $s[]= '      return $this->rpc_impl->_simpleRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata);';
+          }
+        }
+        $s[]= '    }';
+      }
+      $s[]= '  }';
+      $s[]= '}';
+
+      return implode(PHP_EOL, $s) . PHP_EOL;
     }
 
     protected function generatePublicField(proto\FieldDescriptorProto $field, $ns, $indent)
