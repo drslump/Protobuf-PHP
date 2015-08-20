@@ -427,12 +427,10 @@ class PhpGenerator extends AbstractGenerator
         $s[]= $cmt;
         $s[]= "   */";
       }
-      $s[] = '  class ' . $service->getName() . 'Client{';
+      $s[] = '  class ' . $service->getName() . 'Client extends \Grpc\BaseStub {';
       $s[] = '';
-      $s[] = '    private $rpc_impl;';
-      $s[] = '';
-      $s[] = '    public function __construct($rpc_impl) {';
-      $s[] = '      $this->rpc_impl = $rpc_impl;';
+      $s[] = '    public function __construct($hostname, $opts) {';
+      $s[] = '      parent::__construct($hostname, $opts);';
       $s[] = '    }';
 
       foreach ($service->getMethodList() as $method){
@@ -454,18 +452,18 @@ class PhpGenerator extends AbstractGenerator
         if($client_stream){
           if($server_stream){
             $s[]= '    public function ' . $method->getName() . '($metadata = array()) {';
-            $s[]= '      return $this->rpc_impl->_bidiRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', \'\\' . $ns_output . '::deserialize\', $metadata);';
+            $s[]= '      return $this->_bidiRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', \'\\' . $ns_output . '::deserialize\', $metadata);';
           } else {
             $s[]= '    public function ' . $method->getName() . '($arguments, $metadata = array()) {';
-            $s[]= '      return $this->rpc_impl->_clientStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $arguments, \'\\' . $ns_output . '::deserialize\', $metadata);';
+            $s[]= '      return $this->_clientStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $arguments, \'\\' . $ns_output . '::deserialize\', $metadata);';
           }
         } else {
           if($server_stream){
             $s[]= '    public function ' . $method->getName() . '($argument, $metadata = array()) {';
-            $s[]= '      return $this->rpc_impl->_serverStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata);';
+            $s[]= '      return $this->_serverStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata);';
           } else {
             $s[]= '    public function ' . $method->getName() . '(\\' . $ns_input . ' $argument, $metadata = array()) {';
-            $s[]= '      return $this->rpc_impl->_simpleRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata);';
+            $s[]= '      return $this->_simpleRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata);';
           }
         }
         $s[]= '    }';
