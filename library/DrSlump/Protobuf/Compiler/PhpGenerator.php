@@ -454,16 +454,16 @@ class PhpGenerator extends AbstractGenerator
             $s[]= '    public function ' . $method->getName() . '($metadata = array()) {';
             $s[]= '      return $this->_bidiRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', \'\\' . $ns_output . '::deserialize\', $metadata);';
           } else {
-            $s[]= '    public function ' . $method->getName() . '($arguments, $metadata = array()) {';
-            $s[]= '      return $this->_clientStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $arguments, \'\\' . $ns_output . '::deserialize\', $metadata);';
+            $s[]= '    public function ' . $method->getName() . '($metadata = array()) {';
+            $s[]= '      return $this->_clientStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', \'\\' . $ns_output . '::deserialize\', $metadata);';
           }
         } else {
           if($server_stream){
-            $s[]= '    public function ' . $method->getName() . '($argument, $metadata = array()) {';
-            $s[]= '      return $this->_serverStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata);';
+            $s[]= '    public function ' . $method->getName() . '($argument, $metadata = array(), $options = array()) {';
+            $s[]= '      return $this->_serverStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata, $options);';
           } else {
-            $s[]= '    public function ' . $method->getName() . '(\\' . $ns_input . ' $argument, $metadata = array()) {';
-            $s[]= '      return $this->_simpleRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata);';
+            $s[]= '    public function ' . $method->getName() . '(\\' . $ns_input . ' $argument, $metadata = array(), $options = array()) {';
+            $s[]= '      return $this->_simpleRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', $argument, \'\\' . $ns_output . '::deserialize\', $metadata, $options);';
           }
         }
         $s[]= '    }';
