@@ -451,11 +451,11 @@ class PhpGenerator extends AbstractGenerator
         $service_fqn = $ns . '.' . $service->getName();
         if($client_stream){
           if($server_stream){
-            $s[]= '    public function ' . $method->getName() . '($metadata = array()) {';
-            $s[]= '      return $this->_bidiRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', \'\\' . $ns_output . '::deserialize\', $metadata);';
+            $s[]= '    public function ' . $method->getName() . '($metadata = array(), $options = array()) {';
+            $s[]= '      return $this->_bidiRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', \'\\' . $ns_output . '::deserialize\', $metadata, $options);';
           } else {
-            $s[]= '    public function ' . $method->getName() . '($metadata = array()) {';
-            $s[]= '      return $this->_clientStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', \'\\' . $ns_output . '::deserialize\', $metadata);';
+            $s[]= '    public function ' . $method->getName() . '($metadata = array(), $options = array()) {';
+            $s[]= '      return $this->_clientStreamRequest(\'/' . $service_fqn . '/' . $method->getName() . '\', \'\\' . $ns_output . '::deserialize\', $metadata, $options);';
           }
         } else {
           if($server_stream){
