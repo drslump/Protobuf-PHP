@@ -53,9 +53,13 @@ class Protobuf
                 // Convert namespace separator to directory ones
                 $class = str_replace('\\', DIRECTORY_SEPARATOR, $class);
                 // Prefix with this file's directory
-                $class = __DIR__ . DIRECTORY_SEPARATOR . $class;
+                $class = __DIR__ . DIRECTORY_SEPARATOR . $class . '.php';
 
-                include($class . '.php');
+				if(!file_exists($class)){
+					return false;
+				}
+
+                include($class);
                 return true;
             }
 
