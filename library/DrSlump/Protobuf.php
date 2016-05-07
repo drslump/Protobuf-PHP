@@ -55,9 +55,9 @@ class Protobuf
                 // Prefix with this file's directory
                 $class = __DIR__ . DIRECTORY_SEPARATOR . $class . '.php';
 
-				if(!file_exists($class)){
-					return false;
-				}
+                if(!file_exists($class)){
+                    return false;
+                }
 
                 include($class);
                 return true;
