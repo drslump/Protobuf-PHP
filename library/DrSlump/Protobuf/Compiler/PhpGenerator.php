@@ -84,7 +84,7 @@ class PhpGenerator extends AbstractGenerator
         endif;
         foreach($proto->getServiceList() as $service) {
           $src = $this->compileStub($service, $namespace);
-          $this->addComponent($namespace, $service->getName() . 'Stub', $src);
+          $this->addComponent($namespace, $service->getName() . 'Client', $src);
         }
 
         // Collect extensions
@@ -429,8 +429,8 @@ class PhpGenerator extends AbstractGenerator
       }
       $s[] = '  class ' . $service->getName() . 'Client extends \Grpc\BaseStub {';
       $s[] = '';
-      $s[] = '    public function __construct($hostname, $opts) {';
-      $s[] = '      parent::__construct($hostname, $opts);';
+      $s[] = '    public function __construct($hostname, $opts, $channel = null) {';
+      $s[] = '      parent::__construct($hostname, $opts, $channel);';
       $s[] = '    }';
 
       foreach ($service->getMethodList() as $method){
