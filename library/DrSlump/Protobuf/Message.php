@@ -64,7 +64,7 @@ abstract class Message implements \ArrayAccess
         if (is_numeric($offset)) {
             return $this->_has($offset);
         } else {
-            return $this->hasExtension($offset);
+            return $this->_hasExtension($offset);
         }
     }
 
@@ -73,7 +73,7 @@ abstract class Message implements \ArrayAccess
         if (is_numeric($offset)) {
             $this->_set($offset, $value);
         } else {
-            $this->setExtension($offset, $value);
+            $this->_setExtension($offset, $value);
         }
     }
 
@@ -82,7 +82,7 @@ abstract class Message implements \ArrayAccess
         if (is_numeric($offset)) {
             return $this->_get($offset);
         } else {
-            return $this->getExtension($offset);
+            return $this->_getExtension($offset);
         }
     }
 
@@ -91,7 +91,7 @@ abstract class Message implements \ArrayAccess
         if (is_numeric($offset)) {
             $this->_clear($offset);
         } else {
-            $this->clearExtension($offset);
+            $this->_clearExtension($offset);
         }
     }
 
@@ -287,7 +287,7 @@ abstract class Message implements \ArrayAccess
      * @param string $extname
      * @return bool
      */
-    public function hasExtension($extname)
+    public function _hasExtension($extname)
     {
         return isset($this->_extensions[$extname]);
     }
@@ -299,7 +299,7 @@ abstract class Message implements \ArrayAccess
      * @param int|null $idx
      * @return mixed
      */
-    public function getExtension($extname, $idx = null)
+    public function _getExtension($extname, $idx = null)
     {
         if (!isset($this->_extensions[$extname])) return NULL;
 
@@ -314,7 +314,7 @@ abstract class Message implements \ArrayAccess
      * @param string $extname
      * @return array
      */
-    public function getExtensionList($extname)
+    public function _getExtensionList($extname)
     {
         return isset($this->_extensions[$extname])
                ? $this->_extensions[$extname]
@@ -329,7 +329,7 @@ abstract class Message implements \ArrayAccess
      * @param int|null $idx
      * @return \DrSlump\Protobuf\Message - Fluent Interface
      */
-    public function setExtension($extname, $value, $idx = null)
+    public function _setExtension($extname, $value, $idx = null)
     {
         if (NULL !== $idx) {
             if (empty($this->_extensions)) {
@@ -350,7 +350,7 @@ abstract class Message implements \ArrayAccess
      * @param mixed $value
      * @return \DrSlump\Protobuf\Message - Fluent Interface
      */
-    public function addExtension($extname, $value)
+    public function _addExtension($extname, $value)
     {
         $this->_extensions[$extname][] = $value;
     }
@@ -359,7 +359,7 @@ abstract class Message implements \ArrayAccess
      * @param  $extname
      * @return void
      */
-    public function clearExtension($extname)
+    public function _clearExtension($extname)
     {
         unset($this->_extensions[$extname]);
     }
