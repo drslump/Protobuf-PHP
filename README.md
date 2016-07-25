@@ -83,8 +83,8 @@ $data = $book->serialize($codec);
 
 Install with Pear
 
-    pear channel-discover pear.pollinimini.net
-    pear install drslump/Protobuf-beta
+    rake pear:package version=1.0
+    [sudo] pear install Protobuf-1.0.tgz
 
 You can also get the latest version by checking out a copy of the
 repository in your computer.
