@@ -444,10 +444,35 @@ class PhpGenerator extends AbstractGenerator
           $s[]= '     * ';
         }
 
-        $s[]= '     * @param ' . $ns_input . ' $input';
-        $s[]= '     */';
         $server_stream = $method->getServerStreaming();
         $client_stream = $method->getClientStreaming();
+
+        // Attach appropriate param/return types
+        if (! $client_stream) {
+          $s[]= '     * @param \\' . $ns_input . ' $argument';
+        }
+
+        if ($client_stream || $server_stream) {
+          $s[]= '     * @param array $metadata';
+          $s[]= '     * @param array $options';
+        }
+
+        if ($client_stream) {
+          if ($server_stream) {
+            $s[]= '     * @return \Grpc\BidiStreamingCall' ;
+          } else {
+            $s[]= '     * @return \Grpc\ClientStreamingCall' ;
+          }
+        } else {
+          if ($server_stream) {
+            $s[]= '     * @return \Grpc\ServerStreamingCall' ;
+          } else {
+            $s[]= '     * @return \\' . $ns_output;
+          }
+        }
+
+        $s[]= '     */';
+
         $service_fqn = $ns . '.' . $service->getName();
         if($client_stream){
           if($server_stream){
