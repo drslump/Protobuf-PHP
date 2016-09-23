@@ -51,12 +51,12 @@ class Cli
         // We have data from stdin so compile it
         try {
             // Create a compiler interface
-            $comp = new Protobuf\Compiler();
+            $comp = new Protobuf\Compiler(true);
             echo $comp->compile($stdin);
             exit(0);
         } catch(\Exception $e) {
-            fputs(STDERR, 'ERROR: ' . $e->getMessage());
-            fputs(STDERR, $e->getTraceAsString());
+            fputs(STDERR, 'ERROR: ' . $e->getMessage() . PHP_EOL);
+            fputs(STDERR, $e->getTraceAsString() . PHP_EOL);
             exit(255);
         }
     }
