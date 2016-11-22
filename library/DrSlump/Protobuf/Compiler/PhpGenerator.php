@@ -313,7 +313,7 @@ class PhpGenerator extends AbstractGenerator
         $s[]= "// $rule $type " . $field->getName() . " = " . $field->getNumber();
         $s[]= '$f = new \DrSlump\Protobuf\Field();';
         $s[]= '$f->number    = ' . $field->getNumber() . ';';
-        $s[]= '$f->name      = "'. $field->getName() . '";';
+        $s[]= '$f->name      = \''. $field->getName() . '\';';
         $s[]= '$f->type      = \DrSlump\Protobuf::TYPE_' . $type . ';';
         $s[]= '$f->rule      = \DrSlump\Protobuf::RULE_' . $rule . ';';
 
